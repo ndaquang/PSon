@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Excel Cleaner</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0d0d0d;
+    --surface: #141414;
+    --surface2: #1a1a1a;
+    --border: #2a2a2a;
+    --border2: #333;
+    --text: #e8e4dc;
+    --muted: #666;
+    --muted2: #444;
+    --accent: #c8f05a;
+    --accent-dim: rgba(200,240,90,0.1);
+    --accent-dim2: rgba(200,240,90,0.06);
+    --red: #ff5f5f;
+    --red-dim: rgba(255,95,95,0.1);
+    --amber: #f0a040;
+    --amber-dim: rgba(240,160,64,0.1);
+    --blue: #5fa8ff;
+    --blue-dim: rgba(95,168,255,0.1);
+    --mono: 'DM Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* GRID PATTERN BG */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 740px;
+    padding: 48px 24px 80px;
+  }
+
+  /* HEADER */
+  header {
+    margin-bottom: 48px;
+  }
+  .logo-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-icon svg { width: 20px; height: 20px; }
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+  .tagline {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* DROP ZONE */
+  .dropzone {
+    border: 1.5px dashed var(--border2);
+    border-radius: 12px;
+    padding: 52px 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    background: var(--accent-dim2);
+    position: relative;
+    overflow: hidden;
+  }
+  .dropzone:hover, .dropzone.dragover {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+  .dropzone input {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .drop-icon {
+    width: 48px; height: 48px;
+    margin: 0 auto 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .drop-icon svg { width: 22px; height: 22px; stroke: var(--accent); fill: none; }
+  .drop-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .drop-sub {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+
+  /* OPTIONS */
+  .options {
+    margin-top: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .opt-header {
+    padding: 12px 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    border-bottom: 1px solid var(--border);
+    text-transform: uppercase;
+  }
+  .opt-row {
+    display: flex;
+    align-items: flex-start;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .opt-row:last-child { border-bottom: none; }
+  .opt-row:hover { background: var(--surface2); }
+  .opt-row input[type=checkbox] {
+    width: 16px; height: 16px;
+    margin-top: 2px;
+    accent-color: var(--accent);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .opt-text { flex: 1; }
+  .opt-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .opt-desc {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .opt-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+  .badge-green { background: rgba(200,240,90,0.12); color: var(--accent); border: 1px solid rgba(200,240,90,0.25); }
+  .badge-amber { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(240,160,64,0.25); }
+  .badge-blue  { background: var(--blue-dim);  color: var(--blue);  border: 1px solid rgba(95,168,255,0.25); }
+
+  /* FILE PREVIEW */
+  #file-preview {
+    display: none;
+    margin-top: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .file-info-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .file-icon {
+    width: 32px; height: 32px;
+    background: rgba(200,240,90,0.1);
+    border: 1px solid rgba(200,240,90,0.2);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .file-icon svg { width: 16px; height: 16px; stroke: var(--accent); fill: none; }
+  .file-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .file-size { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .file-remove {
+    margin-left: auto;
+    background: none; border: none;
+    color: var(--muted); cursor: pointer;
+    font-size: 18px; line-height: 1;
+    padding: 4px;
+    transition: color 0.1s;
+  }
+  .file-remove:hover { color: var(--red); }
+  #scan-info {
+    padding: 12px 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+  #scan-info .stat { color: var(--text); font-weight: 500; }
+  #scan-info .warn { color: var(--amber); }
+  #scan-info .danger { color: var(--red); }
+  #scan-info .ok { color: var(--accent); }
+
+  /* PROCESS BUTTON */
+  #btn-process {
+    display: none;
+    width: 100%;
+    margin-top: 16px;
+    padding: 14px 20px;
+    background: var(--accent);
+    color: #0d0d0d;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  #btn-process:hover { opacity: 0.9; }
+  #btn-process:active { transform: scale(0.99); }
+  #btn-process:disabled { opacity: 0.4; cursor: default; transform: none; }
+
+  /* PROGRESS */
+  #progress-wrap {
+    display: none;
+    margin-top: 16px;
+  }
+  .progress-bar-bg {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+  .progress-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* RESULT */
+  #result-wrap {
+    display: none;
+    margin-top: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .result-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .result-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+  }
+  .result-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .result-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+  }
+  .stat-box {
+    background: var(--surface);
+    padding: 14px 16px;
+  }
+  .stat-num {
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+  .stat-num.green { color: var(--accent); }
+  .stat-num.red   { color: var(--red); }
+  .stat-lbl {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  #btn-download {
+    display: block;
+    width: calc(100% - 32px);
+    margin: 14px 16px;
+    padding: 12px;
+    background: var(--accent);
+    color: #0d0d0d;
+    border: none;
+    border-radius: 6px;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    text-align: center;
+  }
+  #btn-download:hover { opacity: 0.88; }
+
+  /* LOG */
+  #log-wrap {
+    margin-top: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    display: none;
+  }
+  .log-header {
+    padding: 10px 16px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  #log-body {
+    padding: 12px 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.9;
+    color: var(--muted);
+    max-height: 180px;
+    overflow-y: auto;
+  }
+  #log-body .l-ok    { color: var(--accent); }
+  #log-body .l-info  { color: var(--blue); }
+  #log-body .l-warn  { color: var(--amber); }
+  #log-body .l-err   { color: var(--red); }
+
+  /* FOOTER */
+  footer {
+    margin-top: 48px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted2);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="logo-row">
+      <div class="logo-icon">
+        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 5h12M4 10h12M4 15h7" stroke="#0d0d0d" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="16" cy="15" r="3" fill="#0d0d0d"/>
+          <path d="M15 15l1 1 2-2" stroke="#c8f05a" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h1>Excel Cleaner</h1>
+    </div>
+    <p class="tagline">// xóa named ranges lỗi · hỗ trợ xlsx · xlsm · xlsb · xls · xlam</p>
+  </header>
+
+  <!-- DROP ZONE -->
+  <div class="dropzone" id="dropzone">
+    <input type="file" id="file-input" accept=".xlsx,.xlsm,.xlsb,.xls,.xlam" />
+    <div class="drop-icon">
+      <svg viewBox="0 0 24 24" stroke-width="1.5">
+        <path d="M12 16V4m0 0l-4 4m4-4l4 4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M4 20h16" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="drop-title">Kéo thả file Excel vào đây</div>
+    <div class="drop-sub">xlsx · xlsm · xlsb · xls · xlam — xử lý hoàn toàn trong trình duyệt</div>
+  </div>
+
+  <!-- FILE PREVIEW -->
+  <div id="file-preview">
+    <div class="file-info-row">
+      <div class="file-icon">
+        <svg viewBox="0 0 24 24" stroke-width="1.5">
+          <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="file-name" id="f-name">—</div>
+        <div class="file-size" id="f-size">—</div>
+      </div>
+      <button class="file-remove" id="btn-remove" title="Xóa file">×</button>
+    </div>
+    <div id="scan-info">Đang quét file...</div>
+  </div>
+
+  <!-- OPTIONS -->
+  <div class="options" style="margin-top:16px;">
+    <div class="opt-header">Tùy chọn làm sạch</div>
+    <label class="opt-row">
+      <input type="checkbox" id="opt-names" checked>
+      <div class="opt-text">
+        <div class="opt-label">Xóa Named Ranges lỗi</div>
+        <div class="opt-desc">Chỉ xóa các name có lỗi (#REF!, #NAME?, #VALUE!, v.v.) hoặc tham chiếu không tồn tại trong workbook — giữ lại các name hợp lệ</div>
+      </div>
+      <span class="opt-badge badge-green">Khuyên dùng</span>
+    </label>
+    <label class="opt-row">
+      <input type="checkbox" id="opt-na" checked>
+      <div class="opt-text">
+        <div class="opt-label">Xóa Named Ranges tham chiếu NA()</div>
+        <div class="opt-desc">Xóa các name có công thức là NA() hoặc =NA() — thường do phần mềm BOQ tạo hàng loạt, không có giá trị sử dụng</div>
+      </div>
+      <span class="opt-badge badge-green">Khuyên dùng</span>
+    </label>
+    <label class="opt-row">
+      <input type="checkbox" id="opt-calcchain" checked>
+      <div class="opt-text">
+        <div class="opt-label">Xóa calcChain.xml</div>
+        <div class="opt-desc">File lưu thứ tự tính toán — Excel tự tạo lại khi mở. Thường chiếm 200KB–2MB trong file nặng</div>
+      </div>
+      <span class="opt-badge badge-amber">Trung bình</span>
+    </label>
+    <label class="opt-row">
+      <input type="checkbox" id="opt-styles" >
+      <div class="opt-text">
+        <div class="opt-label">Nén lại styles.xml</div>
+        <div class="opt-desc">Xóa các style entry trùng lặp trong styles.xml. An toàn nhưng tiết kiệm ít hơn</div>
+      </div>
+      <span class="opt-badge badge-blue">Nhỏ</span>
+    </label>
+  </div>
+
+  <!-- PROCESS BUTTON -->
+  <button id="btn-process">Làm sạch &amp; Tải về</button>
+
+  <!-- PROGRESS -->
+  <div id="progress-wrap">
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progress-bar"></div>
+    </div>
+    <div class="progress-label" id="progress-label">Đang xử lý...</div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result-wrap">
+    <div class="result-header">
+      <div class="result-dot"></div>
+      <div class="result-title">Hoàn thành</div>
+    </div>
+    <div class="result-stats">
+      <div class="stat-box">
+        <div class="stat-num" id="r-before">—</div>
+        <div class="stat-lbl">Trước (KB)</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num green" id="r-after">—</div>
+        <div class="stat-lbl">Sau (KB)</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num green" id="r-saved">—</div>
+        <div class="stat-lbl">Tiết kiệm</div>
+      </div>
+    </div>
+    <button id="btn-download">Tải về file sạch</button>
+  </div>
+
+  <!-- LOG -->
+  <div id="log-wrap">
+    <div class="log-header">Log</div>
+    <div id="log-body"></div>
+  </div>
+
+  <footer>// xử lý hoàn toàn trong trình duyệt · không upload server · mã nguồn mở</footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let currentFile = null;
+let cleanedBlob = null;
+let scanData = {};
+
+// ---- DRAG & DROP ----
+const SUPPORTED_EXTS = ['.xlsx', '.xlsm', '.xlsb', '.xls', '.xlam'];
+const XLS_BINARY = ['.xls']; // legacy binary — limited support
+
+function isSupportedExcel(filename) {
+  const lower = filename.toLowerCase();
+  return SUPPORTED_EXTS.some(ext => lower.endsWith(ext));
+}
+function getExt(filename) {
+  const lower = filename.toLowerCase();
+  return SUPPORTED_EXTS.find(ext => lower.endsWith(ext)) || '';
+}
+
+const dz = $('dropzone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('dragover');
+  const f = e.dataTransfer.files[0];
+  if (f && isSupportedExcel(f.name)) loadFile(f);
+  else alert('Hỗ trợ: .xlsx, .xlsm, .xlsb, .xls, .xlam');
+});
+$('file-input').addEventListener('change', e => {
+  if (e.target.files[0]) loadFile(e.target.files[0]);
+});
+$('btn-remove').addEventListener('click', () => {
+  currentFile = null; cleanedBlob = null;
+  $('file-preview').style.display = 'none';
+  $('btn-process').style.display = 'none';
+  $('result-wrap').style.display = 'none';
+  $('log-wrap').style.display = 'none';
+  $('progress-wrap').style.display = 'none';
+  $('file-input').value = '';
+});
+
+function fmtSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/1048576).toFixed(2) + ' MB';
+}
+
+function log(msg, type='') {
+  const d = $('log-body');
+  $('log-wrap').style.display = 'block';
+  const sp = document.createElement('div');
+  if (type) sp.className = 'l-' + type;
+  const ts = new Date().toLocaleTimeString('vi', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  sp.textContent = `[${ts}] ${msg}`;
+  d.appendChild(sp);
+  d.scrollTop = d.scrollHeight;
+}
+
+function setProgress(pct, label) {
+  $('progress-wrap').style.display = 'block';
+  $('progress-bar').style.width = pct + '%';
+  $('progress-label').textContent = label;
+}
+
+async function loadFile(file) {
+  currentFile = file;
+  $('file-preview').style.display = 'block';
+  $('f-name').textContent = file.name;
+  $('f-size').textContent = fmtSize(file.size);
+  $('scan-info').textContent = 'Đang quét...';
+  $('btn-process').style.display = 'none';
+  $('result-wrap').style.display = 'none';
+  $('log-wrap').style.display = 'none';
+  $('progress-wrap').style.display = 'none';
+
+  const ext = getExt(file.name);
+
+  // .xls binary format — cannot parse with JSZip
+  if (ext === '.xls') {
+    $('scan-info').innerHTML =
+      `<span class="warn">⚠ File .xls (định dạng cũ binary BIFF) — JSZip không đọc được nội dung bên trong.<br>` +
+      `Vui lòng mở bằng Excel rồi lưu lại dạng <b>.xlsx</b> hoặc <b>.xlsm</b>, sau đó xử lý ở đây.</span>`;
+    $('btn-process').style.display = 'none';
+    return;
+  }
+
+  try {
+    const buf = await file.arrayBuffer();
+    const zip = await JSZip.loadAsync(buf);
+    scanData = { names: 0, brokenNames: 0, hasCalcChain: false, wbSize: 0, totalSize: file.size, ext };
+
+    // Detect valid sheet names from workbook.xml
+    let validSheetNames = new Set();
+    if (zip.files['xl/workbook.xml']) {
+      const wbTxt = await zip.files['xl/workbook.xml'].async('string');
+      scanData.wbSize = wbTxt.length;
+      // Extract sheet names
+      const sheetMatches = [...wbTxt.matchAll(/name="([^"]+)"/g)];
+      sheetMatches.forEach(m => validSheetNames.add(m[1]));
+      // Count all definedNames
+      const matches = wbTxt.match(/<definedName/g);
+      scanData.names = matches ? matches.length : 0;
+      scanData.hasDefinedNamesBlock = wbTxt.includes('<definedNames>');
+      // Count broken names (scan with all checks on for full preview)
+      const scanOpts = { checkErrors: true, checkNA: true };
+      scanData.brokenNames = await countBrokenNames(wbTxt, validSheetNames, scanOpts);
+    }
+
+    // calcChain
+    scanData.hasCalcChain = !!zip.files['xl/calcChain.xml'];
+    if (scanData.hasCalcChain) {
+      const cc = await zip.files['xl/calcChain.xml'].async('uint8array');
+      scanData.calcChainSize = cc.length;
+    }
+
+    // Sheets count
+    scanData.sheets = Object.keys(zip.files).filter(k => k.startsWith('xl/worksheets/sheet') && !k.includes('Rels')).length;
+
+    // File type badge
+    const extBadge = {
+      '.xlsx': '<span class="ok">xlsx</span>',
+      '.xlsm': '<span class="warn">xlsm (macro)</span>',
+      '.xlsb': '<span class="warn">xlsb (binary)</span>',
+      '.xlam': '<span class="warn">xlam (add-in)</span>',
+    }[ext] || `<span>${ext}</span>`;
+
+    // Render scan info
+    let html = '';
+    html += `<span>Định dạng: ${extBadge}</span><br>`;
+    html += `<span>Sheets: <span class="stat">${scanData.sheets}</span></span><br>`;
+    const nc = scanData.names;
+    const bn = scanData.brokenNames;
+    const ncClass = nc > 10000 ? 'danger' : nc > 1000 ? 'warn' : nc > 0 ? 'stat' : 'ok';
+    html += `<span>Named ranges (tổng): <span class="${ncClass}">${nc.toLocaleString()}</span></span><br>`;
+    if (bn > 0) {
+      html += `<span>→ Names lỗi/không hợp lệ: <span class="danger">${bn.toLocaleString()}</span> — sẽ bị xóa</span><br>`;
+    } else {
+      html += `<span>→ Names lỗi: <span class="ok">không có</span></span><br>`;
+    }
+    if (scanData.hasCalcChain) {
+      html += `<span>calcChain.xml: <span class="warn">${fmtSize(scanData.calcChainSize)}</span> — có thể xóa</span><br>`;
+    } else {
+      html += `<span>calcChain.xml: <span class="ok">không có</span></span><br>`;
+    }
+    html += `<span>Dung lượng file: <span class="stat">${fmtSize(file.size)}</span></span>`;
+    $('scan-info').innerHTML = html;
+    $('btn-process').style.display = 'block';
+    $('btn-process').textContent = 'Làm sạch & Tải về';
+    $('btn-process').disabled = false;
+
+  } catch(e) {
+    $('scan-info').innerHTML = `<span class="danger">Lỗi đọc file: ${e.message}</span>`;
+  }
+}
+
+// Detect broken/invalid definedName entries
+async function countBrokenNames(wbTxt, validSheetNames, opts) {
+  return (await extractBrokenNames(wbTxt, validSheetNames, null, opts)).length;
+}
+
+// Error patterns in formulas
+const ERROR_PATTERNS = [/#REF!/i, /#NAME\?/i, /#VALUE!/i, /#NULL!/i, /#DIV\/0!/i, /#N\/A/i, /#NUM!/i];
+
+function isFormulaError(formula) {
+  if (!formula) return true; // empty formula = broken
+  const decoded = formula.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'");
+  return ERROR_PATTERNS.some(p => p.test(decoded));
+}
+
+function isNA(formula) {
+  // Match NA(), =NA(), or XML-encoded variants, with optional whitespace
+  const decoded = formula.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'").trim();
+  return /^=?NA\(\s*\)$/i.test(decoded);
+}
+
+function isSheetMissing(formula, validSheetNames) {
+  // Sheet references look like: SheetName!... or 'Sheet Name'!...
+  const refMatch = formula.match(/^'?([^'!]+)'?!/);
+  if (refMatch) {
+    const sheetRef = refMatch[1].trim();
+    if (!validSheetNames.has(sheetRef)) return true;
+  }
+  return false;
+}
+
+// Yield to browser to prevent UI freeze
+function yieldToUI() {
+  return new Promise(resolve => setTimeout(resolve, 0));
+}
+
+async function extractBrokenNames(wbTxt, validSheetNames, onProgress, opts = {}) {
+  const broken = [];
+  const nameRegex = /<definedName\s([^>]*)>([\s\S]*?)<\/definedName>/g;
+  let m;
+  let i = 0;
+  const CHUNK = 300;
+  while ((m = nameRegex.exec(wbTxt)) !== null) {
+    const formula = m[2].trim();
+    const bad =
+      (opts.checkErrors && (isFormulaError(formula) || isSheetMissing(formula, validSheetNames))) ||
+      (opts.checkNA     && isNA(formula));
+    if (bad) {
+      broken.push({ full: m[0], attrs: m[1], formula });
+    }
+    i++;
+    if (i % CHUNK === 0) {
+      if (onProgress) onProgress(i);
+      await yieldToUI();
+    }
+  }
+  return broken;
+}
+
+$('btn-process').addEventListener('click', processFile);
+
+async function processFile() {
+  if (!currentFile) return;
+  $('btn-process').disabled = true;
+  $('btn-process').textContent = 'Đang xử lý...';
+  $('result-wrap').style.display = 'none';
+  $('log-wrap').style.display = 'none';
+  cleanedBlob = null;
+
+  const optNames      = $('opt-names').checked;
+  const optNA         = $('opt-na').checked;
+  const optCalcChain  = $('opt-calcchain').checked;
+  const optStyles     = $('opt-styles').checked;
+
+  setProgress(5, 'Đọc file...');
+  log('Bắt đầu xử lý: ' + currentFile.name, 'info');
+
+  try {
+    const buf = await currentFile.arrayBuffer();
+    setProgress(15, 'Giải nén ZIP...');
+    const zip = await JSZip.loadAsync(buf);
+    let actions = [];
+
+    // 1. Remove broken/invalid definedNames
+    if ((optNames || optNA) && zip.files['xl/workbook.xml']) {
+      setProgress(30, 'Phân tích Named Ranges...');
+      let wbTxt = await zip.files['xl/workbook.xml'].async('string');
+      const sizeBefore = wbTxt.length;
+
+      // Collect valid sheet names
+      let validSheetNames = new Set();
+      const sheetMatches = [...wbTxt.matchAll(/name="([^"]+)"/g)];
+      sheetMatches.forEach(m => validSheetNames.add(m[1]));
+
+      const processOpts = { checkErrors: optNames, checkNA: optNA };
+      const totalNames = scanData.names || 0;
+      const brokenList = await extractBrokenNames(wbTxt, validSheetNames, (scanned) => {
+        const pct = Math.round(30 + (scanned / Math.max(totalNames, 1)) * 20);
+        setProgress(Math.min(pct, 50), `Đang kiểm tra ${scanned.toLocaleString()} / ${totalNames.toLocaleString()} names...`);
+      }, processOpts);
+
+      if (brokenList.length > 0) {
+        // Build a Set of broken full strings for O(1) lookup, then single-pass replace
+        const brokenSet = new Set(brokenList.map(b => b.full));
+        setProgress(55, `Xóa ${brokenList.length.toLocaleString()} names lỗi...`);
+        await yieldToUI();
+        wbTxt = wbTxt.replace(/<definedName\s[^>]*>[\s\S]*?<\/definedName>/g, match =>
+          brokenSet.has(match) ? '' : match
+        );
+        await yieldToUI();
+        // Clean up empty definedNames block
+        wbTxt = wbTxt.replace(/<definedNames>\s*<\/definedNames>/g, '');
+        zip.file('xl/workbook.xml', wbTxt);
+        const saved = sizeBefore - wbTxt.length;
+        const countRemoved = brokenList.length;
+        const naCount = brokenList.filter(b => isNA(b.formula)).length;
+        const errCount = countRemoved - naCount;
+        const parts = [];
+        if (errCount > 0) parts.push(`${errCount.toLocaleString()} lỗi (#REF!, #NAME?...)`);
+        if (naCount > 0) parts.push(`${naCount.toLocaleString()} NA()`);
+        actions.push({ label: 'Named Ranges', detail: `Xóa ${countRemoved.toLocaleString()} names (${parts.join(', ')}) · giữ lại ${(scanData.names - countRemoved).toLocaleString()} hợp lệ · tiết kiệm ${fmtSize(saved)}`, ok: true });
+        log(`Xóa ${countRemoved.toLocaleString()} names: ${parts.join(', ')} — giữ lại ${scanData.names - countRemoved} hợp lệ (tiết kiệm ${fmtSize(saved)})`, 'ok');
+      } else {
+        actions.push({ label: 'Named Ranges', detail: 'Không tìm thấy names lỗi — không thay đổi', ok: false });
+        log('Không có named ranges lỗi nào cần xóa', 'ok');
+      }
+    }
+
+    // 2. Remove calcChain
+    if (optCalcChain && zip.files['xl/calcChain.xml']) {
+      setProgress(55, 'Xóa calcChain.xml...');
+      const ccSize = (await zip.files['xl/calcChain.xml'].async('uint8array')).length;
+      zip.remove('xl/calcChain.xml');
+      // Also remove from content types and rels if present
+      if (zip.files['[Content_Types].xml']) {
+        let ct = await zip.files['[Content_Types].xml'].async('string');
+        ct = ct.replace(/<Override[^>]*calcChain[^>]*\/>/g, '');
+        zip.file('[Content_Types].xml', ct);
+      }
+      actions.push({ label: 'calcChain.xml', detail: `Xóa ${fmtSize(ccSize)}`, ok: true });
+      log(`Xóa calcChain.xml (${fmtSize(ccSize)})`, 'ok');
+    }
+
+    // 3. Styles dedup (basic)
+    if (optStyles && zip.files['xl/styles.xml']) {
+      setProgress(70, 'Nén styles.xml...');
+      let stylesTxt = await zip.files['xl/styles.xml'].async('string');
+      const before = stylesTxt.length;
+      // Remove excessive whitespace/newlines
+      stylesTxt = stylesTxt.replace(/\s{2,}/g, ' ').replace(/> </g, '><');
+      zip.file('xl/styles.xml', stylesTxt);
+      const saved = before - stylesTxt.length;
+      if (saved > 0) {
+        actions.push({ label: 'styles.xml', detail: `Nén whitespace · tiết kiệm ${fmtSize(saved)}`, ok: true });
+        log(`Nén styles.xml (${fmtSize(saved)})`, 'ok');
+      }
+    }
+
+    setProgress(85, 'Đóng gói ZIP...');
+    const outBuf = await zip.generateAsync({
+      type: 'arraybuffer',
+      compression: 'DEFLATE',
+      compressionOptions: { level: 6 }
+    });
+
+    setProgress(100, 'Xong!');
+    // Use correct MIME type per extension
+    const mimeMap = {
+      '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      '.xlsm': 'application/vnd.ms-excel.sheet.macroEnabled.12',
+      '.xlsb': 'application/vnd.ms-excel.sheet.binary.macroEnabled.12',
+      '.xlam': 'application/vnd.ms-excel.addin.macroEnabled.12',
+    };
+    const outMime = mimeMap[scanData.ext] || mimeMap['.xlsx'];
+    cleanedBlob = new Blob([outBuf], { type: outMime });
+
+    // Show result
+    const savedBytes = currentFile.size - cleanedBlob.size;
+    const savedPct = ((savedBytes / currentFile.size) * 100).toFixed(1);
+    $('r-before').textContent = (currentFile.size / 1024).toFixed(0);
+    $('r-after').textContent  = (cleanedBlob.size  / 1024).toFixed(0);
+    $('r-saved').textContent  = savedPct + '%';
+    $('result-wrap').style.display = 'block';
+
+    log(`Kết quả: ${fmtSize(currentFile.size)} → ${fmtSize(cleanedBlob.size)} (giảm ${savedPct}%)`, 'ok');
+
+    $('btn-process').textContent = 'Làm sạch lại';
+    $('btn-process').disabled = false;
+
+  } catch(e) {
+    log('Lỗi: ' + e.message, 'err');
+    setProgress(0, 'Lỗi!');
+    $('btn-process').textContent = 'Làm sạch & Tải về';
+    $('btn-process').disabled = false;
+  }
+}
+
+$('btn-download').addEventListener('click', () => {
+  if (!cleanedBlob || !currentFile) return;
+  const ext = getExt(currentFile.name);
+  const name = currentFile.name.replace(new RegExp('\\' + ext + '$', 'i'), '_clean' + ext);
+  const url = URL.createObjectURL(cleanedBlob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  log('Đã tải về: ' + name, 'ok');
+});
+</script>
+</body>
+</html>
