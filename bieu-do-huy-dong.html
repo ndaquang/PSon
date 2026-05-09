@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biểu Đồ Huy Động Nhân Lực & Máy Móc — Nhà Xưởng</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --bg-page: #f8fafc;
+    --bg-card: #ffffff;
+    --bg-card-hover: #f1f5f9;
+    --bg-subtle: #f1f5f9;
+    --border: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --accent-blue: #2563eb;
+    --accent-violet: #7c3aed;
+    --accent-rose: #e11d48;
+    --accent-amber: #d97706;
+    --accent-emerald: #059669;
+    --shadow-sm: 0 1px 3px rgba(15,23,42,0.06);
+    --shadow-md: 0 4px 12px rgba(15,23,42,0.08);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Be Vietnam Pro', sans-serif;
+    background: var(--bg-page);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+
+  .header { text-align: center; margin-bottom: 28px; }
+  .header .tag {
+    display: inline-block; font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--accent-blue); background: #dbeafe;
+    padding: 4px 14px; border-radius: 20px; margin-bottom: 10px;
+    border: 1px solid #bfdbfe; font-weight: 600;
+  }
+  .header h1 {
+    font-size: 26px; font-weight: 800;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-violet));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .header .sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+  /* Toolbar */
+  .toolbar {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 12px; margin-bottom: 22px; flex-wrap: wrap;
+  }
+  .tabs { display: flex; gap: 8px; }
+  .tab-btn {
+    padding: 9px 26px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--bg-card); color: var(--text-secondary);
+    font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: all 0.25s; box-shadow: var(--shadow-sm);
+  }
+  .tab-btn.active {
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    color: #fff; border-color: transparent;
+    box-shadow: 0 4px 15px rgba(37,99,235,0.25);
+  }
+  .tab-btn:hover:not(.active) { background: var(--bg-card-hover); }
+
+  .action-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-action {
+    padding: 9px 16px; border-radius: 10px; border: 1px solid;
+    font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+    transition: all 0.25s; display: flex; align-items: center; gap: 5px;
+  }
+  .btn-pdf {
+    background: linear-gradient(135deg, #dc2626, #ea580c);
+    color: #fff; border-color: transparent;
+    box-shadow: 0 4px 12px rgba(220,38,38,0.2);
+  }
+  .btn-pdf:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(220,38,38,0.3); }
+  .btn-save {
+    background: linear-gradient(135deg, #059669, #10b981);
+    color: #fff; border-color: transparent;
+    box-shadow: 0 4px 12px rgba(5,150,105,0.2);
+  }
+  .btn-save:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(5,150,105,0.3); }
+  .btn-load {
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    color: #fff; border-color: transparent;
+    box-shadow: 0 4px 12px rgba(37,99,235,0.2);
+  }
+  .btn-load:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(37,99,235,0.3); }
+  .btn-secondary {
+    background: var(--bg-card); color: var(--text-secondary); border-color: var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+  .btn-secondary:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+
+  /* Hidden file input */
+  #fileInput { display: none; }
+
+  /* Settings Panel */
+  .settings-panel {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px 20px; margin-bottom: 22px;
+    box-shadow: var(--shadow-sm);
+  }
+  .settings-panel h3 {
+    font-size: 13px; font-weight: 700; color: var(--accent-amber);
+    margin-bottom: 14px; display: flex; align-items: center; gap: 6px;
+  }
+  .settings-row {
+    display: flex; gap: 16px; align-items: center; margin-bottom: 12px; flex-wrap: wrap;
+  }
+  .settings-row:last-child { margin-bottom: 0; }
+  .settings-row label {
+    font-size: 12px; color: var(--text-secondary); font-weight: 500; min-width: 130px;
+  }
+
+  .stepper {
+    display: inline-flex; align-items: center;
+    background: var(--bg-card); border: 1px solid var(--border-strong);
+    border-radius: 10px; overflow: hidden; box-shadow: var(--shadow-sm);
+  }
+  .stepper-btn {
+    width: 34px; height: 36px; border: none; background: transparent;
+    color: var(--accent-blue); font-size: 18px; font-weight: 700; cursor: pointer;
+    transition: all 0.15s; font-family: inherit;
+  }
+  .stepper-btn:hover:not(:disabled) { background: #eff6ff; }
+  .stepper-btn:active:not(:disabled) { transform: scale(0.92); }
+  .stepper-btn:disabled { color: var(--text-muted); cursor: not-allowed; }
+  .stepper-input {
+    width: 50px; height: 36px; border: none; background: transparent;
+    text-align: center; font-weight: 700; font-size: 14px;
+    color: var(--text-primary); font-family: inherit; outline: none;
+    border-left: 1px solid var(--border); border-right: 1px solid var(--border);
+    -moz-appearance: textfield;
+  }
+  .stepper-input::-webkit-outer-spin-button,
+  .stepper-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+  .input-text {
+    background: var(--bg-card); border: 1px solid var(--border-strong);
+    border-radius: 8px; padding: 8px 12px; color: var(--text-primary);
+    font-family: inherit; font-size: 13px; outline: none;
+    transition: border-color 0.2s; box-shadow: var(--shadow-sm);
+  }
+  .input-text:focus { border-color: var(--accent-blue); }
+
+  /* Data Table */
+  .data-section {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden; margin-bottom: 22px;
+    box-shadow: var(--shadow-sm);
+  }
+  .data-section-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 18px; border-bottom: 1px solid var(--border);
+    flex-wrap: wrap; gap: 8px; background: var(--bg-subtle);
+  }
+  .data-section-header h3 { font-size: 13px; font-weight: 700; color: var(--text-secondary); }
+  .btn-sm {
+    padding: 5px 14px; border-radius: 7px; border: 1px solid;
+    font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s;
+    background: #ecfdf5; color: var(--accent-emerald); border-color: #a7f3d0;
+  }
+  .btn-sm:hover { background: #d1fae5; }
+  .btn-danger { background: #fef2f2; color: var(--accent-rose); border-color: #fecaca; }
+  .btn-danger:hover { background: #fee2e2; }
+
+  .data-table-wrap { overflow-x: auto; }
+  .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .data-table th {
+    padding: 10px 6px; text-align: center; color: var(--text-secondary);
+    font-weight: 600; font-size: 11px; background: var(--bg-subtle);
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table th:first-child { text-align: left; padding-left: 16px; min-width: 180px; }
+  .data-table td { padding: 5px 3px; text-align: center; border-top: 1px solid var(--border); }
+  .data-table td:first-child { text-align: left; padding-left: 10px; font-weight: 600; }
+  .data-table tbody tr:hover { background: #fafbfc; }
+  .data-table input[type="number"] {
+    width: 44px; background: transparent; border: 1px solid transparent;
+    border-radius: 5px; padding: 4px 2px; color: var(--text-primary);
+    font-family: inherit; font-size: 12px; text-align: center; outline: none;
+    transition: all 0.2s; -moz-appearance: textfield;
+  }
+  .data-table input[type="number"]::-webkit-outer-spin-button,
+  .data-table input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .data-table input[type="number"]:hover { background: #eff6ff; }
+  .data-table input[type="number"]:focus { border-color: var(--accent-blue); background: #eff6ff; }
+  .data-table .name-input {
+    width: 150px; background: transparent; border: 1px solid transparent;
+    border-radius: 5px; padding: 4px 6px; color: inherit;
+    font-family: inherit; font-size: 12px; font-weight: 600; text-align: left; outline: none;
+  }
+  .data-table .name-input:hover { background: #eff6ff; }
+  .data-table .name-input:focus { border-color: var(--accent-blue); background: #eff6ff; }
+
+  .total-row td {
+    font-weight: 800; color: var(--accent-blue);
+    border-top: 2px solid var(--border-strong);
+    background: var(--bg-subtle) !important;
+  }
+  .peak-val { color: var(--accent-rose) !important; }
+
+  /* Chart */
+  .chart-wrap {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px 12px; margin-bottom: 22px;
+    box-shadow: var(--shadow-sm); overflow-x: auto;
+  }
+  .chart-wrap canvas { display: block; width: 100%; }
+
+  /* Legend */
+  .legend {
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: 6px 18px; padding: 14px 18px; margin-bottom: 16px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 14px; box-shadow: var(--shadow-sm);
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-secondary); }
+  .legend-color { width: 14px; height: 14px; border-radius: 3px; }
+
+  /* Summary */
+  .summary-cards { display: flex; justify-content: center; gap: 14px; margin-bottom: 22px; flex-wrap: wrap; }
+  .summary-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 24px; text-align: center; min-width: 130px;
+    box-shadow: var(--shadow-sm); transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .summary-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .summary-card .label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+  .summary-card .value { font-size: 22px; font-weight: 800; margin-top: 3px; }
+
+  .footer-note {
+    text-align: center; font-size: 10px; color: var(--text-muted);
+    font-style: italic; margin-top: 16px; padding-bottom: 20px;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+    color: #fff; padding: 12px 28px; border-radius: 10px;
+    font-size: 13px; font-weight: 600;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    opacity: 0; transition: all 0.35s ease; z-index: 1000;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .toast-success { background: linear-gradient(135deg, #059669, #10b981); }
+  .toast-info { background: linear-gradient(135deg, #2563eb, #3b82f6); }
+  .toast-error { background: linear-gradient(135deg, #dc2626, #ef4444); }
+  .toast-loading { background: linear-gradient(135deg, #d97706, #f59e0b); }
+
+  /* Save info bar */
+  .save-info {
+    display: flex; align-items: center; gap: 8px; padding: 8px 16px;
+    background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px;
+    font-size: 11px; color: #92400e; margin-bottom: 18px;
+  }
+  .save-info strong { font-weight: 700; }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .animate-in { animation: fadeUp 0.4s ease-out both; }
+
+  @media print {
+    .toolbar, .settings-panel, .btn-sm, .data-section-header > div:last-child, .save-info { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container" id="exportContent">
+  <div class="header animate-in">
+    <span class="tag">Dự án xây dựng</span>
+    <h1 id="mainTitle">Biểu Đồ Huy Động Nhân Lực & Máy Móc</h1>
+    <div class="sub" id="subTitle">Hạng mục: Nhà xưởng — Có thể chỉnh sửa trực tiếp</div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar animate-in" style="animation-delay:0.05s">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('labor')">👷 Nhân lực</button>
+      <button class="tab-btn" onclick="switchTab('equip')">🏗️ Máy móc thiết bị</button>
+    </div>
+    <div class="action-buttons">
+      <button class="btn-action btn-save" onclick="saveProject()">💾 Lưu file</button>
+      <button class="btn-action btn-load" onclick="document.getElementById('fileInput').click()">📂 Mở file</button>
+      <input type="file" id="fileInput" accept=".json" onchange="loadProject(event)">
+      <button class="btn-action btn-pdf" onclick="exportPDF()">📄 Xuất PDF</button>
+      <button class="btn-action btn-secondary" onclick="window.print()">🖨️ In</button>
+    </div>
+  </div>
+
+  <!-- Save info -->
+  <div class="save-info animate-in" style="animation-delay:0.07s" id="saveInfo">
+    💡 <span><strong>Lưu & Mở:</strong> Nhấn "💾 Lưu file" để tải file .json về máy. Lần sau mở lại bằng nút "📂 Mở file" để tiếp tục chỉnh sửa.</span>
+  </div>
+
+  <!-- Settings -->
+  <div class="settings-panel animate-in" style="animation-delay:0.1s">
+    <h3>⚙️ Cài đặt chung</h3>
+    <div class="settings-row">
+      <label>Thời gian thi công:</label>
+      <div class="stepper">
+        <button class="stepper-btn" onclick="changeMonths(-1)" id="btnDec">−</button>
+        <input type="number" class="stepper-input" id="totalMonths" value="12" min="1" max="60" onchange="setMonths(this.value)">
+        <button class="stepper-btn" onclick="changeMonths(1)" id="btnInc">+</button>
+      </div>
+      <span style="font-size:12px;color:var(--text-muted)">tháng (1 – 60)</span>
+      <div style="display:flex;gap:6px;margin-left:auto">
+        <button class="btn-sm" onclick="setMonths(6)">6T</button>
+        <button class="btn-sm" onclick="setMonths(12)">12T</button>
+        <button class="btn-sm" onclick="setMonths(18)">18T</button>
+        <button class="btn-sm" onclick="setMonths(24)">24T</button>
+      </div>
+    </div>
+    <div class="settings-row">
+      <label>Tên dự án:</label>
+      <input type="text" class="input-text" id="projectName" value="Nhà xưởng ~3,000 m²" style="width:300px" oninput="updateTitle()">
+    </div>
+  </div>
+
+  <!-- Summary -->
+  <div class="summary-cards animate-in" style="animation-delay:0.12s" id="summaryCards"></div>
+
+  <!-- Chart (Canvas) -->
+  <div class="chart-wrap animate-in" style="animation-delay:0.15s" id="chartWrap">
+    <canvas id="chartCanvas"></canvas>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend animate-in" style="animation-delay:0.18s" id="legendWrap"></div>
+
+  <!-- Data Table -->
+  <div class="data-section animate-in" style="animation-delay:0.2s">
+    <div class="data-section-header">
+      <h3 id="tableTitle">📊 Bảng số liệu nhân lực (chỉnh sửa trực tiếp)</h3>
+      <div style="display:flex;gap:6px;">
+        <button class="btn-sm" onclick="addRow()">+ Thêm hàng</button>
+        <button class="btn-sm btn-danger" onclick="removeLastRow()">− Xóa hàng cuối</button>
+      </div>
+    </div>
+    <div class="data-table-wrap">
+      <table class="data-table" id="dataTable"></table>
+    </div>
+  </div>
+
+  <div class="footer-note">* Nhấp vào ô số liệu để chỉnh sửa — Biểu đồ tự động cập nhật</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════
+const COLORS = ['#E8913A','#3B82F6','#10B981','#8B5CF6','#EC4899','#F59E0B','#06B6D4','#EF4444','#84CC16','#D946EF','#F97316','#14B8A6'];
+let currentTab = 'labor';
+let totalMonths = 12;
+
+let laborData = [
+  { name: 'Chuẩn bị mặt bằng', color: '#E8913A', values: [12,15,8,0,0,0,0,0,0,0,0,0] },
+  { name: 'Móng & Nền',         color: '#3B82F6', values: [0,10,35,40,20,0,0,0,0,0,0,0] },
+  { name: 'Kết cấu thép',       color: '#10B981', values: [0,0,5,25,45,50,40,20,0,0,0,0] },
+  { name: 'Mái & Bao che',      color: '#8B5CF6', values: [0,0,0,0,10,25,35,30,15,0,0,0] },
+  { name: 'M&E (Cơ điện)',      color: '#EC4899', values: [0,0,0,0,0,5,15,30,35,30,15,0] },
+  { name: 'Hoàn thiện',         color: '#F59E0B', values: [0,0,0,0,0,0,0,5,20,35,30,15] },
+];
+
+let equipData = [
+  { name: 'Máy đào',         color: '#D97706', values: [2,3,2,1,0,0,0,0,0,0,0,0] },
+  { name: 'Máy ép cọc',      color: '#2563EB', values: [0,2,3,3,1,0,0,0,0,0,0,0] },
+  { name: 'Cẩu bánh xích',   color: '#059669', values: [0,0,1,2,3,3,3,2,1,0,0,0] },
+  { name: 'Xe trộn bê tông', color: '#7C3AED', values: [0,1,3,4,3,2,1,0,0,0,0,0] },
+  { name: 'Cẩu tháp',        color: '#DC2626', values: [0,0,0,1,2,2,2,2,1,0,0,0] },
+  { name: 'Máy hàn',         color: '#EA580C', values: [0,0,0,2,5,8,8,6,3,1,0,0] },
+  { name: 'Xe nâng',         color: '#0891B2', values: [0,0,0,0,1,2,2,3,3,2,1,0] },
+  { name: 'Giàn giáo (bộ)',  color: '#6D28D9', values: [0,0,0,0,5,10,15,15,10,8,5,0] },
+];
+
+function getData() { return currentTab === 'labor' ? laborData : equipData; }
+function getMonthLabels() { return Array.from({length: totalMonths}, (_, i) => 'T' + (i+1)); }
+function getTotals() {
+  const d = getData();
+  return Array.from({length: totalMonths}, (_, i) => d.reduce((s, r) => s + (r.values[i]||0), 0));
+}
+
+// ═══════════════════════════════════════════════
+// SAVE / LOAD PROJECT (.json)
+// ═══════════════════════════════════════════════
+function saveProject() {
+  const project = {
+    version: 2,
+    projectName: document.getElementById('projectName').value,
+    totalMonths: totalMonths,
+    laborData: JSON.parse(JSON.stringify(laborData)),
+    equipData: JSON.parse(JSON.stringify(equipData)),
+    savedAt: new Date().toISOString()
+  };
+  const json = JSON.stringify(project, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const name = project.projectName.replace(/\s+/g, '-') || 'du-an';
+  a.href = url;
+  a.download = `${name}_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('success', '💾 Đã lưu file thành công!');
+}
+
+function loadProject(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const project = JSON.parse(e.target.result);
+      if (!project.laborData || !project.equipData) throw new Error('File không hợp lệ');
+
+      document.getElementById('projectName').value = project.projectName || 'Nhà xưởng';
+      totalMonths = project.totalMonths || 12;
+      document.getElementById('totalMonths').value = totalMonths;
+      laborData = project.laborData;
+      equipData = project.equipData;
+
+      updateTitle();
+      renderAll();
+
+      const d = project.savedAt ? new Date(project.savedAt).toLocaleString('vi-VN') : '';
+      showToast('success', `📂 Đã mở file thành công! ${d ? '(Lưu lúc: '+d+')' : ''}`);
+    } catch (err) {
+      showToast('error', '❌ File không hợp lệ: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ═══════════════════════════════════════════════
+// MONTHS
+// ═══════════════════════════════════════════════
+function changeMonths(delta) { setMonths(totalMonths + delta); }
+function setMonths(value) {
+  const v = Math.max(1, Math.min(60, parseInt(value)||1));
+  totalMonths = v;
+  document.getElementById('totalMonths').value = v;
+  document.getElementById('btnDec').disabled = v <= 1;
+  document.getElementById('btnInc').disabled = v >= 60;
+  [laborData, equipData].forEach(ds => {
+    ds.forEach(r => {
+      while (r.values.length < totalMonths) r.values.push(0);
+      if (r.values.length > totalMonths) r.values = r.values.slice(0, totalMonths);
+    });
+  });
+  renderAll();
+}
+
+function updateTitle() {
+  document.getElementById('subTitle').textContent =
+    'Hạng mục: ' + document.getElementById('projectName').value + ' — Có thể chỉnh sửa trực tiếp';
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', (i===0 && tab==='labor') || (i===1 && tab==='equip'));
+  });
+  renderAll();
+}
+
+function addRow() {
+  const d = getData(), c = COLORS[d.length % COLORS.length];
+  d.push({ name: currentTab==='labor' ? 'Hạng mục mới' : 'Thiết bị mới', color: c, values: Array(totalMonths).fill(0) });
+  renderAll();
+}
+function removeLastRow() {
+  const d = getData();
+  if (d.length > 1) { d.pop(); renderAll(); }
+}
+
+// ═══════════════════════════════════════════════
+// RENDER SUMMARY
+// ═══════════════════════════════════════════════
+function renderSummary() {
+  const t = getTotals(), mx = Math.max(...t), pk = t.indexOf(mx)+1, sm = t.reduce((a,b)=>a+b,0);
+  const u = currentTab==='labor' ? 'người' : 'đơn vị';
+  document.getElementById('summaryCards').innerHTML = `
+    <div class="summary-card"><div class="label">Cao điểm</div><div class="value" style="color:var(--accent-rose)">${mx} <span style="font-size:12px;font-weight:400;color:var(--text-muted)">${u}</span></div></div>
+    <div class="summary-card"><div class="label">Tháng cao điểm</div><div class="value" style="color:var(--accent-blue)">T${pk}</div></div>
+    <div class="summary-card"><div class="label">Tổng lượt huy động</div><div class="value" style="color:var(--accent-violet)">${sm.toLocaleString()}</div></div>
+    <div class="summary-card"><div class="label">Thời gian</div><div class="value" style="color:var(--accent-emerald)">${totalMonths} <span style="font-size:12px;font-weight:400;color:var(--text-muted)">tháng</span></div></div>`;
+}
+
+// ═══════════════════════════════════════════════
+// RENDER CHART (Canvas — reliable for PDF)
+// ═══════════════════════════════════════════════
+function renderChart() {
+  const data = getData(), totals = getTotals(), maxVal = Math.max(...totals, 1);
+  const months = getMonthLabels();
+
+  const canvas = document.getElementById('chartCanvas');
+  const dpr = window.devicePixelRatio || 1;
+  const W = Math.max(760, totalMonths * 50);
+  const H = 360;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+
+  const pL = 52, pR = 20, pT = 25, pB = 40;
+  const iW = W - pL - pR, iH = H - pT - pB;
+  const yTicks = 5;
+  const yStep = Math.ceil(maxVal / yTicks / 5) * 5 || 5;
+  const yMax = yStep * yTicks;
+  const barW = iW / totalMonths;
+  const barPad = barW * 0.16;
+
+  ctx.font = '500 10px "Be Vietnam Pro", sans-serif';
+
+  // Y grid
+  for (let i = 0; i <= yTicks; i++) {
+    const y = pT + iH - (i * iH / yTicks);
+    ctx.strokeStyle = i === 0 ? '#cbd5e1' : '#e2e8f0';
+    ctx.lineWidth = 1;
+    if (i > 0) ctx.setLineDash([4, 3]); else ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(pL, y); ctx.lineTo(W - pR, y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#64748b'; ctx.textAlign = 'right';
+    ctx.fillText(Math.round(i * yStep), pL - 8, y + 4);
+  }
+
+  // Bars
+  months.forEach((m, mi) => {
+    const x = pL + mi * barW + barPad;
+    const w = barW - barPad * 2;
+    let y0 = 0;
+
+    data.forEach((d, di) => {
+      const val = d.values[mi] || 0;
+      const bh = (val / yMax) * iH;
+      if (val > 0) {
+        const by = pT + iH - y0 - bh;
+        const isTop = data.slice(di+1).every(dd => (dd.values[mi]||0) === 0);
+        ctx.globalAlpha = 0.92;
+        ctx.fillStyle = d.color;
+        if (isTop) {
+          roundRect(ctx, x, by, w, bh, [3, 3, 0, 0]);
+        } else {
+          ctx.fillRect(x, by, w, bh);
+        }
+        ctx.globalAlpha = 1;
+      }
+      y0 += bh;
+    });
+
+    // Total on top
+    if (totals[mi] > 0) {
+      const ty = pT + iH - (totals[mi] / yMax) * iH - 7;
+      ctx.fillStyle = '#334155';
+      ctx.font = '700 ' + (totalMonths > 24 ? 9 : 11) + 'px "Be Vietnam Pro", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(totals[mi], x + w / 2, ty);
+    }
+
+    // Month label
+    ctx.fillStyle = '#475569';
+    ctx.font = '500 ' + (totalMonths > 24 ? 9 : 11) + 'px "Be Vietnam Pro", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(m, x + (barW - barPad * 2) / 2, H - 10);
+  });
+
+  // Trend line
+  ctx.strokeStyle = '#d97706';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 3]);
+  ctx.globalAlpha = 0.7;
+  ctx.beginPath();
+  months.forEach((_, i) => {
+    const x = pL + i * barW + barW / 2;
+    const y = pT + iH - (totals[i] / yMax) * iH;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
+
+  // Y label
+  ctx.save();
+  ctx.translate(14, pT + iH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = '#64748b';
+  ctx.font = '500 10px "Be Vietnam Pro", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(currentTab === 'labor' ? 'Số người' : 'Số lượng', 0, 0);
+  ctx.restore();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  const [tl, tr, br, bl] = typeof r === 'number' ? [r,r,r,r] : [...r, 0, 0, 0, 0].slice(0, 4);
+  ctx.beginPath();
+  ctx.moveTo(x + tl, y);
+  ctx.lineTo(x + w - tr, y); ctx.quadraticCurveTo(x + w, y, x + w, y + tr);
+  ctx.lineTo(x + w, y + h - br); ctx.quadraticCurveTo(x + w, y + h, x + w - br, y + h);
+  ctx.lineTo(x + bl, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - bl);
+  ctx.lineTo(x, y + tl); ctx.quadraticCurveTo(x, y, x + tl, y);
+  ctx.closePath(); ctx.fill();
+}
+
+// ═══════════════════════════════════════════════
+// RENDER LEGEND
+// ═══════════════════════════════════════════════
+function renderLegend() {
+  const d = getData();
+  let h = d.map(r => `<div class="legend-item"><span class="legend-color" style="background:${r.color}"></span>${r.name}</div>`).join('');
+  h += `<div class="legend-item"><span style="display:inline-block;width:18px;height:2px;background:#d97706;opacity:0.7"></span>Đường xu hướng</div>`;
+  document.getElementById('legendWrap').innerHTML = h;
+}
+
+// ═══════════════════════════════════════════════
+// RENDER TABLE
+// ═══════════════════════════════════════════════
+function renderTable() {
+  const data = getData(), months = getMonthLabels(), totals = getTotals(), mx = Math.max(...totals, 1);
+  const lbl = currentTab === 'labor' ? 'nhân lực' : 'máy móc thiết bị';
+  document.getElementById('tableTitle').textContent = `📊 Bảng số liệu ${lbl} (chỉnh sửa trực tiếp)`;
+
+  let h = '<thead><tr>';
+  h += `<th>${currentTab==='labor' ? 'Hạng mục' : 'Thiết bị'}</th>`;
+  months.forEach(m => h += `<th>${m}</th>`);
+  h += '<th style="color:#d97706">Max</th></tr></thead><tbody>';
+
+  data.forEach((d, ri) => {
+    h += '<tr><td>';
+    h += `<input type="color" value="${d.color}" style="width:16px;height:16px;border:none;background:none;cursor:pointer;vertical-align:middle;margin-right:4px" onchange="getData()[${ri}].color=this.value;renderChart();renderLegend();renderTable()">`;
+    h += `<input class="name-input" value="${d.name}" style="color:${d.color}" oninput="getData()[${ri}].name=this.value;renderLegend()"></td>`;
+    d.values.forEach((v, ci) => {
+      const bg = v > 0 ? d.color + '20' : 'transparent';
+      h += `<td style="background:${bg}"><input type="number" min="0" value="${v}" onchange="getData()[${ri}].values[${ci}]=parseInt(this.value)||0;renderChart();renderSummary();updateRowMax(${ri})"></td>`;
+    });
+    h += `<td style="font-weight:800;color:#d97706" id="rowMax${ri}">${Math.max(...d.values)}</td></tr>`;
+  });
+
+  h += '<tr class="total-row"><td style="padding-left:16px">TỔNG CỘNG</td>';
+  totals.forEach(v => h += `<td class="${v===mx?'peak-val':''}">${v}</td>`);
+  h += `<td class="peak-val" style="font-size:14px">${mx}</td></tr></tbody>`;
+  document.getElementById('dataTable').innerHTML = h;
+}
+
+function updateRowMax(ri) {
+  const el = document.getElementById('rowMax'+ri);
+  if (el) el.textContent = Math.max(...getData()[ri].values);
+}
+
+function renderAll() { renderSummary(); renderChart(); renderLegend(); renderTable(); }
+
+// ═══════════════════════════════════════════════
+// PDF EXPORT (html2canvas + jsPDF — renders chart correctly)
+// ═══════════════════════════════════════════════
+async function exportPDF() {
+  showToast('loading', '⏳ Đang tạo PDF...');
+
+  // Hide non-print elements
+  const hideEls = document.querySelectorAll('.toolbar, .settings-panel, .save-info');
+  hideEls.forEach(el => el.style.display = 'none');
+
+  const element = document.getElementById('exportContent');
+
+  try {
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      allowTaint: true,
+    });
+
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const { jsPDF } = window.jspdf;
+
+    const isLandscape = totalMonths > 14;
+    const pdf = new jsPDF({
+      orientation: isLandscape ? 'landscape' : 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const margin = 8;
+    const usableW = pageW - margin * 2;
+
+    const imgW = canvas.width;
+    const imgH = canvas.height;
+    const ratio = usableW / imgW;
+    const scaledH = imgH * ratio;
+
+    // Multi-page if content is tall
+    if (scaledH <= pageH - margin * 2) {
+      pdf.addImage(imgData, 'JPEG', margin, margin, usableW, scaledH);
+    } else {
+      let yOffset = 0;
+      const sliceH = (pageH - margin * 2) / ratio;
+      let page = 0;
+
+      while (yOffset < imgH) {
+        if (page > 0) pdf.addPage();
+        const sy = yOffset;
+        const sh = Math.min(sliceH, imgH - yOffset);
+
+        // Create slice canvas
+        const sliceCanvas = document.createElement('canvas');
+        sliceCanvas.width = imgW;
+        sliceCanvas.height = sh;
+        const sCtx = sliceCanvas.getContext('2d');
+        sCtx.drawImage(canvas, 0, sy, imgW, sh, 0, 0, imgW, sh);
+
+        const sliceData = sliceCanvas.toDataURL('image/jpeg', 0.95);
+        const sliceScaledH = sh * ratio;
+        pdf.addImage(sliceData, 'JPEG', margin, margin, usableW, sliceScaledH);
+
+        yOffset += sh;
+        page++;
+      }
+    }
+
+    const name = (document.getElementById('projectName').value || 'du-an').replace(/\s+/g, '-');
+    const tabName = currentTab === 'labor' ? 'Nhan-luc' : 'May-moc';
+    pdf.save(`${name}_${tabName}.pdf`);
+
+    showToast('success', '✅ Đã xuất PDF thành công!');
+  } catch (err) {
+    showToast('error', '❌ Lỗi xuất PDF: ' + err.message);
+  }
+
+  // Restore hidden elements
+  hideEls.forEach(el => el.style.display = '');
+}
+
+// ═══════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════
+let toastTimer;
+function showToast(type, msg) {
+  const t = document.getElementById('toast');
+  clearTimeout(toastTimer);
+  t.className = 'toast toast-' + type + ' show';
+  t.textContent = msg;
+  if (type !== 'loading') {
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+  }
+}
+
+// Init
+renderAll();
+</script>
+</body>
+</html>

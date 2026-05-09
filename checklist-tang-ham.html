@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checklist Thi Công Tầng Hầm</title>
+<style>
+  :root {
+    --primary: #0d6efd;
+    --primary-dark: #0a58ca;
+    --primary-light: #e7f1ff;
+    --primary-lighter: #f5f9ff;
+    --text: #1f2937;
+    --text-soft: #4b5563;
+    --text-muted: #6b7280;
+    --border: #d1d5db;
+    --border-soft: #e5e7eb;
+    --bg: #ffffff;
+    --bg-soft: #f9fafb;
+    --critical: #dc2626;
+    --critical-bg: #fef2f2;
+    --important: #d97706;
+    --important-bg: #fffbeb;
+    --done: #059669;
+    --done-bg: #ecfdf5;
+    --review: #ca8a04;
+    --review-bg: #fefce8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  @page { size: A4; margin: 1.5cm; }
+
+  html, body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    font-size: 14px;
+  }
+
+  body { min-height: 100vh; }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 32px;
+  }
+
+  .header {
+    background: var(--primary);
+    color: white;
+    padding: 24px 32px;
+    margin: -24px -32px 24px;
+    border-bottom: 4px solid var(--primary-dark);
+  }
+
+  .header h1 {
+    font-size: 26px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    letter-spacing: -0.3px;
+  }
+
+  .header .subtitle {
+    font-size: 14px;
+    opacity: 0.9;
+    font-weight: 400;
+  }
+
+  .header-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 12px;
+    opacity: 0.85;
+    margin-top: 8px;
+  }
+
+  .project-info {
+    background: var(--primary-lighter);
+    border: 1px solid var(--primary-light);
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+
+  .info-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--primary-dark);
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--primary-light);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .info-title::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 16px;
+    background: var(--primary);
+    border-radius: 2px;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px 24px;
+  }
+
+  .info-field { display: flex; flex-direction: column; }
+
+  .info-field label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-soft);
+    margin-bottom: 4px;
+  }
+
+  .info-field input {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: white;
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text);
+    transition: border-color 0.15s, box-shadow 0.15s;
+    width: 100%;
+  }
+
+  .info-field input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+  }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    background: var(--bg-soft);
+    border: 1px solid var(--border-soft);
+    border-radius: 6px;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .toolbar-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .btn {
+    padding: 7px 14px;
+    border: 1px solid var(--border);
+    background: white;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn:hover {
+    background: var(--bg-soft);
+    border-color: var(--text-muted);
+  }
+
+  .btn.primary {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+  }
+
+  .btn.primary:hover {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+  }
+
+  .filter-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-soft);
+  }
+
+  .filter-select {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: white;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .filter-select:focus { outline: none; border-color: var(--primary); }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .stat {
+    padding: 14px 12px;
+    text-align: center;
+    background: var(--bg-soft);
+    border: 1px solid var(--border-soft);
+    border-radius: 6px;
+  }
+
+  .stat-num {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+    margin-bottom: 2px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .stat.done { background: var(--done-bg); border-color: #a7f3d0; }
+  .stat.done .stat-num { color: var(--done); }
+  .stat.missing { background: var(--critical-bg); border-color: #fecaca; }
+  .stat.missing .stat-num { color: var(--critical); }
+  .stat.review { background: var(--review-bg); border-color: #fde68a; }
+  .stat.review .stat-num { color: var(--review); }
+  .stat.progress { background: var(--primary-light); border-color: #b6d4fe; }
+  .stat.progress .stat-num { color: var(--primary-dark); }
+
+  .tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--border-soft);
+    overflow-x: auto;
+  }
+
+  .tab {
+    padding: 10px 18px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    white-space: nowrap;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.15s;
+  }
+
+  .tab:hover { color: var(--text); }
+
+  .tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    font-weight: 600;
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--primary-dark);
+    margin: 8px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--primary-light);
+  }
+
+  .notices {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .notice {
+    background: white;
+    border: 1px solid var(--border-soft);
+    border-left: 4px solid var(--primary);
+    border-radius: 4px;
+    padding: 12px 16px;
+  }
+
+  .notice.critical { border-left-color: var(--critical); background: var(--critical-bg); }
+  .notice.warning { border-left-color: var(--important); background: var(--important-bg); }
+  .notice.info { border-left-color: var(--primary); background: var(--primary-lighter); }
+
+  .notice-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .notice-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .notice.critical .notice-badge { background: var(--critical); }
+  .notice.warning .notice-badge { background: var(--important); }
+  .notice.info .notice-badge { background: var(--primary); }
+
+  .notice-title { font-weight: 600; font-size: 13px; color: var(--text); }
+  .notice-body { font-size: 13px; color: var(--text-soft); line-height: 1.55; }
+
+  .group {
+    margin-bottom: 16px;
+    border: 1px solid var(--border-soft);
+    border-radius: 6px;
+    background: white;
+    overflow: hidden;
+  }
+
+  .group-header {
+    background: var(--primary-lighter);
+    color: var(--text);
+    padding: 12px 16px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    border-bottom: 1px solid var(--primary-light);
+    transition: background 0.15s;
+  }
+
+  .group-header:hover { background: var(--primary-light); }
+
+  .group-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--primary-dark);
+  }
+
+  .group-meta {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    font-size: 12px;
+  }
+
+  .group-progress {
+    color: var(--primary-dark);
+    font-weight: 600;
+    background: white;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+  }
+
+  .toggle-icon {
+    transition: transform 0.2s;
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  .group.collapsed .toggle-icon { transform: rotate(-90deg); }
+  .group.collapsed .items { display: none; }
+  .group.collapsed .group-header { border-bottom: none; }
+
+  .items { padding: 0; }
+
+  .item {
+    display: grid;
+    grid-template-columns: 32px 1fr 200px;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-soft);
+    align-items: start;
+    transition: background 0.1s;
+  }
+
+  .item:last-child { border-bottom: none; }
+  .item:hover { background: var(--bg-soft); }
+  .item.status-done { background: var(--done-bg); }
+  .item.status-done:hover { background: #d1fae5; }
+
+  .item-check { margin-top: 2px; }
+
+  .item-check input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+    cursor: pointer;
+  }
+
+  .item-content { display: flex; flex-direction: column; gap: 4px; }
+
+  .item-title {
+    font-weight: 500;
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .item.status-done .item-title {
+    text-decoration: line-through;
+    color: var(--text-muted);
+  }
+
+  .item-note {
+    font-size: 12.5px;
+    color: var(--text-soft);
+    line-height: 1.5;
+  }
+
+  .item-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 2px;
+  }
+
+  .tag {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    font-weight: 600;
+    border-radius: 3px;
+  }
+
+  .tag.critical { color: var(--critical); background: var(--critical-bg); border: 1px solid #fca5a5; }
+  .tag.important { color: var(--important); background: var(--important-bg); border: 1px solid #fcd34d; }
+
+  .item-status { display: flex; flex-direction: column; gap: 5px; }
+
+  .status-select {
+    padding: 5px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: white;
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    width: 100%;
+    color: var(--text);
+  }
+
+  .status-select:focus { outline: none; border-color: var(--primary); }
+
+  .status-note {
+    padding: 5px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: white;
+    font-family: inherit;
+    font-size: 12px;
+    width: 100%;
+    resize: vertical;
+    min-height: 32px;
+    color: var(--text);
+    line-height: 1.4;
+  }
+
+  .status-note:focus { outline: none; border-color: var(--primary); }
+
+  .footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 2px solid var(--border-soft);
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .footer .signature {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+
+  .sig-block { text-align: center; min-width: 180px; }
+  .sig-line { border-bottom: 1px solid var(--text); height: 50px; margin-bottom: 6px; }
+  .sig-label { font-weight: 500; color: var(--text-soft); }
+
+  @media print {
+    body { background: white; font-size: 10pt; }
+    .container { max-width: 100%; padding: 0; }
+    .header {
+      margin: 0 0 16px;
+      padding: 16px;
+      background: var(--primary) !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .toolbar { display: none; }
+    .tabs { display: none; }
+    .tab-content { display: block !important; }
+    .group.collapsed .items { display: block !important; }
+    .toggle-icon { display: none; }
+    .group, .item, .notice { break-inside: avoid; }
+    .item:hover, .group-header:hover { background: inherit; }
+    .print-tab-title {
+      display: block !important;
+      font-size: 16pt;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin: 24px 0 12px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid var(--primary);
+      page-break-before: always;
+    }
+    .print-tab-title.first { page-break-before: avoid; }
+    .stats { break-inside: avoid; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+
+  .print-tab-title { display: none; }
+
+  @media (max-width: 768px) {
+    .container { padding: 16px; }
+    .header { padding: 16px; margin: -16px -16px 16px; }
+    .header h1 { font-size: 20px; }
+    .info-grid { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .item { grid-template-columns: 28px 1fr; }
+    .item-status {
+      grid-column: 1 / -1;
+      flex-direction: row;
+      margin-top: 6px;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>Checklist Thi Công Tầng Hầm</h1>
+    <p class="subtitle">Danh mục các công việc dễ bị bỏ sót khi lập BOQ và biện pháp thi công</p>
+    <div class="header-meta">
+      <span>Hồ sơ kỹ thuật &nbsp;·&nbsp; Phiên bản 1.0</span>
+      <span id="dateDisplay"></span>
+    </div>
+  </div>
+
+  <div class="project-info">
+    <div class="info-title">Thông tin dự án</div>
+    <div class="info-grid">
+      <div class="info-field">
+        <label>Tên dự án</label>
+        <input type="text" id="projectName" placeholder="VD: Champarama Resort & Spa">
+      </div>
+      <div class="info-field">
+        <label>Gói thầu / Hạng mục</label>
+        <input type="text" id="packageName" placeholder="VD: Tầng hầm khối khách sạn">
+      </div>
+      <div class="info-field">
+        <label>Chủ đầu tư</label>
+        <input type="text" id="owner" placeholder="VD: Công ty CP ABC">
+      </div>
+      <div class="info-field">
+        <label>Nhà thầu thi công</label>
+        <input type="text" id="contractor" placeholder="VD: Công ty Xây dựng XYZ">
+      </div>
+      <div class="info-field">
+        <label>Địa điểm</label>
+        <input type="text" id="location" placeholder="VD: Nha Trang, Khánh Hòa">
+      </div>
+      <div class="info-field">
+        <label>Phương án thi công áp dụng</label>
+        <input type="text" id="method" placeholder="VD: Semi top-down + tường vây + neo đất">
+      </div>
+      <div class="info-field" style="grid-column: 1 / -1;">
+        <label>Người lập checklist / Ngày</label>
+        <input type="text" id="preparedBy" placeholder="VD: Nguyễn Văn A — 08/05/2026">
+      </div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="toolbar-group">
+      <span class="filter-label">Lọc:</span>
+      <select id="filterStatus" class="filter-select">
+        <option value="all">Tất cả tình trạng</option>
+        <option value="">Chưa đánh giá</option>
+        <option value="done">Đã có</option>
+        <option value="missing">Chưa có</option>
+        <option value="review">Cần xem lại</option>
+        <option value="na">Không áp dụng</option>
+      </select>
+      <select id="filterLevel" class="filter-select">
+        <option value="all">Tất cả mức độ</option>
+        <option value="critical">Bắt buộc</option>
+        <option value="important">Quan trọng</option>
+      </select>
+    </div>
+    <div class="toolbar-group">
+      <button class="btn" onclick="expandAll(true)">Mở tất cả</button>
+      <button class="btn" onclick="expandAll(false)">Đóng tất cả</button>
+      <button class="btn" onclick="resetData()">Xóa dữ liệu</button>
+      <button class="btn primary" onclick="window.print()">In / Lưu PDF</button>
+    </div>
+  </div>
+
+  <div class="stats" id="stats">
+    <div class="stat"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Tổng hạng mục</div></div>
+    <div class="stat done"><div class="stat-num" id="statDone">0</div><div class="stat-label">Đã có</div></div>
+    <div class="stat missing"><div class="stat-num" id="statMissing">0</div><div class="stat-label">Chưa có</div></div>
+    <div class="stat review"><div class="stat-num" id="statReview">0</div><div class="stat-label">Cần xem lại</div></div>
+    <div class="stat progress"><div class="stat-num" id="statProgress">0%</div><div class="stat-label">Hoàn thành</div></div>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div id="content"></div>
+
+  <div class="footer">
+    <div>Tài liệu này chỉ mang tính tham khảo — Cần được rà soát bởi kỹ sư địa kỹ thuật & kết cấu</div>
+    <div class="signature">
+      <div class="sig-block">
+        <div class="sig-line"></div>
+        <div class="sig-label">Người lập</div>
+      </div>
+      <div class="sig-block">
+        <div class="sig-line"></div>
+        <div class="sig-label">Người kiểm tra</div>
+      </div>
+      <div class="sig-block">
+        <div class="sig-line"></div>
+        <div class="sig-label">Người phê duyệt</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const NOTICES = [
+  { level: 'critical', icon: '!', title: 'Nguyên tắc bất di bất dịch', body: 'Sàn tầng trên BẮT BUỘC phải đạt cường độ thiết kế tối thiểu (thường 70-80% R28) TRƯỚC KHI đào đất tầng dưới. Vi phạm = sụp đổ. Thường mất 7-14 ngày chờ kỹ thuật cho mỗi tầng — cần tính vào tiến độ tổng.' },
+  { level: 'critical', icon: '!', title: 'Trình tự không thể đảo ngược', body: 'Top-down không cho phép sửa sai dễ dàng. Mọi cốt thép chờ, ống chờ kỹ thuật (điện, nước, PCCC, thông gió) xuyên sàn PHẢI được lắp đặt CHÍNH XÁC trước khi đổ bê tông sàn. Sai = đục phá kết cấu chính.' },
+  { level: 'critical', icon: '!', title: 'Kiểm soát chất lượng cột giữa hai tầng sàn', body: 'Cột thi công sau (đổ ngược lên hoặc grouting) là điểm yếu nhất của top-down. PHẢI có quy trình kiểm soát đặc biệt: dùng bê tông tự đầm (SCC), đổ qua phễu/ống tremie, kiểm tra sonic logging 100%. Nhiều dự án phát hiện rỗ, không đủ cường độ sau bàn giao.' },
+  { level: 'warning', icon: '!', title: 'Ánh sáng & thông gió', body: 'Khi sàn trên đã đổ, tầng dưới = không gian kín. PHẢI có hệ thống chiếu sáng cường độ đủ (≥300 lux khu vực thi công) và thông gió cưỡng bức (đổi 6-8 lần thể tích/giờ). Nhiều dự án chủ quan, gây tai nạn lao động.' },
+  { level: 'warning', icon: '!', title: 'Tiếng ồn & rung động ngược', body: 'Đào và thi công bên dưới sàn đã đổ — tiếng ồn dội ngược, rung động truyền qua kết cấu cứng. Có thể gây ảnh hưởng nghiêm trọng đến phần thi công bên trên (đặc biệt nếu đã có hoàn thiện trên cao). Phải có giải pháp giảm chấn.' },
+  { level: 'warning', icon: '!', title: 'Vận chuyển vật liệu & đất qua lỗ mở', body: 'Tất cả đất đào ra + vật liệu đưa vào ĐỀU phải qua lỗ mở giới hạn. Thường là nút thắt cổ chai. Cần tính toán lưu lượng cẩu, tránh chồng chéo các đội thi công cùng dùng chung lỗ mở.' },
+  { level: 'warning', icon: '!', title: 'Liên kết Kingpost - Sàn - Cột', body: 'Khu vực giao giữa Kingpost (cột tạm thép hình) và cột vĩnh cửu là điểm phức tạp nhất. Chi tiết liên kết phải được tính toán riêng; nếu rút Kingpost thì phải có quy trình rõ ràng đảm bảo cột vĩnh cửu đã đủ chịu tải. Một số dự án để Kingpost lại trong cột — cần sơn chống cháy.' },
+  { level: 'warning', icon: '!', title: 'Co ngót & nứt nhiệt sàn đáy', body: 'Sàn đáy thường dày 1.5-3m = bê tông khối lớn. Nhiệt thủy hóa cao gây nứt. PHẢI có biện pháp: làm lạnh nước trộn (đá viên), ống làm mát chôn trong khối đổ, kiểm soát chênh lệch nhiệt độ tâm-bề mặt ≤25°C. Đổ phân khu, mạch ngừng đúng kỹ thuật.' },
+  { level: 'info', icon: 'i', title: 'Phối hợp với thiết kế & TVGS', body: 'Top-down ĐÒI HỎI thiết kế phải tính đủ trường hợp tải trong giai đoạn thi công (sàn đỡ tải đất + thiết bị + Kingpost chịu kéo). Nhiều thiết kế quên kiểm tra trường hợp này. NT cần yêu cầu xác nhận bằng văn bản trước khi triển khai.' },
+  { level: 'info', icon: 'i', title: 'Quan trắc liên tục, không gián đoạn', body: 'Quan trắc chuyển vị tường vây, lún công trình lân cận, lực Kingpost — PHẢI duy trì 24/7 trong suốt quá trình đào và thi công. Một số dự án bỏ quan trắc cuối tuần → sự cố không phát hiện kịp.' },
+  { level: 'info', icon: 'i', title: 'Bảo hiểm CAR đặc thù', body: 'Bảo hiểm Construction All Risks cho top-down có phí cao hơn đào hở 30-50% do mức độ rủi ro. NT nên đảm bảo bảo hiểm bao phủ cả sự cố sụp đổ tạm thời, hỏng hóc kết cấu lân cận, và tai nạn lao động trong không gian kín.' },
+  { level: 'info', icon: 'i', title: 'Năng suất giảm — Tính lại tiến độ', body: 'Năng suất thi công top-down chỉ đạt 40-60% so với đào hở. Tổng tiến độ KÉO DÀI hơn nhưng ưu điểm là có thể thi công song song phần thân trên — bù lại tổng tiến độ dự án. NT phải làm rõ điểm này khi đàm phán tiến độ với CĐT.' }
+];
+
+const CHECKLISTS = {
+  topdown: [
+    ['I. Hệ kết cấu chống đỡ tạm và Kingpost', [
+      ['Khoan dẫn cọc Kingpost', 'Khoan dẫn trước khi hạ thép hình; đường kính phù hợp với tiết diện thép hình', 'critical'],
+      ['Cấp và hạ Kingpost (thép hình H/I)', 'Tiết diện theo thiết kế; chiều dài âm trong cọc khoan nhồi đảm bảo neo giữ', 'critical'],
+      ['Bê tông cấy chân Kingpost vào cọc nhồi', 'Bê tông liên kết Kingpost với cọc khoan nhồi tại đáy', 'critical'],
+      ['Định vị và canh chỉnh Kingpost', 'Sai số ≤ 1/200 chiều cao; kiểm tra bằng thiết bị trắc đạc', 'critical'],
+      ['Hệ shoring/strut tạm cho tường vây', 'Áp dụng cho khu vực không có sàn chống đỡ tường vây', 'important'],
+      ['Liên kết Kingpost với sàn từng tầng', 'Shear stud, bản mã, hàn cốt thép — chi tiết tại bản vẽ shop drawing', 'critical'],
+      ['Tháo dỡ Kingpost (nếu phương án rút)', 'Sau khi sàn đáy hoàn thành; thường bị quên trong dự toán', 'important'],
+      ['Xử lý lỗ Kingpost sau khi rút', 'Bịt lỗ sàn, chống thấm, gia cố cốt thép vùng lỗ; chi phí phát sinh', 'important'],
+      ['Sơn chống cháy Kingpost (nếu để lại)', 'Yêu cầu PCCC nếu Kingpost để vĩnh cửu trong kết cấu', 'important']
+    ]],
+    ['II. Lỗ mở và liên kết kết cấu', [
+      ['Gia cố mép lỗ mở thi công', 'Dầm bao quanh, cốt thép gia cường; tính toán kết cấu cho lỗ mở', 'critical'],
+      ['Bịt lỗ mở sau khi đào xong', 'Cốt thép chờ, ván khuôn, đổ bê tông bù, xử lý mạch ngừng', 'critical'],
+      ['Hệ cẩu tháp/cẩu đất qua lỗ mở', 'Vị trí đặt, gia cường sàn dưới chân cẩu, kiểm định cẩu', 'critical'],
+      ['Băng tải / máng đổ bê tông qua lỗ mở', 'Lắp đặt, di chuyển theo tiến độ thi công', 'important'],
+      ['Lan can an toàn quanh lỗ mở', 'Trong suốt quá trình thi công; lưới chắn rơi vật', 'critical'],
+      ['Cốt thép chờ trong tường vây (coupler)', 'Kiểm tra đúng cao độ, đúng vị trí mỗi tầng', 'critical'],
+      ['Đục bê tông tường vây lộ thép chờ', 'Công tác thủ công, năng suất thấp', 'important'],
+      ['Mở khớp nối coupler', 'Thường bị kẹt, cong vênh — phải xử lý từng vị trí', 'important'],
+      ['Bê tông bù vùng đục tẩy', 'Sau khi liên kết cốt thép sàn với tường vây', 'important']
+    ]],
+    ['III. Đào đất trong không gian hạn chế', [
+      ['Đào đất bằng máy nhỏ (mini excavator)', 'Năng suất chỉ 40-60% so đào hở', 'critical'],
+      ['Vận chuyển đất nội bộ tới lỗ mở', 'Xe ben mini, băng tải, xe rùa — chi phí nhân công lớn', 'critical'],
+      ['Đào thủ công vùng giáp tường vây và Kingpost', 'Máy không tới được; bằng tay, cuốc xẻng', 'critical'],
+      ['Chiếu sáng cưỡng bức trong tầng hầm', '≥300 lux khu vực thi công; tủ điện phân tầng', 'critical'],
+      ['Thông gió cưỡng bức', 'Đổi 6-8 lần thể tích/giờ; quạt hút công nghiệp', 'critical'],
+      ['Bơm nước hố móng liên tục (dewatering)', 'Bơm chính + bơm dự phòng, điện 24/7', 'critical'],
+      ['Đào hạ cốt từng phân khu', 'Theo trình tự; không thể đào đồng loạt', 'important'],
+      ['Tính lại năng suất đào trong dự toán', 'Chỉ đạt 40-60% năng suất đào hở', 'important']
+    ]],
+    ['IV. Chống thấm tường vây và sàn đáy', [
+      ['Chống thấm mặt trong tường vây', 'Xử lý bề mặt bê tông, mạch dừng, chỗ rỗ', 'critical'],
+      ['Waterstop tại mạch ngừng sàn-tường vây', 'Gioăng PVC/bentonite — chi tiết quan trọng', 'critical'],
+      ['Xử lý mạch ngừng giữa các đợt đổ sàn đáy', 'Vệ sinh, tạo nhám, sika đầu chờ', 'critical'],
+      ['Chống thấm cổ cột Kingpost xuyên sàn', 'Điểm yếu thấm phổ biến — cần chi tiết riêng', 'critical'],
+      ['Hệ thoát nước ngầm dưới sàn đáy', 'Đá dăm, vải địa, ống thoát (nếu thiết kế có)', 'important'],
+      ['Phun bù vữa không co ngót cho khe hở', 'Khe hở giữa kết cấu mới và tường vây', 'important']
+    ]],
+    ['V. Quan trắc và an toàn công trình lân cận', [
+      ['Khảo sát hiện trạng công trình lân cận', 'Trước thi công; có ảnh, biên bản với chủ nhà', 'critical'],
+      ['Quan trắc chuyển vị tường vây (inclinometer)', 'Cài đặt ống đo trong tường vây; đọc định kỳ', 'critical'],
+      ['Quan trắc lún công trình lân cận', 'Mốc đo theo TCVN 9360:2012', 'critical'],
+      ['Quan trắc mực nước ngầm (piezometer)', 'Đặc biệt quan trọng khi có dewatering', 'critical'],
+      ['Quan trắc lực trong shoring/strut', 'Strain gauge — nếu có hệ shoring', 'important'],
+      ['Quan trắc lún nền tầng hầm', 'Mốc đo lún sàn đáy, đo cao độ định kỳ', 'important'],
+      ['Bảo hiểm trách nhiệm bên thứ ba', 'Cho thiệt hại công trình lân cận', 'critical'],
+      ['Báo cáo quan trắc định kỳ', 'Hàng tuần/tháng tùy giai đoạn; gửi CĐT, TVGS', 'critical']
+    ]],
+    ['VI. Thi công sàn từ trên xuống', [
+      ['Đổ bê tông sàn trên đất (thay cốp pha treo)', 'Chuẩn bị mặt nền, lót cát, nilon trước đổ', 'critical'],
+      ['Xử lý sau đào lấy đất phía dưới sàn', 'Vệ sinh đáy sàn, sơn lại nếu cần', 'important'],
+      ['Cốt thép chờ cột âm xuống tầng dưới', 'Cao độ, chiều dài chờ — quan trọng cho thi công cột tầng dưới', 'critical'],
+      ['Mạch ngừng kỹ thuật giữa các phân khu', 'Theo phân đợt thi công; chi tiết waterstop', 'critical'],
+      ['Bê tông cột giữa hai tầng sàn', 'Đổ bằng phễu/bơm áp lực/grouting; SCC', 'critical'],
+      ['Xử lý đầu cột chờ ở sàn trên', 'Tẩy bê tông yếu, vệ sinh thép chờ', 'important'],
+      ['Sonic logging 100% cột giữa hai sàn', 'Bắt buộc kiểm tra chất lượng', 'critical'],
+      ['Ống chờ kỹ thuật xuyên sàn', 'Điện, nước, PCCC, thông gió — phải đặt trước khi đổ', 'critical']
+    ]],
+    ['VII. Hạ tầng phục vụ thi công', [
+      ['Điện thi công xuống tầng hầm', 'Tủ điện phân tầng, dây cáp, chiếu sáng', 'critical'],
+      ['Cấp nước thi công', 'Đường ống cấp nước xuống các tầng hầm', 'critical'],
+      ['Thoát nước thi công', 'Hố thu, máy bơm thoát, đường ống lên trên', 'critical'],
+      ['Thông gió cưỡng bức', 'Quạt hút, ống gió mềm — bắt buộc tầng hầm sâu', 'critical'],
+      ['Thang lên xuống giữa các tầng hầm', 'Thang sắt tạm, lan can, sàn nghỉ', 'critical'],
+      ['Bộ đàm liên lạc', 'Sóng điện thoại yếu dưới tầng hầm sâu', 'important'],
+      ['Camera giám sát thi công', 'Theo dõi an toàn từ trên', 'important']
+    ]],
+    ['VIII. An toàn và PCCC trong không gian kín', [
+      ['PCCC tạm thời trong tầng hầm', 'Bình chữa cháy, vòi nước, đèn EXIT', 'critical'],
+      ['Cảnh báo khí độc/thiếu oxy', 'Khi hàn cắt — máy đo khí', 'critical'],
+      ['Lối thoát hiểm khẩn cấp', 'Tối thiểu 2 lối từ mỗi tầng hầm', 'critical'],
+      ['Hệ thống phát hiện rò rỉ nước', 'Cảm biến nước, báo động', 'important'],
+      ['Huấn luyện an toàn cho công nhân', 'Đặc biệt làm việc trong không gian hạn chế', 'critical'],
+      ['Trang bị BHLĐ chuyên dụng', 'Đèn pin cá nhân, mặt nạ phòng độc', 'critical']
+    ]],
+    ['IX. Hoàn thiện và hồ sơ', [
+      ['Vệ sinh, đánh sờn bê tông tường vây', 'Cho công đoạn hoàn thiện kiến trúc', 'important'],
+      ['Trám vá lỗ tie-bolt ván khuôn', 'Tường tầng hầm — chống thấm điểm', 'critical'],
+      ['Xử lý vết nứt do co ngót sàn đáy', 'Sàn đáy khối lớn dễ nứt nhiệt', 'important'],
+      ['Hoàn trả mặt bằng xung quanh', 'Vỉa hè, cây xanh, hệ thống hạ tầng đã di dời', 'critical'],
+      ['Hồ sơ hoàn công kết cấu tạm', 'Kingpost, shoring — nhiều khi thiếu', 'important'],
+      ['Bàn giao hồ sơ quan trắc', 'Toàn bộ số liệu quan trắc trong suốt quá trình', 'critical']
+    ]],
+    ['X. Chi phí mềm dễ tính thiếu', [
+      ['Bê tông khối lớn (mass concrete)', 'Chống nứt nhiệt, làm lạnh nước trộn, ống làm mát', 'critical'],
+      ['Phụ gia bê tông đặc thù', 'Chống thấm, giảm co ngót, tự đầm', 'important'],
+      ['Thí nghiệm bổ sung', 'Kéo coupler, kéo neo Kingpost, nén tĩnh sàn', 'important'],
+      ['Thời gian chờ kỹ thuật', 'Bê tông đạt cường độ trước khi đào tầng dưới (7-14 ngày)', 'critical'],
+      ['Bảo hiểm CAR (Construction All Risks)', 'Phí cao hơn đào hở 30-50%', 'critical'],
+      ['Phí kiểm định kết cấu tạm', 'Cẩu tháp, hệ shoring, Kingpost', 'critical']
+    ]]
+  ],
+  shoring: [
+    ['I. Thiết kế và chuẩn bị', [
+      ['Tính toán thiết kế hệ shoring', 'Tính lực, kiểm tra độ ổn định, độ võng', 'critical'],
+      ['Bản vẽ chi tiết hệ shoring', 'Layout, mặt cắt, chi tiết liên kết, danh sách vật tư', 'critical'],
+      ['Phương án lắp đặt và tháo dỡ', 'Trình tự, thiết bị nâng hạ, an toàn', 'critical'],
+      ['Kiểm định chất lượng vật tư shoring', 'Thép hình H, ống thép — kiểm định trước sử dụng', 'critical'],
+      ['Phương án quan trắc lực và biến dạng', 'Strain gauge, đồng hồ đo lực', 'important']
+    ]],
+    ['II. Thi công lắp đặt', [
+      ['Định vị mốc đặt shoring', 'Trắc đạc xác định cao độ, vị trí — sai số ≤ 5mm', 'critical'],
+      ['Thanh chống ngang (waling beam) áp tường vây', 'Thép hình I/H đặt dọc tường vây làm trục phân phối lực', 'critical'],
+      ['Thanh chống xiên/thẳng (strut)', 'Ống thép tròn hoặc thép hình', 'critical'],
+      ['Liên kết bằng bu-lông cường độ cao hoặc hàn', 'Siết bu-lông đúng momen', 'critical'],
+      ['Pre-loading (kích trước) hệ shoring', 'Tạo lực nén ban đầu — DỄ BỊ BỎ SÓT', 'important'],
+      ['Tấm đệm phân phối lực', 'Bracket/console tại điểm tiếp xúc', 'critical'],
+      ['Lắp đặt theo trình tự đào đất', 'Đào đến đâu lắp đến đó', 'critical'],
+      ['Chống đỡ tạm trong giai đoạn lắp đặt', 'Trước khi shoring chính thức chịu lực', 'important']
+    ]],
+    ['III. Kiểm soát chất lượng và an toàn', [
+      ['Kiểm tra mối hàn (NDT)', 'Siêu âm/từ tính các mối hàn quan trọng', 'critical'],
+      ['Kiểm tra siết bu-lông cường độ cao', 'Theo momen quy định; đánh dấu sau khi siết', 'critical'],
+      ['Sơn chống gỉ thanh shoring', 'Bảo vệ trong thời gian sử dụng dài', 'important'],
+      ['Sơn chống cháy (nếu yêu cầu)', 'PCCC nếu shoring tồn tại trong giai đoạn có lửa', 'important'],
+      ['Biển báo cảnh báo va chạm', 'Tránh xe máy va chạm shoring', 'important'],
+      ['Đèn báo hiệu trong tầng hầm', 'Cảnh báo vị trí shoring khi tối', 'important']
+    ]],
+    ['IV. Quan trắc trong quá trình sử dụng', [
+      ['Quan trắc lực trong shoring (strain gauge)', 'Theo dõi lực thực tế so với thiết kế', 'important'],
+      ['Quan trắc chuyển vị tường vây', 'Inclinometer — kết hợp với shoring', 'critical'],
+      ['Kiểm tra mối hàn/bu-lông định kỳ', 'Hàng tuần/tháng — phát hiện rạn nứt sớm', 'critical'],
+      ['Theo dõi nhiệt độ shoring', 'Co giãn nhiệt có thể gây nứt mối nối', 'important'],
+      ['Báo cáo quan trắc định kỳ', 'Gửi CĐT, TVGS', 'critical']
+    ]],
+    ['V. Tháo dỡ hệ shoring', [
+      ['Phương án tháo dỡ chi tiết', 'Trình tự, đảm bảo kết cấu chính đã đủ chịu lực', 'critical'],
+      ['Tháo từng phần theo trình tự ngược', 'Không tháo đồng loạt', 'critical'],
+      ['Vận chuyển vật tư shoring ra khỏi công trình', 'Qua lỗ mở; cần thiết bị nâng hạ phù hợp', 'critical'],
+      ['Xử lý lỗ liên kết tại tường vây', 'Trám vá, chống thấm', 'critical'],
+      ['Vệ sinh và bảo quản vật tư tái sử dụng', 'Bàn giao lại nhà cung cấp', 'important'],
+      ['Hồ sơ hoàn công và bàn giao', 'Hồ sơ quan trắc, biên bản tháo dỡ', 'critical']
+    ]],
+    ['VI. Chi phí dễ tính thiếu', [
+      ['Chi phí thuê vật tư shoring', 'Theo tháng — kéo dài khi tiến độ chậm', 'critical'],
+      ['Chi phí pre-loading', 'Kích thủy lực, nhân công, theo dõi', 'important'],
+      ['Chi phí vận chuyển 2 chiều', 'Vào + ra công trường', 'critical'],
+      ['Phí lắp dựng/tháo dỡ thủ công vùng khó', 'Vùng góc, vùng giáp tường vây', 'important'],
+      ['Vật tư tiêu hao (bu-lông, đệm, chèn)', 'Không tái sử dụng', 'important'],
+      ['Phí kiểm định cẩu lắp shoring', 'Cẩu nâng hạ vật tư shoring', 'critical']
+    ]]
+  ],
+  larsen: [
+    ['I. Khảo sát và chuẩn bị', [
+      ['Khảo sát địa chất chi tiết', 'Xác định lớp đất, đá tảng, vật cản ngầm', 'critical'],
+      ['Khảo sát công trình ngầm hiện hữu', 'Cáp điện, ống nước, cống', 'critical'],
+      ['Khảo sát công trình lân cận', 'Móng nhà liền kề, mức độ chịu rung động', 'critical'],
+      ['Lựa chọn loại cừ Larsen', 'IV, V, VI, VL — theo chiều sâu và áp lực', 'critical'],
+      ['Lựa chọn phương pháp hạ cừ', 'Búa rung, ép thủy lực — silent piler bắt buộc khu dân cư', 'critical'],
+      ['Bản vẽ shop drawing', 'Sơ đồ bố trí cừ, chiều dài cừ từng vị trí', 'critical']
+    ]],
+    ['II. Thi công hạ cừ', [
+      ['Định vị tuyến cừ', 'Trắc đạc, đóng cọc tiêu — sai số ≤ 50mm', 'critical'],
+      ['Đào rãnh dẫn hướng (guide trench)', 'Sâu 0.5-1m, đảm bảo cừ thẳng đứng', 'important'],
+      ['Hạ cừ Larsen từng tấm', 'Sai số ≤ 1/100', 'critical'],
+      ['Móc khóa giữa các tấm cừ', 'Bôi trơn móc khóa trước khi hạ', 'critical'],
+      ['Kiểm tra độ kín khít móc khóa', 'Tránh chảy đất/nước qua khe hở', 'critical'],
+      ['Xử lý khi gặp vật cản', 'Khoan dẫn, phá vỡ vật cản, hoặc thay đổi tuyến', 'important'],
+      ['Kéo dài cừ (welding splice) nếu cần', 'Hàn nối khi chiều sâu lớn', 'important'],
+      ['Cắt đầu cừ theo cao độ thiết kế', 'Hàn thanh giằng đầu cừ (capping beam)', 'critical']
+    ]],
+    ['III. Hệ chống đỡ cừ Larsen', [
+      ['Capping beam (dầm đầu cừ)', 'BTCT hoặc thép hình — phân phối lực', 'critical'],
+      ['Hệ shoring/chống ngang (nếu cần)', 'Khi hố đào sâu', 'critical'],
+      ['Hệ neo đất (nếu kết hợp)', 'Thay thế shoring khi không có không gian', 'important'],
+      ['Hệ chống xiên (raker)', 'Khi không thể chống ngang qua hố đào lớn', 'important']
+    ]],
+    ['IV. Đào đất và chống thấm', [
+      ['Đào đất theo từng đợt', 'Đào đến cao độ đặt shoring tiếp theo', 'critical'],
+      ['Bơm thoát nước hố đào', 'Cừ Larsen không kín tuyệt đối', 'critical'],
+      ['Bơm hạ mực nước ngầm bên ngoài (nếu cần)', 'Well point hoặc giếng giảm áp', 'important'],
+      ['Trám khe hở giữa các tấm cừ', 'Sika, vữa trương nở khi rò rỉ lớn', 'important'],
+      ['Phun bê tông gia cố mặt cừ (nếu cần)', 'Khi đất yếu chảy qua khe', 'important']
+    ]],
+    ['V. Quan trắc và an toàn', [
+      ['Quan trắc rung động khi hạ cừ', 'Ngưỡng cho phép theo TCVN 9385:2012', 'critical'],
+      ['Quan trắc chuyển vị cừ Larsen', 'Inclinometer hoặc đo trắc đạc đỉnh cừ', 'critical'],
+      ['Quan trắc lún công trình lân cận', 'Đặc biệt quan trọng do gây rung', 'critical'],
+      ['Quan trắc mực nước ngầm', 'Piezometer', 'critical'],
+      ['Tiếng ồn và rung động', 'Đo định kỳ, đảm bảo trong giới hạn', 'critical'],
+      ['Camera giám sát công trình lân cận', 'Phát hiện sớm vết nứt do rung động', 'important']
+    ]],
+    ['VI. Rút cừ và hoàn trả', [
+      ['Phương án rút cừ', 'Búa rung kéo lên hoặc ép thủy lực', 'critical'],
+      ['Trình tự rút cừ', 'Theo từng tấm, không ảnh hưởng kết cấu chính', 'critical'],
+      ['Trám lấp khoảng rỗng sau rút cừ', 'Cát + nước, hoặc vữa xi măng — bắt buộc', 'critical'],
+      ['Vệ sinh và kiểm tra cừ tái sử dụng', 'Hoàn trả nhà cung cấp', 'important'],
+      ['Xử lý cừ không thể rút', 'Cắt đầu cừ ngầm, để lại — tính thêm chi phí', 'important'],
+      ['Hồ sơ hoàn công cừ Larsen', 'Vị trí, chiều dài, biên bản nghiệm thu', 'critical']
+    ]],
+    ['VII. Chi phí dễ tính thiếu', [
+      ['Chi phí thuê cừ Larsen theo tháng', 'Tính dài hơn tiến độ thực tế', 'critical'],
+      ['Chi phí huy động/giải tỏa máy ép/búa', 'Phí vận chuyển 2 chiều', 'critical'],
+      ['Phí khoan dẫn khi đất cứng', 'Khi gặp đá tảng', 'important'],
+      ['Phí xử lý cừ kẹt không rút được', 'Cắt cừ ngầm, mua đứt cừ', 'important'],
+      ['Phí trám lấp sau rút cừ', 'Cát, vữa, nhân công bơm', 'critical'],
+      ['Phí khắc phục sự cố lún công trình lân cận', 'Bồi thường, gia cố — DỰ PHÒNG QUAN TRỌNG', 'important'],
+      ['Bảo hiểm rung động và tiếng ồn', 'Trách nhiệm với cộng đồng dân cư', 'important']
+    ]]
+  ],
+  anchor: [
+    ['I. Khảo sát và thiết kế', [
+      ['Khảo sát địa chất chi tiết', 'Xác định lớp đất neo, khả năng giữ neo', 'critical'],
+      ['Tính toán thiết kế hệ neo', 'Lực neo, chiều dài bond/free, đường kính khoan', 'critical'],
+      ['Thí nghiệm neo thử (test anchor)', 'Trước thi công đại trà', 'critical'],
+      ['Pháp lý sử dụng đất ngoài ranh giới', 'Cần thỏa thuận với hàng xóm/chính quyền', 'critical'],
+      ['Khảo sát công trình ngầm vùng neo', 'Tránh va chạm cáp, ống nước, móng', 'critical'],
+      ['Bản vẽ shop drawing chi tiết', 'Tọa độ, góc nghiêng, chiều dài, chi tiết bản đầu neo', 'critical']
+    ]],
+    ['II. Chuẩn bị thi công', [
+      ['Huy động máy khoan neo chuyên dụng', 'Máy khoan ngang/nghiêng — không phải máy đứng', 'critical'],
+      ['Chuẩn bị vật tư neo', 'Cáp dự ứng lực, ống bảo vệ, đầu neo, kích căng', 'critical'],
+      ['Kiểm định kích căng và đồng hồ áp suất', 'Hiệu chuẩn trước sử dụng', 'critical'],
+      ['Sàn công tác cho thi công neo', 'Trên tường vây/cừ — đảm bảo an toàn', 'critical'],
+      ['Vữa bơm neo (cement grout)', 'Tỷ lệ N/X, phụ gia, máy trộn và bơm', 'critical']
+    ]],
+    ['III. Thi công neo', [
+      ['Khoan lỗ neo theo góc thiết kế', 'Sai số góc nghiêng ≤ 2°', 'critical'],
+      ['Vệ sinh lỗ khoan', 'Thổi khí/nước rửa', 'critical'],
+      ['Hạ cáp dự ứng lực vào lỗ khoan', 'Cáp kèm ống bơm vữa, ống thoát khí', 'critical'],
+      ['Bơm vữa bond (đoạn neo cố định)', 'Vữa cao cường độ; áp lực bơm theo thiết kế', 'critical'],
+      ['Chờ vữa đạt cường độ', 'Tối thiểu 7 ngày — DỄ BỎ QUA TRONG TIẾN ĐỘ', 'critical'],
+      ['Lắp bản đầu neo (anchor head)', 'Bản thép, neo chêm, ống dẫn hướng cáp', 'critical'],
+      ['Căng kéo neo (stressing)', 'Theo lực thiết kế, có biên bản kéo từng cấp', 'critical'],
+      ['Khóa neo (lock-off)', 'Cố định cáp ở lực kéo cuối', 'critical'],
+      ['Cắt cáp thừa và bảo vệ đầu neo', 'Hộp bảo vệ đầu neo, chống ăn mòn', 'critical'],
+      ['Bơm vữa đoạn free (sau căng)', 'Bảo vệ cáp khỏi ăn mòn', 'critical']
+    ]],
+    ['IV. Thí nghiệm và nghiệm thu', [
+      ['Thí nghiệm chứng minh (proof test)', '100% neo — kéo đến 1.25-1.33 lần lực TK', 'critical'],
+      ['Thí nghiệm khả năng (performance test)', 'Mẫu đại diện — kéo đến phá hoại', 'critical'],
+      ['Thí nghiệm dão (creep test)', 'Theo dõi mất lực 7-14 ngày', 'critical'],
+      ['Biên bản căng neo từng vị trí', 'Hồ sơ pháp lý', 'critical'],
+      ['Đánh giá kết quả thí nghiệm', 'So sánh với TCVN 9395:2012', 'critical']
+    ]],
+    ['V. Quan trắc và kiểm soát', [
+      ['Đồng hồ đo lực neo (load cell)', 'Lắp cho neo đại diện', 'critical'],
+      ['Quan trắc chuyển vị tường vây', 'Kết hợp với hệ neo', 'critical'],
+      ['Quan trắc lún công trình lân cận', 'Đặc biệt nếu neo đi qua dưới nhà liền kề', 'critical'],
+      ['Kiểm tra lực neo định kỳ', 'Re-stressing nếu lực neo giảm', 'important'],
+      ['Theo dõi sự ăn mòn cáp', 'Khu vực biển hoặc đất chua', 'important']
+    ]],
+    ['VI. Tháo dỡ và hoàn trả', [
+      ['Phương án xử lý sau khi hết sử dụng', 'Cắt đầu neo và bỏ lại — KHÔNG RÚT ĐƯỢC HOÀN TOÀN', 'critical'],
+      ['Bịt lỗ neo trên tường vây', 'Trám vá, chống thấm', 'critical'],
+      ['Cắt cáp dự ứng lực âm vào tường', 'Theo cao độ; không lộ ra mặt hoàn thiện', 'critical'],
+      ['Hồ sơ hoàn công vị trí neo bỏ lại', 'Cho công tác bảo trì sau này', 'critical']
+    ]],
+    ['VII. Rủi ro và chi phí dễ tính thiếu', [
+      ['Phí khảo sát địa chất bổ sung', 'Cần địa chất chi tiết hơn cọc khoan nhồi', 'important'],
+      ['Phí thí nghiệm neo (test, proof, creep)', 'Chi phí đáng kể', 'critical'],
+      ['Phí xử lý neo không đạt thí nghiệm', 'Phải làm lại neo — dự phòng tỷ lệ hỏng', 'important'],
+      ['Đền bù sử dụng đất ngoài ranh', 'Hàng xóm yêu cầu phí — pháp lý phức tạp', 'important'],
+      ['Phí re-stressing khi neo bị mất lực', 'Theo dõi và căng lại nếu cần', 'important'],
+      ['Vật tư bỏ lại trong đất', 'Cáp, vữa — không thu hồi được', 'critical'],
+      ['Bảo hiểm trách nhiệm với hàng xóm', 'Rủi ro cao do neo vào đất hàng xóm', 'critical'],
+      ['Phí cấp phép sử dụng đất ngoài ranh', 'Một số địa phương yêu cầu giấy phép riêng', 'important']
+    ]]
+  ],
+  pile: [
+    ['I. Khảo sát và thiết kế', [
+      ['Khảo sát địa chất chi tiết', 'Đặc biệt mực nước ngầm, lớp đất chảy/cát chảy', 'critical'],
+      ['Tính toán thiết kế cọc vây', 'Đường kính, khoảng cách, chiều sâu, cốt thép', 'critical'],
+      ['Lựa chọn loại cọc vây', 'Cọc nhồi, CDM, jet grouting', 'critical'],
+      ['Phương án xử lý khe hở giữa cọc', 'Cọc tiếp xúc, giao thoa, hoặc jet grouting bổ sung', 'critical'],
+      ['Khảo sát công trình ngầm và lân cận', 'Tránh va chạm; đánh giá ảnh hưởng', 'critical'],
+      ['Bản vẽ shop drawing', 'Tọa độ từng cọc, cao độ đáy cọc, chi tiết cốt thép', 'critical']
+    ]],
+    ['II. Chuẩn bị mặt bằng và thiết bị', [
+      ['San gạt mặt bằng thi công', 'Đảm bảo mặt bằng phẳng cho máy khoan', 'critical'],
+      ['Sàn công tác (working platform)', 'Đệm cấp phối, vải địa, tấm thép', 'critical'],
+      ['Huy động máy khoan cọc nhồi', 'Phù hợp đường kính và chiều sâu cọc', 'critical'],
+      ['Trạm trộn bê tông/vữa bentonite', 'Tại công trường hoặc gần công trường', 'critical'],
+      ['Bể chứa và xử lý dung dịch khoan', 'Bentonite/polymer — tái sử dụng và xử lý', 'critical'],
+      ['Khu vực gia công cốt thép', 'Lắp dựng lồng thép cọc', 'critical']
+    ]],
+    ['III. Thi công cọc vây', [
+      ['Định vị tim cọc', 'Trắc đạc — sai số ≤ 50mm', 'critical'],
+      ['Hạ ống vách (casing) đầu cọc', 'Bảo vệ miệng cọc — chiều dài 2-4m', 'critical'],
+      ['Khoan tạo lỗ cọc', 'Theo trình tự (cọc lẻ trước, chẵn sau)', 'critical'],
+      ['Kiểm tra độ thẳng đứng lỗ khoan', 'Sai số ≤ 1/100', 'critical'],
+      ['Vệ sinh đáy lỗ khoan', 'Thổi rửa, gầu vét', 'critical'],
+      ['Thả lồng cốt thép', 'Định vị bằng "con kê"', 'critical'],
+      ['Đặt ống thí nghiệm sonic/strain gauge', 'Không thể bổ sung sau khi đổ bê tông', 'critical'],
+      ['Thả ống tremie đổ bê tông', 'Đầu ống ngập trong bê tông tối thiểu 2m', 'critical'],
+      ['Đổ bê tông cọc', 'Cao trên cao độ thiết kế 0.5-1m', 'critical'],
+      ['Phá đầu cọc lộ thép chờ', 'Sau khi bê tông đạt cường độ', 'critical'],
+      ['Xử lý khe hở giữa các cọc vây', 'Cọc giao thoa: trình tự cha-con; hoặc jet grouting', 'critical']
+    ]],
+    ['IV. Kiểm tra chất lượng', [
+      ['Thí nghiệm siêu âm cọc (sonic logging)', 'Tỷ lệ % theo TCVN', 'critical'],
+      ['Thí nghiệm nén tĩnh cọc', 'Mẫu đại diện', 'critical'],
+      ['Thí nghiệm động (PDA)', 'Bổ sung hoặc thay thế nén tĩnh', 'important'],
+      ['Khoan lấy mẫu lõi cọc', 'Khi nghi ngờ chất lượng', 'important'],
+      ['Kiểm tra cao độ đáy cọc', 'Đo trước khi đổ bê tông', 'critical'],
+      ['Lấy mẫu bê tông cọc', 'Thí nghiệm cường độ R7, R28', 'critical']
+    ]],
+    ['V. Capping beam và hệ chống đỡ', [
+      ['Đào và chuẩn bị vùng capping beam', 'Phá đầu cọc; vệ sinh thép chờ', 'critical'],
+      ['Cốp pha capping beam', 'Theo hình dáng và kích thước thiết kế', 'critical'],
+      ['Cốt thép capping beam liên kết các cọc', 'Cốt thép chính + thép chờ cho shoring/sàn', 'critical'],
+      ['Đổ bê tông capping beam', 'Liên tục, không có mạch ngừng', 'critical'],
+      ['Hệ shoring/neo đất sau capping beam', 'Theo phương án thiết kế chính', 'critical']
+    ]],
+    ['VI. Chống thấm và đào đất', [
+      ['Đào đất trong vành cọc vây', 'Theo đợt; không đào quá sâu', 'critical'],
+      ['Bơm thoát nước trong hố đào', 'Cọc vây không kín tuyệt đối', 'critical'],
+      ['Trám khe hở giữa các cọc', 'Sika, vữa trương nở khi rò rỉ', 'important'],
+      ['Phun jet grouting bổ sung khe hở', 'Khi rò rỉ lớn — tạo vành kín bổ sung', 'important'],
+      ['Chống thấm mặt trong cọc vây', 'Trước khi xây tường hoàn thiện', 'critical'],
+      ['Xử lý mặt cọc lồi lõm', 'Đánh sờn, trát phẳng để hoàn thiện', 'important']
+    ]],
+    ['VII. Quan trắc và an toàn', [
+      ['Quan trắc chuyển vị cọc vây', 'Inclinometer trong cọc đại diện', 'critical'],
+      ['Quan trắc lún công trình lân cận', 'Mốc đo định kỳ', 'critical'],
+      ['Quan trắc mực nước ngầm', 'Piezometer trong và ngoài vành cọc', 'critical'],
+      ['Theo dõi nứt mặt đất xung quanh', 'Dấu hiệu mất ổn định', 'important'],
+      ['An toàn khi vận hành máy khoan', 'Khu vực cảnh báo, thợ có chứng chỉ', 'critical']
+    ]],
+    ['VIII. Chi phí dễ tính thiếu', [
+      ['Chi phí dung dịch bentonite/polymer', 'Tiêu hao và xử lý chất thải', 'critical'],
+      ['Chi phí xử lý chất thải khoan', 'Đất khoan + dung dịch', 'critical'],
+      ['Phí jet grouting bổ sung', 'Khi cọc vây không đủ kín', 'important'],
+      ['Phí khoan cọc thí nghiệm', 'Cọc bổ sung không có trong kết cấu', 'critical'],
+      ['Phí phá đầu cọc thừa', 'Bê tông + nhân công + vận chuyển', 'critical'],
+      ['Phí gia cố mặt bằng thi công', 'Đệm cấp phối, vải địa, tấm thép', 'critical'],
+      ['Bảo hiểm thi công cọc nhồi', 'Rủi ro chất lượng cọc, sụt đất', 'important'],
+      ['Phí khắc phục cọc khuyết tật', 'Khoan lấy lõi + xử lý epoxy/vữa', 'important']
+    ]]
+  ]
+};
+
+const TABS = [
+  { key: 'topdown', label: 'Top-down', title: 'I. Phương án Top-down (có lưu ý quan trọng)', hasNotices: true },
+  { key: 'shoring', label: 'Hệ Shoring', title: 'II. Hệ Shoring (Thanh chống)' },
+  { key: 'larsen', label: 'Cừ Larsen', title: 'III. Cừ Larsen (Sheet Pile)' },
+  { key: 'anchor', label: 'Hệ Neo đất', title: 'IV. Hệ Neo đất (Ground Anchor)' },
+  { key: 'pile', label: 'Cọc vây', title: 'V. Cọc vây (Bored Pile Wall)' }
+];
+
+const state = {
+  currentTab: 'topdown',
+  data: {},
+  collapsed: {},
+  filterStatus: 'all',
+  filterLevel: 'all',
+  projectInfo: {}
+};
+
+function saveState() {
+  try {
+    sessionStorage.setItem('checklist_state', JSON.stringify({
+      data: state.data,
+      collapsed: state.collapsed,
+      projectInfo: state.projectInfo
+    }));
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const s = JSON.parse(sessionStorage.getItem('checklist_state') || '{}');
+    if (s.data) state.data = s.data;
+    if (s.collapsed) state.collapsed = s.collapsed;
+    if (s.projectInfo) state.projectInfo = s.projectInfo;
+  } catch(e) {}
+}
+
+function esc(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function renderTabs() {
+  const tabsEl = document.getElementById('tabs');
+  tabsEl.innerHTML = TABS.map(t =>
+    `<button class="tab ${t.key === state.currentTab ? 'active' : ''}" data-tab="${t.key}">${t.label}</button>`
+  ).join('');
+  tabsEl.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.currentTab = btn.dataset.tab;
+      renderTabs();
+      renderContent();
+    });
+  });
+}
+
+function renderContent() {
+  const contentEl = document.getElementById('content');
+  contentEl.innerHTML = TABS.map((tab, tabIdx) => {
+    const isFirst = tabIdx === 0;
+    const noticesHtml = tab.hasNotices ? renderNotices() : '';
+    const groupsHtml = renderGroups(tab.key);
+    return `
+      <div class="tab-content ${tab.key === state.currentTab ? 'active' : ''}" data-tab="${tab.key}">
+        <div class="print-tab-title ${isFirst ? 'first' : ''}">${tab.title}</div>
+        ${noticesHtml}
+        ${groupsHtml}
+      </div>
+    `;
+  }).join('');
+
+  applyFilters();
+  updateStats();
+}
+
+function renderNotices() {
+  return `
+    <h2 class="section-title">Lưu ý quan trọng — Phương án Top-down</h2>
+    <div class="notices">
+      ${NOTICES.map(n => `
+        <div class="notice ${n.level}">
+          <div class="notice-header">
+            <span class="notice-badge">${n.icon}</span>
+            <span class="notice-title">${esc(n.title)}</span>
+          </div>
+          <div class="notice-body">${esc(n.body)}</div>
+        </div>
+      `).join('')}
+    </div>
+    <h2 class="section-title">Checklist công tác chi tiết</h2>
+  `;
+}
+
+function renderGroups(tabKey) {
+  const groups = CHECKLISTS[tabKey] || [];
+  return groups.map((g, gi) => {
+    const [title, items] = g;
+    const collapseKey = `${tabKey}-${gi}`;
+    const isCollapsed = state.collapsed[collapseKey];
+    const stats = getGroupStats(tabKey, gi, items);
+    return `
+      <div class="group ${isCollapsed ? 'collapsed' : ''}" data-group="${collapseKey}">
+        <div class="group-header" onclick="toggleGroup('${collapseKey}')">
+          <div class="group-title">${esc(title)}</div>
+          <div class="group-meta">
+            <span class="group-progress">${stats.done}/${stats.total}</span>
+            <span class="toggle-icon">▾</span>
+          </div>
+        </div>
+        <div class="items">
+          ${items.map((item, ii) => renderItem(tabKey, gi, ii, item)).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderItem(tabKey, gi, ii, item) {
+  const [title, note, level] = item;
+  const itemKey = `${tabKey}-${gi}-${ii}`;
+  const itemState = state.data[itemKey] || {};
+  const status = itemState.status || '';
+  const userNote = itemState.note || '';
+  const isDone = status === 'done';
+
+  return `
+    <div class="item status-${status}" data-item="${itemKey}" data-level="${level}" data-status="${status}">
+      <div class="item-check">
+        <input type="checkbox" ${isDone ? 'checked' : ''} onchange="toggleCheck('${itemKey}', this.checked)">
+      </div>
+      <div class="item-content">
+        <div class="item-title">${esc(title)}</div>
+        <div class="item-note">${esc(note)}</div>
+        <div class="item-tags">
+          <span class="tag ${level}">${level === 'critical' ? 'Bắt buộc' : 'Quan trọng'}</span>
+        </div>
+      </div>
+      <div class="item-status">
+        <select class="status-select" onchange="updateStatus('${itemKey}', this.value)">
+          <option value="" ${status === '' ? 'selected' : ''}>— Chưa đánh giá —</option>
+          <option value="done" ${status === 'done' ? 'selected' : ''}>Đã có</option>
+          <option value="missing" ${status === 'missing' ? 'selected' : ''}>Chưa có</option>
+          <option value="review" ${status === 'review' ? 'selected' : ''}>Cần xem lại</option>
+          <option value="na" ${status === 'na' ? 'selected' : ''}>Không áp dụng</option>
+        </select>
+        <textarea class="status-note" placeholder="Ghi chú riêng..." data-item-key="${itemKey}">${esc(userNote)}</textarea>
+      </div>
+    </div>
+  `;
+}
+
+function getGroupStats(tabKey, gi, items) {
+  let done = 0;
+  items.forEach((_, ii) => {
+    if (state.data[`${tabKey}-${gi}-${ii}`]?.status === 'done') done++;
+  });
+  return { done, total: items.length };
+}
+
+function toggleGroup(key) {
+  state.collapsed[key] = !state.collapsed[key];
+  saveState();
+  const group = document.querySelector(`.group[data-group="${key}"]`);
+  if (group) group.classList.toggle('collapsed');
+}
+
+function toggleCheck(itemKey, checked) {
+  if (!state.data[itemKey]) state.data[itemKey] = {};
+  state.data[itemKey].status = checked ? 'done' : '';
+  saveState();
+  updateItemUI(itemKey);
+  updateGroupProgress(itemKey);
+  updateStats();
+}
+
+function updateStatus(itemKey, value) {
+  if (!state.data[itemKey]) state.data[itemKey] = {};
+  state.data[itemKey].status = value;
+  saveState();
+  updateItemUI(itemKey);
+  updateGroupProgress(itemKey);
+  updateStats();
+  applyFilters();
+}
+
+function updateNoteValue(itemKey, value) {
+  if (!state.data[itemKey]) state.data[itemKey] = {};
+  state.data[itemKey].note = value;
+  saveState();
+}
+
+function updateItemUI(itemKey) {
+  const item = document.querySelector(`.item[data-item="${itemKey}"]`);
+  if (!item) return;
+  const status = state.data[itemKey]?.status || '';
+  item.className = `item status-${status}`;
+  item.dataset.status = status;
+  const checkbox = item.querySelector('input[type="checkbox"]');
+  if (checkbox) checkbox.checked = (status === 'done');
+  const select = item.querySelector('.status-select');
+  if (select && select.value !== status) select.value = status;
+}
+
+function updateGroupProgress(itemKey) {
+  const parts = itemKey.split('-');
+  const tabKey = parts[0];
+  const gi = parts[1];
+  const groupKey = `${tabKey}-${gi}`;
+  const groups = CHECKLISTS[tabKey] || [];
+  const group = groups[parseInt(gi)];
+  if (!group) return;
+  const stats = getGroupStats(tabKey, parseInt(gi), group[1]);
+  const progressEl = document.querySelector(`.group[data-group="${groupKey}"] .group-progress`);
+  if (progressEl) progressEl.textContent = `${stats.done}/${stats.total}`;
+}
+
+function expandAll(open) {
+  TABS.forEach(t => {
+    const groups = CHECKLISTS[t.key] || [];
+    groups.forEach((_, gi) => {
+      state.collapsed[`${t.key}-${gi}`] = !open;
+    });
+  });
+  saveState();
+  document.querySelectorAll('.group').forEach(g => {
+    if (open) g.classList.remove('collapsed');
+    else g.classList.add('collapsed');
+  });
+}
+
+function resetData() {
+  if (!confirm('Xóa toàn bộ dữ liệu đã đánh giá? Hành động này không thể hoàn tác.')) return;
+  state.data = {};
+  state.collapsed = {};
+  saveState();
+  renderContent();
+}
+
+function applyFilters() {
+  document.querySelectorAll('.item').forEach(el => {
+    const itemKey = el.dataset.item;
+    const status = state.data[itemKey]?.status || '';
+    const level = el.dataset.level;
+    let showByStatus = true;
+    if (state.filterStatus !== 'all') {
+      showByStatus = (state.filterStatus === '' && status === '') || (state.filterStatus === status);
+    }
+    let showByLevel = true;
+    if (state.filterLevel !== 'all') {
+      showByLevel = (state.filterLevel === level);
+    }
+    el.style.display = (showByStatus && showByLevel) ? '' : 'none';
+  });
+  document.querySelectorAll('.group').forEach(group => {
+    const visible = Array.from(group.querySelectorAll('.item')).filter(i => i.style.display !== 'none').length;
+    group.style.display = visible > 0 ? '' : 'none';
+  });
+}
+
+function updateStats() {
+  let total = 0, done = 0, missing = 0, review = 0;
+  TABS.forEach(t => {
+    const groups = CHECKLISTS[t.key] || [];
+    groups.forEach((g, gi) => {
+      g[1].forEach((_, ii) => {
+        total++;
+        const status = state.data[`${t.key}-${gi}-${ii}`]?.status;
+        if (status === 'done') done++;
+        else if (status === 'missing') missing++;
+        else if (status === 'review') review++;
+      });
+    });
+  });
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statDone').textContent = done;
+  document.getElementById('statMissing').textContent = missing;
+  document.getElementById('statReview').textContent = review;
+  const progress = total > 0 ? Math.round((done / total) * 100) : 0;
+  document.getElementById('statProgress').textContent = progress + '%';
+}
+
+function attachInfoListeners() {
+  ['projectName', 'packageName', 'owner', 'contractor', 'location', 'method', 'preparedBy'].forEach(id => {
+    const el = document.getElementById(id);
+    if (state.projectInfo[id]) el.value = state.projectInfo[id];
+    el.addEventListener('input', () => {
+      state.projectInfo[id] = el.value;
+      saveState();
+    });
+  });
+}
+
+function attachFilterListeners() {
+  document.getElementById('filterStatus').addEventListener('change', e => {
+    state.filterStatus = e.target.value;
+    applyFilters();
+  });
+  document.getElementById('filterLevel').addEventListener('change', e => {
+    state.filterLevel = e.target.value;
+    applyFilters();
+  });
+}
+
+function attachNoteDelegate() {
+  document.getElementById('content').addEventListener('input', (e) => {
+    if (e.target.classList.contains('status-note')) {
+      const itemKey = e.target.dataset.itemKey;
+      if (itemKey) updateNoteValue(itemKey, e.target.value);
+    }
+  });
+}
+
+function setDate() {
+  const d = new Date();
+  const opts = { year: 'numeric', month: 'long', day: 'numeric' };
+  document.getElementById('dateDisplay').textContent =
+    'Ngày tạo: ' + d.toLocaleDateString('vi-VN', opts);
+}
+
+loadState();
+setDate();
+renderTabs();
+renderContent();
+attachInfoListeners();
+attachFilterListeners();
+attachNoteDelegate();
+</script>
+</body>
+</html>
