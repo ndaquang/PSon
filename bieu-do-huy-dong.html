@@ -3,12 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Biểu Đồ Huy Động Nhân Lực & Máy Móc — Nhà Xưởng</title>
+<title>Biểu Đồ Huy Động Nhân Lực & Máy Móc — VITECCONS</title>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root {
+    --brand-blue: #1d4ed8;
+    --brand-red: #dc2626;
+    --brand-dark: #0a0a0a;
     --bg-page: #f8fafc;
     --bg-card: #ffffff;
     --bg-card-hover: #f1f5f9;
@@ -18,9 +21,9 @@
     --text-primary: #0f172a;
     --text-secondary: #475569;
     --text-muted: #94a3b8;
-    --accent-blue: #2563eb;
+    --accent-blue: #1d4ed8;
     --accent-violet: #7c3aed;
-    --accent-rose: #e11d48;
+    --accent-rose: #dc2626;
     --accent-amber: #d97706;
     --accent-emerald: #059669;
     --shadow-sm: 0 1px 3px rgba(15,23,42,0.06);
@@ -34,26 +37,97 @@
     min-height: 100vh;
     padding: 20px;
   }
-  .container { max-width: 1100px; margin: 0 auto; }
+  .container { max-width: 1280px; margin: 0 auto; }
 
-  .header { text-align: center; margin-bottom: 28px; }
-  .header .tag {
-    display: inline-block; font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
-    color: var(--accent-blue); background: #dbeafe;
-    padding: 4px 14px; border-radius: 20px; margin-bottom: 10px;
-    border: 1px solid #bfdbfe; font-weight: 600;
+  /* ─── BRAND HEADER ─── */
+  .brand-header {
+    background: var(--brand-dark);
+    border-radius: 14px;
+    padding: 18px 28px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    box-shadow: var(--shadow-md);
+    border: 1px solid #1f1f1f;
   }
-  .header h1 {
-    font-size: 26px; font-weight: 800;
-    background: linear-gradient(135deg, var(--accent-blue), var(--accent-violet));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  .brand-logo {
+    height: 64px;
+    width: auto;
+    flex-shrink: 0;
   }
-  .header .sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .brand-text { flex: 1; min-width: 0; }
+  .brand-title {
+    color: #fff;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+  }
+  .brand-title .accent { color: var(--brand-red); }
+  .brand-subtitle {
+    color: #cbd5e1;
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 4px;
+    letter-spacing: 0.3px;
+  }
+  .brand-meta {
+    text-align: right;
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.5;
+    border-left: 2px solid #1d4ed8;
+    padding-left: 14px;
+    min-width: 180px;
+  }
+  .brand-meta strong { color: #fff; font-weight: 600; }
 
-  /* Toolbar */
+  /* ─── PROJECT INFO PANEL ─── */
+  .project-info {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--brand-blue);
+    border-radius: 12px;
+    padding: 16px 22px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow-sm);
+  }
+  .project-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .info-field { display: flex; flex-direction: column; gap: 4px; }
+  .info-field label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--brand-blue);
+  }
+  .info-field input {
+    background: #fff;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    outline: none;
+    transition: all 0.2s;
+  }
+  .info-field input:focus {
+    border-color: var(--brand-blue);
+    box-shadow: 0 0 0 3px rgba(29,78,216,0.1);
+  }
+
+  /* ─── TOOLBAR ─── */
   .toolbar {
     display: flex; justify-content: space-between; align-items: center;
-    gap: 12px; margin-bottom: 22px; flex-wrap: wrap;
+    gap: 12px; margin-bottom: 18px; flex-wrap: wrap;
   }
   .tabs { display: flex; gap: 8px; }
   .tab-btn {
@@ -63,9 +137,9 @@
     transition: all 0.25s; box-shadow: var(--shadow-sm);
   }
   .tab-btn.active {
-    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    background: linear-gradient(135deg, var(--brand-blue), #2563eb);
     color: #fff; border-color: transparent;
-    box-shadow: 0 4px 15px rgba(37,99,235,0.25);
+    box-shadow: 0 4px 15px rgba(29,78,216,0.25);
   }
   .tab-btn:hover:not(.active) { background: var(--bg-card-hover); }
 
@@ -76,7 +150,7 @@
     transition: all 0.25s; display: flex; align-items: center; gap: 5px;
   }
   .btn-pdf {
-    background: linear-gradient(135deg, #dc2626, #ea580c);
+    background: linear-gradient(135deg, var(--brand-red), #ea580c);
     color: #fff; border-color: transparent;
     box-shadow: 0 4px 12px rgba(220,38,38,0.2);
   }
@@ -88,36 +162,34 @@
   }
   .btn-save:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(5,150,105,0.3); }
   .btn-load {
-    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    background: linear-gradient(135deg, var(--brand-blue), #3b82f6);
     color: #fff; border-color: transparent;
-    box-shadow: 0 4px 12px rgba(37,99,235,0.2);
+    box-shadow: 0 4px 12px rgba(29,78,216,0.2);
   }
-  .btn-load:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(37,99,235,0.3); }
+  .btn-load:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(29,78,216,0.3); }
   .btn-secondary {
     background: var(--bg-card); color: var(--text-secondary); border-color: var(--border);
     box-shadow: var(--shadow-sm);
   }
   .btn-secondary:hover { background: var(--bg-card-hover); color: var(--text-primary); }
 
-  /* Hidden file input */
   #fileInput { display: none; }
 
-  /* Settings Panel */
+  /* ─── SETTINGS ─── */
   .settings-panel {
     background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 14px; padding: 18px 20px; margin-bottom: 22px;
+    border-radius: 14px; padding: 16px 22px; margin-bottom: 18px;
     box-shadow: var(--shadow-sm);
   }
   .settings-panel h3 {
     font-size: 13px; font-weight: 700; color: var(--accent-amber);
-    margin-bottom: 14px; display: flex; align-items: center; gap: 6px;
+    margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
   }
   .settings-row {
-    display: flex; gap: 16px; align-items: center; margin-bottom: 12px; flex-wrap: wrap;
+    display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
   }
-  .settings-row:last-child { margin-bottom: 0; }
   .settings-row label {
-    font-size: 12px; color: var(--text-secondary); font-weight: 500; min-width: 130px;
+    font-size: 12px; color: var(--text-secondary); font-weight: 600;
   }
 
   .stepper {
@@ -126,15 +198,15 @@
     border-radius: 10px; overflow: hidden; box-shadow: var(--shadow-sm);
   }
   .stepper-btn {
-    width: 34px; height: 36px; border: none; background: transparent;
-    color: var(--accent-blue); font-size: 18px; font-weight: 700; cursor: pointer;
+    width: 36px; height: 38px; border: none; background: transparent;
+    color: var(--brand-blue); font-size: 18px; font-weight: 700; cursor: pointer;
     transition: all 0.15s; font-family: inherit;
   }
   .stepper-btn:hover:not(:disabled) { background: #eff6ff; }
   .stepper-btn:active:not(:disabled) { transform: scale(0.92); }
   .stepper-btn:disabled { color: var(--text-muted); cursor: not-allowed; }
   .stepper-input {
-    width: 50px; height: 36px; border: none; background: transparent;
+    width: 56px; height: 38px; border: none; background: transparent;
     text-align: center; font-weight: 700; font-size: 14px;
     color: var(--text-primary); font-family: inherit; outline: none;
     border-left: 1px solid var(--border); border-right: 1px solid var(--border);
@@ -143,15 +215,7 @@
   .stepper-input::-webkit-outer-spin-button,
   .stepper-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
-  .input-text {
-    background: var(--bg-card); border: 1px solid var(--border-strong);
-    border-radius: 8px; padding: 8px 12px; color: var(--text-primary);
-    font-family: inherit; font-size: 13px; outline: none;
-    transition: border-color 0.2s; box-shadow: var(--shadow-sm);
-  }
-  .input-text:focus { border-color: var(--accent-blue); }
-
-  /* Data Table */
+  /* ─── DATA TABLE ─── */
   .data-section {
     background: var(--bg-card); border: 1px solid var(--border);
     border-radius: 14px; overflow: hidden; margin-bottom: 22px;
@@ -179,13 +243,15 @@
     padding: 10px 6px; text-align: center; color: var(--text-secondary);
     font-weight: 600; font-size: 11px; background: var(--bg-subtle);
     border-bottom: 1px solid var(--border);
+    white-space: nowrap;
   }
-  .data-table th:first-child { text-align: left; padding-left: 16px; min-width: 180px; }
+  .data-table th.col-name { text-align: left; padding-left: 16px; min-width: 200px; }
+  .data-table th.col-action { width: 50px; }
   .data-table td { padding: 5px 3px; text-align: center; border-top: 1px solid var(--border); }
-  .data-table td:first-child { text-align: left; padding-left: 10px; font-weight: 600; }
+  .data-table td.col-name { text-align: left; padding-left: 10px; font-weight: 600; }
   .data-table tbody tr:hover { background: #fafbfc; }
   .data-table input[type="number"] {
-    width: 44px; background: transparent; border: 1px solid transparent;
+    width: 46px; background: transparent; border: 1px solid transparent;
     border-radius: 5px; padding: 4px 2px; color: var(--text-primary);
     font-family: inherit; font-size: 12px; text-align: center; outline: none;
     transition: all 0.2s; -moz-appearance: textfield;
@@ -193,45 +259,56 @@
   .data-table input[type="number"]::-webkit-outer-spin-button,
   .data-table input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
   .data-table input[type="number"]:hover { background: #eff6ff; }
-  .data-table input[type="number"]:focus { border-color: var(--accent-blue); background: #eff6ff; }
+  .data-table input[type="number"]:focus { border-color: var(--brand-blue); background: #eff6ff; }
   .data-table .name-input {
-    width: 150px; background: transparent; border: 1px solid transparent;
+    width: 160px; background: transparent; border: 1px solid transparent;
     border-radius: 5px; padding: 4px 6px; color: inherit;
     font-family: inherit; font-size: 12px; font-weight: 600; text-align: left; outline: none;
   }
   .data-table .name-input:hover { background: #eff6ff; }
-  .data-table .name-input:focus { border-color: var(--accent-blue); background: #eff6ff; }
+  .data-table .name-input:focus { border-color: var(--brand-blue); background: #eff6ff; }
+
+  .btn-delete-row {
+    width: 26px; height: 26px; border-radius: 6px;
+    border: 1px solid #fecaca; background: #fef2f2;
+    color: var(--accent-rose); font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: inherit;
+  }
+  .btn-delete-row:hover { background: var(--accent-rose); color: #fff; transform: scale(1.08); }
 
   .total-row td {
-    font-weight: 800; color: var(--accent-blue);
+    font-weight: 800; color: var(--brand-blue);
     border-top: 2px solid var(--border-strong);
     background: var(--bg-subtle) !important;
   }
   .peak-val { color: var(--accent-rose) !important; }
 
-  /* Chart */
+  /* ─── CHART ─── */
   .chart-wrap {
     background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 14px; padding: 18px 12px; margin-bottom: 22px;
-    box-shadow: var(--shadow-sm); overflow-x: auto;
+    border-radius: 14px; padding: 18px 12px; margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+    width: 100%;
   }
-  .chart-wrap canvas { display: block; width: 100%; }
+  .chart-wrap canvas { display: block; width: 100% !important; height: auto !important; max-width: 100%; }
 
-  /* Legend */
+  /* ─── LEGEND ─── */
   .legend {
     display: flex; flex-wrap: wrap; justify-content: center;
-    gap: 6px 18px; padding: 14px 18px; margin-bottom: 16px;
+    gap: 6px 18px; padding: 12px 18px; margin-bottom: 18px;
     background: var(--bg-card); border: 1px solid var(--border);
     border-radius: 14px; box-shadow: var(--shadow-sm);
   }
   .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-secondary); }
   .legend-color { width: 14px; height: 14px; border-radius: 3px; }
 
-  /* Summary */
-  .summary-cards { display: flex; justify-content: center; gap: 14px; margin-bottom: 22px; flex-wrap: wrap; }
+  /* ─── SUMMARY ─── */
+  .summary-cards { display: flex; justify-content: center; gap: 14px; margin-bottom: 18px; flex-wrap: wrap; }
   .summary-card {
     background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 12px; padding: 14px 24px; text-align: center; min-width: 130px;
+    border-radius: 12px; padding: 14px 24px; text-align: center; min-width: 140px;
     box-shadow: var(--shadow-sm); transition: transform 0.2s, box-shadow 0.2s;
   }
   .summary-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
@@ -242,8 +319,15 @@
     text-align: center; font-size: 10px; color: var(--text-muted);
     font-style: italic; margin-top: 16px; padding-bottom: 20px;
   }
+  .footer-sign {
+    text-align: center; font-size: 11px; color: var(--text-muted);
+    padding: 12px 0 8px;
+    border-top: 1px solid var(--border);
+    margin-top: 14px;
+  }
+  .footer-sign strong { color: var(--brand-blue); font-weight: 700; letter-spacing: 1px; }
 
-  /* Toast */
+  /* ─── TOAST ─── */
   .toast {
     position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
     color: #fff; padding: 12px 28px; border-radius: 10px;
@@ -254,37 +338,88 @@
   }
   .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
   .toast-success { background: linear-gradient(135deg, #059669, #10b981); }
-  .toast-info { background: linear-gradient(135deg, #2563eb, #3b82f6); }
-  .toast-error { background: linear-gradient(135deg, #dc2626, #ef4444); }
+  .toast-info { background: linear-gradient(135deg, var(--brand-blue), #3b82f6); }
+  .toast-error { background: linear-gradient(135deg, var(--brand-red), #ef4444); }
   .toast-loading { background: linear-gradient(135deg, #d97706, #f59e0b); }
-
-  /* Save info bar */
-  .save-info {
-    display: flex; align-items: center; gap: 8px; padding: 8px 16px;
-    background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px;
-    font-size: 11px; color: #92400e; margin-bottom: 18px;
-  }
-  .save-info strong { font-weight: 700; }
 
   @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
   .animate-in { animation: fadeUp 0.4s ease-out both; }
 
+  /* ─── PRINT / PDF MODE ─── */
+  body.printing {
+    background: #fff !important;
+    padding: 0 !important;
+  }
+  body.printing .toolbar,
+  body.printing .settings-panel,
+  body.printing .data-section-header > div:last-child,
+  body.printing .btn-delete-row,
+  body.printing .col-action {
+    display: none !important;
+  }
+  body.printing .project-info input {
+    border-color: transparent !important;
+    background: transparent !important;
+    padding-left: 0 !important;
+  }
+  body.printing .data-table .name-input,
+  body.printing .data-table input[type="number"] {
+    border-color: transparent !important;
+    background: transparent !important;
+  }
+  body.printing .data-table input[type="color"] { display: none !important; }
+
   @media print {
-    .toolbar, .settings-panel, .btn-sm, .data-section-header > div:last-child, .save-info { display: none; }
+    @page { size: A4 landscape; margin: 10mm; }
+    body { background: #fff !important; padding: 0 !important; }
+    .toolbar, .settings-panel,
+    .data-section-header > div:last-child,
+    .btn-delete-row, .col-action { display: none !important; }
+    .container { max-width: 100% !important; }
+    .data-table input[type="color"] { display: none !important; }
+    .data-table .name-input, .data-table input[type="number"] {
+      border-color: transparent !important; background: transparent !important;
+    }
   }
 </style>
 </head>
 <body>
 
 <div class="container" id="exportContent">
-  <div class="header animate-in">
-    <span class="tag">Dự án xây dựng</span>
-    <h1 id="mainTitle">Biểu Đồ Huy Động Nhân Lực & Máy Móc</h1>
-    <div class="sub" id="subTitle">Hạng mục: Nhà xưởng — Có thể chỉnh sửa trực tiếp</div>
+
+  <!-- ═══ BRAND HEADER WITH VITECCONS LOGO ═══ -->
+  <div class="brand-header animate-in">
+    <img class="brand-logo" src="data:image/png;base64,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" alt="VITECCONS">
+    <div class="brand-text">
+      <div class="brand-title">BIỂU ĐỒ HUY ĐỘNG <span class="accent">NHÂN LỰC & MÁY MÓC</span></div>
+      <div class="brand-subtitle" id="brandSubtitle">Tiến độ thi công · Build by Heart</div>
+    </div>
+    <div class="brand-meta">
+      <div>Ngày lập: <strong id="reportDate"></strong></div>
+      <div>Đơn vị: <strong>VITECCONS</strong></div>
+    </div>
   </div>
 
-  <!-- Toolbar -->
-  <div class="toolbar animate-in" style="animation-delay:0.05s">
+  <!-- ═══ PROJECT INFO ═══ -->
+  <div class="project-info animate-in" style="animation-delay:0.05s">
+    <div class="project-info-grid">
+      <div class="info-field">
+        <label>Tên dự án</label>
+        <input type="text" id="projectName" value="Nhà xưởng ~3,000 m²" placeholder="Nhập tên dự án..." oninput="updateBrandInfo()">
+      </div>
+      <div class="info-field">
+        <label>Gói thầu</label>
+        <input type="text" id="projectPackage" value="Gói thầu thi công xây lắp" placeholder="Nhập tên gói thầu..." oninput="updateBrandInfo()">
+      </div>
+      <div class="info-field">
+        <label>Địa điểm</label>
+        <input type="text" id="projectLocation" value="KCN Mỹ Phước, Bình Dương" placeholder="Nhập địa điểm thi công..." oninput="updateBrandInfo()">
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TOOLBAR ═══ -->
+  <div class="toolbar animate-in" style="animation-delay:0.07s">
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('labor')">👷 Nhân lực</button>
       <button class="tab-btn" onclick="switchTab('equip')">🏗️ Máy móc thiết bị</button>
@@ -298,53 +433,44 @@
     </div>
   </div>
 
-  <!-- Save info -->
-  <div class="save-info animate-in" style="animation-delay:0.07s" id="saveInfo">
-    💡 <span><strong>Lưu & Mở:</strong> Nhấn "💾 Lưu file" để tải file .json về máy. Lần sau mở lại bằng nút "📂 Mở file" để tiếp tục chỉnh sửa.</span>
-  </div>
-
-  <!-- Settings -->
+  <!-- ═══ SETTINGS ═══ -->
   <div class="settings-panel animate-in" style="animation-delay:0.1s">
-    <h3>⚙️ Cài đặt chung</h3>
+    <h3>⚙️ Cài đặt thời gian thi công</h3>
     <div class="settings-row">
-      <label>Thời gian thi công:</label>
+      <label>Số tháng:</label>
       <div class="stepper">
         <button class="stepper-btn" onclick="changeMonths(-1)" id="btnDec">−</button>
         <input type="number" class="stepper-input" id="totalMonths" value="12" min="1" max="60" onchange="setMonths(this.value)">
         <button class="stepper-btn" onclick="changeMonths(1)" id="btnInc">+</button>
       </div>
       <span style="font-size:12px;color:var(--text-muted)">tháng (1 – 60)</span>
-      <div style="display:flex;gap:6px;margin-left:auto">
+      <div style="display:flex;gap:6px;margin-left:auto;flex-wrap:wrap">
         <button class="btn-sm" onclick="setMonths(6)">6T</button>
         <button class="btn-sm" onclick="setMonths(12)">12T</button>
         <button class="btn-sm" onclick="setMonths(18)">18T</button>
         <button class="btn-sm" onclick="setMonths(24)">24T</button>
+        <button class="btn-sm" onclick="setMonths(36)">36T</button>
       </div>
-    </div>
-    <div class="settings-row">
-      <label>Tên dự án:</label>
-      <input type="text" class="input-text" id="projectName" value="Nhà xưởng ~3,000 m²" style="width:300px" oninput="updateTitle()">
     </div>
   </div>
 
-  <!-- Summary -->
+  <!-- ═══ SUMMARY ═══ -->
   <div class="summary-cards animate-in" style="animation-delay:0.12s" id="summaryCards"></div>
 
-  <!-- Chart (Canvas) -->
+  <!-- ═══ CHART ═══ -->
   <div class="chart-wrap animate-in" style="animation-delay:0.15s" id="chartWrap">
     <canvas id="chartCanvas"></canvas>
   </div>
 
-  <!-- Legend -->
+  <!-- ═══ LEGEND ═══ -->
   <div class="legend animate-in" style="animation-delay:0.18s" id="legendWrap"></div>
 
-  <!-- Data Table -->
+  <!-- ═══ DATA TABLE ═══ -->
   <div class="data-section animate-in" style="animation-delay:0.2s">
     <div class="data-section-header">
       <h3 id="tableTitle">📊 Bảng số liệu nhân lực (chỉnh sửa trực tiếp)</h3>
       <div style="display:flex;gap:6px;">
         <button class="btn-sm" onclick="addRow()">+ Thêm hàng</button>
-        <button class="btn-sm btn-danger" onclick="removeLastRow()">− Xóa hàng cuối</button>
       </div>
     </div>
     <div class="data-table-wrap">
@@ -352,7 +478,12 @@
     </div>
   </div>
 
-  <div class="footer-note">* Nhấp vào ô số liệu để chỉnh sửa — Biểu đồ tự động cập nhật</div>
+  <!-- ═══ FOOTER SIGN ═══ -->
+  <div class="footer-sign">
+    <strong>VITECCONS</strong> · BUILD BY HEART · Báo cáo tự động từ hệ thống quản lý dự án
+  </div>
+
+  <div class="footer-note">* Nhấp vào ô số liệu để chỉnh sửa — Biểu đồ tự động cập nhật · Nhấp ✕ ở cuối mỗi hàng để xóa hàng đó</div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -392,13 +523,29 @@ function getTotals() {
   return Array.from({length: totalMonths}, (_, i) => d.reduce((s, r) => s + (r.values[i]||0), 0));
 }
 
+// Date display
+function setReportDate() {
+  const d = new Date();
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  document.getElementById('reportDate').textContent = `${dd}/${mm}/${d.getFullYear()}`;
+}
+
+function updateBrandInfo() {
+  const proj = document.getElementById('projectName').value || '—';
+  const loc = document.getElementById('projectLocation').value || '—';
+  document.getElementById('brandSubtitle').textContent = `${proj} · ${loc}`;
+}
+
 // ═══════════════════════════════════════════════
-// SAVE / LOAD PROJECT (.json)
+// SAVE / LOAD PROJECT
 // ═══════════════════════════════════════════════
 function saveProject() {
   const project = {
-    version: 2,
+    version: 3,
     projectName: document.getElementById('projectName').value,
+    projectPackage: document.getElementById('projectPackage').value,
+    projectLocation: document.getElementById('projectLocation').value,
     totalMonths: totalMonths,
     laborData: JSON.parse(JSON.stringify(laborData)),
     equipData: JSON.parse(JSON.stringify(equipData)),
@@ -408,7 +555,7 @@ function saveProject() {
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  const name = project.projectName.replace(/\s+/g, '-') || 'du-an';
+  const name = (project.projectName || 'du-an').replace(/\s+/g, '-');
   a.href = url;
   a.download = `${name}_${new Date().toISOString().slice(0,10)}.json`;
   a.click();
@@ -425,13 +572,15 @@ function loadProject(event) {
       const project = JSON.parse(e.target.result);
       if (!project.laborData || !project.equipData) throw new Error('File không hợp lệ');
 
-      document.getElementById('projectName').value = project.projectName || 'Nhà xưởng';
+      document.getElementById('projectName').value = project.projectName || '';
+      document.getElementById('projectPackage').value = project.projectPackage || '';
+      document.getElementById('projectLocation').value = project.projectLocation || '';
       totalMonths = project.totalMonths || 12;
       document.getElementById('totalMonths').value = totalMonths;
       laborData = project.laborData;
       equipData = project.equipData;
 
-      updateTitle();
+      updateBrandInfo();
       renderAll();
 
       const d = project.savedAt ? new Date(project.savedAt).toLocaleString('vi-VN') : '';
@@ -463,11 +612,6 @@ function setMonths(value) {
   renderAll();
 }
 
-function updateTitle() {
-  document.getElementById('subTitle').textContent =
-    'Hạng mục: ' + document.getElementById('projectName').value + ' — Có thể chỉnh sửa trực tiếp';
-}
-
 function switchTab(tab) {
   currentTab = tab;
   document.querySelectorAll('.tab-btn').forEach((b, i) => {
@@ -481,9 +625,18 @@ function addRow() {
   d.push({ name: currentTab==='labor' ? 'Hạng mục mới' : 'Thiết bị mới', color: c, values: Array(totalMonths).fill(0) });
   renderAll();
 }
-function removeLastRow() {
+
+function removeRow(ri) {
   const d = getData();
-  if (d.length > 1) { d.pop(); renderAll(); }
+  if (d.length <= 1) {
+    showToast('error', '❌ Phải có ít nhất 1 hàng!');
+    return;
+  }
+  const rowName = d[ri].name;
+  if (!confirm(`Xóa hàng "${rowName}"?`)) return;
+  d.splice(ri, 1);
+  renderAll();
+  showToast('info', `🗑️ Đã xóa "${rowName}"`);
 }
 
 // ═══════════════════════════════════════════════
@@ -494,38 +647,50 @@ function renderSummary() {
   const u = currentTab==='labor' ? 'người' : 'đơn vị';
   document.getElementById('summaryCards').innerHTML = `
     <div class="summary-card"><div class="label">Cao điểm</div><div class="value" style="color:var(--accent-rose)">${mx} <span style="font-size:12px;font-weight:400;color:var(--text-muted)">${u}</span></div></div>
-    <div class="summary-card"><div class="label">Tháng cao điểm</div><div class="value" style="color:var(--accent-blue)">T${pk}</div></div>
+    <div class="summary-card"><div class="label">Tháng cao điểm</div><div class="value" style="color:var(--brand-blue)">T${pk}</div></div>
     <div class="summary-card"><div class="label">Tổng lượt huy động</div><div class="value" style="color:var(--accent-violet)">${sm.toLocaleString()}</div></div>
     <div class="summary-card"><div class="label">Thời gian</div><div class="value" style="color:var(--accent-emerald)">${totalMonths} <span style="font-size:12px;font-weight:400;color:var(--text-muted)">tháng</span></div></div>`;
 }
 
 // ═══════════════════════════════════════════════
-// RENDER CHART (Canvas — reliable for PDF)
+// RESPONSIVE CHART (auto-fit container width)
 // ═══════════════════════════════════════════════
 function renderChart() {
   const data = getData(), totals = getTotals(), maxVal = Math.max(...totals, 1);
   const months = getMonthLabels();
 
   const canvas = document.getElementById('chartCanvas');
+  const wrap = document.getElementById('chartWrap');
   const dpr = window.devicePixelRatio || 1;
-  const W = Math.max(760, totalMonths * 50);
-  const H = 360;
+
+  // Auto-fit container: use container width, height proportional but capped
+  const containerW = wrap.clientWidth - 24; // minus padding
+  const W = Math.max(600, containerW);
+  // Height adapts: more months → slightly taller for label readability
+  const H = totalMonths > 30 ? 420 : (totalMonths > 18 ? 380 : 340);
+
   canvas.width = W * dpr;
   canvas.height = H * dpr;
-  canvas.style.width = W + 'px';
+  canvas.style.width = '100%';
   canvas.style.height = H + 'px';
 
   const ctx = canvas.getContext('2d');
+  ctx.setTransform(1,0,0,1,0,0);
   ctx.scale(dpr, dpr);
   ctx.clearRect(0, 0, W, H);
 
-  const pL = 52, pR = 20, pT = 25, pB = 40;
+  // Padding adapts to month count (more months = thinner labels)
+  const pL = 56, pR = 24, pT = 28, pB = 42;
   const iW = W - pL - pR, iH = H - pT - pB;
   const yTicks = 5;
   const yStep = Math.ceil(maxVal / yTicks / 5) * 5 || 5;
   const yMax = yStep * yTicks;
   const barW = iW / totalMonths;
-  const barPad = barW * 0.16;
+  const barPad = Math.max(1.5, barW * 0.14);
+
+  // Dynamic font sizing
+  const monthFont = totalMonths > 36 ? 8 : (totalMonths > 24 ? 9 : (totalMonths > 16 ? 10 : 11));
+  const totalFont = totalMonths > 36 ? 8 : (totalMonths > 24 ? 9 : (totalMonths > 16 ? 10 : 11));
 
   ctx.font = '500 10px "Be Vietnam Pro", sans-serif';
 
@@ -541,7 +706,7 @@ function renderChart() {
     ctx.fillText(Math.round(i * yStep), pL - 8, y + 4);
   }
 
-  // Bars
+  // Bars (stacked)
   months.forEach((m, mi) => {
     const x = pL + mi * barW + barPad;
     const w = barW - barPad * 2;
@@ -565,27 +730,37 @@ function renderChart() {
       y0 += bh;
     });
 
-    // Total on top
+    // Total on top of bar
     if (totals[mi] > 0) {
-      const ty = pT + iH - (totals[mi] / yMax) * iH - 7;
-      ctx.fillStyle = '#334155';
-      ctx.font = '700 ' + (totalMonths > 24 ? 9 : 11) + 'px "Be Vietnam Pro", sans-serif';
+      const ty = pT + iH - (totals[mi] / yMax) * iH - 6;
+      ctx.fillStyle = '#0f172a';
+      ctx.font = '700 ' + totalFont + 'px "Be Vietnam Pro", sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(totals[mi], x + w / 2, ty);
     }
 
     // Month label
     ctx.fillStyle = '#475569';
-    ctx.font = '500 ' + (totalMonths > 24 ? 9 : 11) + 'px "Be Vietnam Pro", sans-serif';
+    ctx.font = '500 ' + monthFont + 'px "Be Vietnam Pro", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(m, x + (barW - barPad * 2) / 2, H - 10);
+    // For many months, rotate labels
+    if (totalMonths > 24) {
+      ctx.save();
+      ctx.translate(x + w / 2, H - 14);
+      ctx.rotate(-Math.PI / 4);
+      ctx.textAlign = 'right';
+      ctx.fillText(m, 0, 4);
+      ctx.restore();
+    } else {
+      ctx.fillText(m, x + (barW - barPad * 2) / 2 + barPad, H - 12);
+    }
   });
 
   // Trend line
-  ctx.strokeStyle = '#d97706';
+  ctx.strokeStyle = '#dc2626';
   ctx.lineWidth = 2;
   ctx.setLineDash([6, 3]);
-  ctx.globalAlpha = 0.7;
+  ctx.globalAlpha = 0.75;
   ctx.beginPath();
   months.forEach((_, i) => {
     const x = pL + i * barW + barW / 2;
@@ -598,10 +773,10 @@ function renderChart() {
 
   // Y label
   ctx.save();
-  ctx.translate(14, pT + iH / 2);
+  ctx.translate(16, pT + iH / 2);
   ctx.rotate(-Math.PI / 2);
   ctx.fillStyle = '#64748b';
-  ctx.font = '500 10px "Be Vietnam Pro", sans-serif';
+  ctx.font = '600 10px "Be Vietnam Pro", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(currentTab === 'labor' ? 'Số người' : 'Số lượng', 0, 0);
   ctx.restore();
@@ -618,18 +793,25 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath(); ctx.fill();
 }
 
+// Re-render chart on window resize
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => renderChart(), 150);
+});
+
 // ═══════════════════════════════════════════════
 // RENDER LEGEND
 // ═══════════════════════════════════════════════
 function renderLegend() {
   const d = getData();
   let h = d.map(r => `<div class="legend-item"><span class="legend-color" style="background:${r.color}"></span>${r.name}</div>`).join('');
-  h += `<div class="legend-item"><span style="display:inline-block;width:18px;height:2px;background:#d97706;opacity:0.7"></span>Đường xu hướng</div>`;
+  h += `<div class="legend-item"><span style="display:inline-block;width:18px;height:2px;background:#dc2626;opacity:0.75"></span>Đường xu hướng</div>`;
   document.getElementById('legendWrap').innerHTML = h;
 }
 
 // ═══════════════════════════════════════════════
-// RENDER TABLE
+// RENDER TABLE (with per-row delete buttons)
 // ═══════════════════════════════════════════════
 function renderTable() {
   const data = getData(), months = getMonthLabels(), totals = getTotals(), mx = Math.max(...totals, 1);
@@ -637,24 +819,28 @@ function renderTable() {
   document.getElementById('tableTitle').textContent = `📊 Bảng số liệu ${lbl} (chỉnh sửa trực tiếp)`;
 
   let h = '<thead><tr>';
-  h += `<th>${currentTab==='labor' ? 'Hạng mục' : 'Thiết bị'}</th>`;
+  h += `<th class="col-name">${currentTab==='labor' ? 'Hạng mục' : 'Thiết bị'}</th>`;
   months.forEach(m => h += `<th>${m}</th>`);
-  h += '<th style="color:#d97706">Max</th></tr></thead><tbody>';
+  h += '<th style="color:#d97706">Max</th>';
+  h += '<th class="col-action">Xóa</th></tr></thead><tbody>';
 
   data.forEach((d, ri) => {
-    h += '<tr><td>';
+    h += '<tr><td class="col-name">';
     h += `<input type="color" value="${d.color}" style="width:16px;height:16px;border:none;background:none;cursor:pointer;vertical-align:middle;margin-right:4px" onchange="getData()[${ri}].color=this.value;renderChart();renderLegend();renderTable()">`;
-    h += `<input class="name-input" value="${d.name}" style="color:${d.color}" oninput="getData()[${ri}].name=this.value;renderLegend()"></td>`;
+    h += `<input class="name-input" value="${d.name.replace(/"/g,'&quot;')}" style="color:${d.color}" oninput="getData()[${ri}].name=this.value;renderLegend()"></td>`;
     d.values.forEach((v, ci) => {
       const bg = v > 0 ? d.color + '20' : 'transparent';
       h += `<td style="background:${bg}"><input type="number" min="0" value="${v}" onchange="getData()[${ri}].values[${ci}]=parseInt(this.value)||0;renderChart();renderSummary();updateRowMax(${ri})"></td>`;
     });
-    h += `<td style="font-weight:800;color:#d97706" id="rowMax${ri}">${Math.max(...d.values)}</td></tr>`;
+    h += `<td style="font-weight:800;color:#d97706" id="rowMax${ri}">${Math.max(...d.values)}</td>`;
+    h += `<td class="col-action"><button class="btn-delete-row" onclick="removeRow(${ri})" title="Xóa hàng này">✕</button></td>`;
+    h += '</tr>';
   });
 
-  h += '<tr class="total-row"><td style="padding-left:16px">TỔNG CỘNG</td>';
+  h += '<tr class="total-row"><td class="col-name" style="padding-left:16px">TỔNG CỘNG</td>';
   totals.forEach(v => h += `<td class="${v===mx?'peak-val':''}">${v}</td>`);
-  h += `<td class="peak-val" style="font-size:14px">${mx}</td></tr></tbody>`;
+  h += `<td class="peak-val" style="font-size:14px">${mx}</td>`;
+  h += '<td class="col-action"></td></tr></tbody>';
   document.getElementById('dataTable').innerHTML = h;
 }
 
@@ -666,14 +852,18 @@ function updateRowMax(ri) {
 function renderAll() { renderSummary(); renderChart(); renderLegend(); renderTable(); }
 
 // ═══════════════════════════════════════════════
-// PDF EXPORT (html2canvas + jsPDF — renders chart correctly)
+// PDF EXPORT (html2canvas + jsPDF)
 // ═══════════════════════════════════════════════
 async function exportPDF() {
-  showToast('loading', '⏳ Đang tạo PDF...');
+  showToast('loading', '⏳ Đang tạo PDF, vui lòng chờ...');
 
-  // Hide non-print elements
-  const hideEls = document.querySelectorAll('.toolbar, .settings-panel, .save-info');
-  hideEls.forEach(el => el.style.display = 'none');
+  // Switch to print mode
+  document.body.classList.add('printing');
+  // Wait for browser to repaint
+  await new Promise(r => setTimeout(r, 100));
+  // Re-render chart at full width for high quality
+  renderChart();
+  await new Promise(r => setTimeout(r, 200));
 
   const element = document.getElementById('exportContent');
 
@@ -684,47 +874,51 @@ async function exportPDF() {
       backgroundColor: '#ffffff',
       logging: false,
       allowTaint: true,
+      windowWidth: element.scrollWidth,
     });
 
     const imgData = canvas.toDataURL('image/jpeg', 0.95);
     const { jsPDF } = window.jspdf;
 
-    const isLandscape = totalMonths > 14;
+    // Landscape A4 by default (better for charts)
     const pdf = new jsPDF({
-      orientation: isLandscape ? 'landscape' : 'portrait',
+      orientation: 'landscape',
       unit: 'mm',
       format: 'a4'
     });
 
-    const pageW = pdf.internal.pageSize.getWidth();
-    const pageH = pdf.internal.pageSize.getHeight();
+    const pageW = pdf.internal.pageSize.getWidth();   // 297mm
+    const pageH = pdf.internal.pageSize.getHeight();  // 210mm
     const margin = 8;
     const usableW = pageW - margin * 2;
+    const usableH = pageH - margin * 2;
 
     const imgW = canvas.width;
     const imgH = canvas.height;
     const ratio = usableW / imgW;
     const scaledH = imgH * ratio;
 
-    // Multi-page if content is tall
-    if (scaledH <= pageH - margin * 2) {
+    // Single page if fits
+    if (scaledH <= usableH) {
       pdf.addImage(imgData, 'JPEG', margin, margin, usableW, scaledH);
     } else {
+      // Multi-page: slice the canvas
       let yOffset = 0;
-      const sliceH = (pageH - margin * 2) / ratio;
+      const sliceH = usableH / ratio;
       let page = 0;
 
       while (yOffset < imgH) {
         if (page > 0) pdf.addPage();
-        const sy = yOffset;
         const sh = Math.min(sliceH, imgH - yOffset);
 
-        // Create slice canvas
         const sliceCanvas = document.createElement('canvas');
         sliceCanvas.width = imgW;
         sliceCanvas.height = sh;
         const sCtx = sliceCanvas.getContext('2d');
-        sCtx.drawImage(canvas, 0, sy, imgW, sh, 0, 0, imgW, sh);
+        // White background for slice
+        sCtx.fillStyle = '#ffffff';
+        sCtx.fillRect(0, 0, imgW, sh);
+        sCtx.drawImage(canvas, 0, yOffset, imgW, sh, 0, 0, imgW, sh);
 
         const sliceData = sliceCanvas.toDataURL('image/jpeg', 0.95);
         const sliceScaledH = sh * ratio;
@@ -736,16 +930,20 @@ async function exportPDF() {
     }
 
     const name = (document.getElementById('projectName').value || 'du-an').replace(/\s+/g, '-');
-    const tabName = currentTab === 'labor' ? 'Nhan-luc' : 'May-moc';
-    pdf.save(`${name}_${tabName}.pdf`);
+    const tabName = currentTab === 'labor' ? 'NhanLuc' : 'MayMoc';
+    const dateStr = new Date().toISOString().slice(0,10);
+    pdf.save(`VITECCONS_${name}_${tabName}_${dateStr}.pdf`);
 
     showToast('success', '✅ Đã xuất PDF thành công!');
   } catch (err) {
     showToast('error', '❌ Lỗi xuất PDF: ' + err.message);
+    console.error(err);
+  } finally {
+    // Restore normal view
+    document.body.classList.remove('printing');
+    await new Promise(r => setTimeout(r, 50));
+    renderChart();
   }
-
-  // Restore hidden elements
-  hideEls.forEach(el => el.style.display = '');
 }
 
 // ═══════════════════════════════════════════════
@@ -762,7 +960,11 @@ function showToast(type, msg) {
   }
 }
 
-// Init
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+setReportDate();
+updateBrandInfo();
 renderAll();
 </script>
 </body>
