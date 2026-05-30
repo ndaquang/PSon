@@ -1394,11 +1394,9 @@ function updateStaffQty(code, val){
   staffState[code].qty = v;
   // Auto-suggest months = duration nếu chưa nhập
   if (v > 0 && !staffState[code].months) {
-    const p = getProjectInputs();
-    staffState[code].months = p.duration;
-    // Cập nhật ô tháng (chỉ ô tháng của dòng này, không re-render cả bảng)
+    staffState[code].months = APP_STATE.duration;
     const monthEl = document.getElementById('month-'+code);
-    if (monthEl) monthEl.value = p.duration;
+    if (monthEl) monthEl.value = APP_STATE.duration;
   }
   refreshStaffRow(code);
   refreshStaffTotals();
@@ -1406,6 +1404,16 @@ function updateStaffQty(code, val){
 
 function updateStaffMonths(code, val){
   const v = parseFloat(val) || 0;
+  const maxMonths = APP_STATE.duration;
+  if (maxMonths > 0 && v > maxMonths) {
+    // Cảnh báo nhẹ — không hard-block để cho phép DA gia hạn
+    const el = document.getElementById('month-'+code);
+    if (el) el.style.borderColor = '#f59e0b';
+    el && el.setAttribute('title', `⚠️ Số tháng (${v}) vượt tiến độ DA (${maxMonths} tháng)`);
+  } else {
+    const el = document.getElementById('month-'+code);
+    if (el) { el.style.borderColor = ''; el.removeAttribute('title'); }
+  }
   staffState[code].months = v;
   refreshStaffRow(code);
   refreshStaffTotals();
@@ -2182,8 +2190,19 @@ function updateQuickCalc(){
   const v = getQuickInputs();
   const d = QC_DEFAULTS[v.type];
 
+  // Xác định bucket theo GTT
+  const bucket = v.GTT < 100 ? 'small' : v.GTT <= 250 ? 'medium' : 'large';
+  const bucketLabel = { small:'< 100 tỷ', medium:'100-250 tỷ', large:'> 250 tỷ' }[bucket];
+  // R chuẩn theo bucket (để hiển thị tham chiếu, không override R user đã nhập)
+  const R_ccm_bucket = CCM_RATES[v.type]?.[bucket] || d.R;
+  // Cảnh báo nếu R user đang dùng lệch khỏi bucket hiện tại
+  const R_bucket_diff = Math.abs(v.R - R_ccm_bucket);
+  const R_bucket_warning = R_bucket_diff > 0.3;
+
   // CT [1]: QL (chuẩn, chưa hiệu chỉnh thời gian) = GTT × R, đơn vị tỷ VND
   const QL_base_billion = v.GTT * v.R / 100;
+  // QL theo R chuẩn của bucket (để so sánh)
+  const QL_bucket_billion = v.GTT * R_ccm_bucket / 100;
   // Đổi sang triệu để khớp đơn vị L
   const QL_base_million = QL_base_billion * 1000;
 
@@ -2196,14 +2215,16 @@ function updateQuickCalc(){
 
   // CT [4]: Năng suất lao động
   const NSLD_year = N_used > 0 ? (v.GTT / N_used * 12 / v.T) : 0; // tỷ/người/năm
-  const NSLD_proj = N_used > 0 ? (v.GTT / N_used) : 0;            // tỷ/người/dự án
+  const NSLD_proj = N_used > 0 ? (v.GTT / N_used) : 0;
 
   // CT [5]: Hồi quy nhanh
   const N_reg = 0.034 * v.GTT + 16.96;
+  // Cảnh báo nếu N tính lệch N hồi quy > 50%
+  const N_reg_diff_pct = N_reg > 0 ? Math.abs(N_auto - N_reg) / N_reg * 100 : 0;
+  const N_reg_warning = N_reg_diff_pct > 50;
 
   // Hiệu chỉnh thời gian
   const QL_adj_billion = QL_base_billion * v.timeCoef;
-  const QL_adj_million = QL_adj_billion * 1000;
   const R_adj = v.R * v.timeCoef;
 
   // So sánh với chuẩn loại hình
@@ -2216,20 +2237,50 @@ function updateQuickCalc(){
   html += '<div class="summary-grid" style="margin-bottom:14px">';
   html += '<div class="card" style="border-left:4px solid #065f46"><div class="card-val" style="color:#065f46;font-size:20px">'+QL_base_billion.toFixed(2)+' tỷ</div><div class="card-label">QL Định biên (chuẩn)</div><div class="card-sub">= '+v.GTT+' × '+v.R+'%</div></div>';
   html += '<div class="card" style="border-left:4px solid #9a3412"><div class="card-val" style="color:#9a3412;font-size:20px">'+QL_adj_billion.toFixed(2)+' tỷ</div><div class="card-label">QL Hiệu chỉnh thời gian (×'+v.timeCoef.toFixed(2)+')</div><div class="card-sub">% hiệu chỉnh: '+R_adj.toFixed(2)+'%</div></div>';
-  html += '<div class="card" style="border-left:4px solid #0f3460"><div class="card-val" style="color:#0f3460;font-size:20px">'+N_used+' người</div><div class="card-label">N — Số nhân sự</div><div class="card-sub">'+(v.N ? 'User nhập' : 'Auto-tính từ QL/L/T')+'</div></div>';
-  html += '<div class="card" style="border-left:4px solid #7b2cbf"><div class="card-val" style="color:#7b2cbf;font-size:20px">'+L_check.toFixed(1)+' tr</div><div class="card-label">L — Kiểm tra (back-calc)</div><div class="card-sub">L mong muốn: '+v.L.toFixed(1)+' tr</div></div>';
-  html += '<div class="card" style="border-left:4px solid #0a9396"><div class="card-val" style="color:#0a9396;font-size:20px">'+NSLD_year.toFixed(2)+' tỷ/ng/năm</div><div class="card-label">Năng suất Lao động</div><div class="card-sub">Chuẩn: 15 tỷ/ng/năm '+(NSLD_year >= 15 ? '✅' : '⚠️ Thấp')+'</div></div>';
-  html += '<div class="card" style="border-left:4px solid #f59e0b"><div class="card-val" style="color:#f59e0b;font-size:20px">'+Math.round(N_reg)+' người</div><div class="card-label">N theo Hồi quy</div><div class="card-sub">N = 0.034×GTT + 16.96</div></div>';
+  html += '<div class="card" style="border-left:4px solid #0f3460"><div class="card-val" style="color:#0f3460;font-size:20px">'+N_used+' người</div><div class="card-label">N — Số nhân sự</div><div class="card-sub">'+(v.N ? 'User nhập' : 'Auto từ QL/L/T')+'</div></div>';
+  html += '<div class="card" style="border-left:4px solid #7b2cbf"><div class="card-val" style="color:#7b2cbf;font-size:20px">'+L_check.toFixed(1)+' tr</div><div class="card-label">L — Kiểm tra (back-calc)</div><div class="card-sub">Mục tiêu: '+v.L.toFixed(1)+' tr</div></div>';
+  // NSLĐ với label đã điều chỉnh: không cảnh báo đỏ, chỉ là tham chiếu
+  const nsldColor = NSLD_year >= 15 ? '#065f46' : '#854d0e';
+  const nsldNote = NSLD_year >= 15 ? '✅ Trên benchmark' : '💡 Dưới benchmark (bình thường cho XDVN)';
+  html += '<div class="card" style="border-left:4px solid '+nsldColor+'"><div class="card-val" style="color:'+nsldColor+';font-size:20px">'+NSLD_year.toFixed(2)+' tỷ/ng/năm</div><div class="card-label">Năng suất Lao động</div><div class="card-sub" style="color:'+nsldColor+'">'+nsldNote+'</div></div>';
+  // N hồi quy với cảnh báo nếu lệch > 50%
+  const nRegColor = N_reg_warning ? '#9a3412' : '#f59e0b';
+  html += '<div class="card" style="border-left:4px solid '+nRegColor+'"><div class="card-val" style="color:'+nRegColor+';font-size:20px">'+Math.round(N_reg)+' người</div><div class="card-label">N hồi quy (tham chiếu)</div><div class="card-sub" style="color:'+nRegColor+'">'+(N_reg_warning ? '⚠️ Lệch '+N_reg_diff_pct.toFixed(0)+'% — xem ghi chú' : 'Δ = '+Math.abs(N_auto - Math.round(N_reg))+' người')+'</div></div>';
   html += '</div>';
+
+  // Bucket + R chuẩn alert
+  if (R_bucket_warning) {
+    html += '<div style="padding:10px 14px;background:#fee2e2;border-radius:8px;border:1.5px solid #fca5a5;font-size:12px;color:#991b1b;margin-bottom:10px">';
+    html += '<b>⚠️ R đang dùng ('+v.R+'%) lệch so với CCM chuẩn cho quy mô '+ bucketLabel +' ('+R_ccm_bucket+'%).</b><br>';
+    html += 'QL theo R chuẩn bucket = <b>'+QL_bucket_billion.toFixed(2)+' tỷ</b> (Δ = '+(QL_base_billion - QL_bucket_billion > 0 ? '+' : '')+(QL_base_billion - QL_bucket_billion).toFixed(2)+' tỷ).<br>';
+    html += 'Nhấn <b>"Tải lại Tham số chuẩn"</b> và kiểm tra lại hoặc tự điều chỉnh R theo quy mô.';
+    html += '</div>';
+  }
+
+  // Bucket info bar
+  html += '<div style="background:#f0fdf4;padding:8px 14px;border-radius:8px;border:1px solid #86efac;font-size:12px;margin-bottom:10px;display:flex;gap:16px;flex-wrap:wrap">';
+  html += '<span>📏 <b>Quy mô:</b> '+bucketLabel+' → <b>R CCM chuẩn: '+R_ccm_bucket+'%</b></span>';
+  html += '<span>📊 <b>R đang dùng:</b> '+v.R+'%'+(R_bucket_warning ? ' ⚠️' : ' ✅')+'</span>';
+  html += '<span>💰 <b>QL theo R chuẩn:</b> '+QL_bucket_billion.toFixed(2)+' tỷ</span>';
+  html += '</div>';
+
+  // N hồi quy note nếu lệch lớn
+  if (N_reg_warning) {
+    html += '<div style="padding:10px 14px;background:#fef3c7;border-radius:8px;border:1px solid #fcd34d;font-size:12px;color:#854d0e;margin-bottom:10px">';
+    html += '<b>💡 N tính ('+N_auto+') lệch '+N_reg_diff_pct.toFixed(0)+'% so với N hồi quy ('+Math.round(N_reg)+').</b><br>';
+    html += 'Lý do bình thường: công thức tính N từ R% chỉ tính lương công trường trực tiếp, còn hồi quy phản ánh tổng nhân sự thực tế (cả gián tiếp). Không phải lỗi.';
+    html += '</div>';
+  }
 
   // Detail table
   html += '<div style="background:#f8fafc;padding:14px;border-radius:10px;font-size:13px;line-height:2">';
   html += '<b style="color:#0f3460;font-size:13px">📐 CHI TIẾT TÍNH TOÁN:</b><br>';
+  html += '<div class="info-row"><span>Quy mô (bucket)</span><b>'+bucketLabel+' → R chuẩn: '+R_ccm_bucket+'%</b></div>';
   html += '<div class="info-row"><span>[1] Quỹ lương = GTT × R</span><b>'+v.GTT+' tỷ × '+v.R+'% = '+QL_base_billion.toFixed(2)+' tỷ VND</b></div>';
-  html += '<div class="info-row"><span>[2] N = QL ÷ (L × T)</span><b>'+QL_base_million.toFixed(0)+' tr ÷ ('+v.L+' tr × '+v.T+' th) = '+N_auto+' người</b></div>';
-  html += '<div class="info-row"><span>[3] L = QL ÷ (N × T) (back-calc)</span><b>'+QL_base_million.toFixed(0)+' tr ÷ ('+N_used+' × '+v.T+' th) = '+L_check.toFixed(2)+' tr</b></div>';
+  html += '<div class="info-row"><span>[2] N = QL ÷ (L × T)</span><b>'+(QL_base_million).toFixed(0)+' tr ÷ ('+v.L+' tr × '+v.T+' th) = '+N_auto+' người</b></div>';
+  html += '<div class="info-row"><span>[3] L = QL ÷ (N × T) (back-calc)</span><b>'+(QL_base_million).toFixed(0)+' tr ÷ ('+N_used+' × '+v.T+' th) = '+L_check.toFixed(2)+' tr</b></div>';
   html += '<div class="info-row"><span>[4] NSLĐ = GTT ÷ N</span><b>'+v.GTT+' tỷ ÷ '+N_used+' ng = '+NSLD_proj.toFixed(3)+' tỷ/ng/DA = '+NSLD_year.toFixed(2)+' tỷ/ng/năm</b></div>';
-  html += '<div class="info-row"><span>[5] N hồi quy = 0.034×GTT+16.96</span><b>'+N_reg.toFixed(1)+' người (tham chiếu)</b></div>';
+  html += '<div class="info-row"><span>[5] N hồi quy = 0.034×GTT+16.96</span><b>'+N_reg.toFixed(1)+' người (tham chiếu CCM thực tế)</b></div>';
   html += '<div class="info-row" style="background:#fef3c7;margin:6px -8px;padding:6px 8px;border-radius:6px"><span>⏱️ Hệ số biến động thời gian</span><b style="color:#9a3412">×'+v.timeCoef.toFixed(2)+'</b></div>';
   html += '<div class="info-row" style="background:#fee2e2;margin:6px -8px;padding:6px 8px;border-radius:6px"><span><b>💰 QL HIỆU CHỈNH (cuối cùng)</b></span><b style="color:#e94560;font-size:14px">'+QL_adj_billion.toFixed(2)+' tỷ VND</b></div>';
   html += '<div class="info-row"><span>📊 % hiệu chỉnh trên GTT</span><b style="color:#9a3412">'+R_adj.toFixed(2)+'% (gốc '+v.R+'%)</b></div>';
