@@ -51,6 +51,22 @@ tbody tr:hover{background:#eef1f8!important}
 .scenario-input{display:block;margin-top:3px;width:100%;max-width:175px;font-size:11px;padding:3px 7px;border:1px dashed #cbd5e1;border-radius:6px;background:#fff;color:#0f3460;outline:none}
 .scenario-input::placeholder{color:#b8c0cc;font-style:italic}
 .scenario-input:focus{border-color:#0f3460;border-style:solid;background:#f8fbff}
+.crit-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-weight:700;color:#92400e;font-size:12px}
+.crit-bar select{padding:6px 10px;border:1.5px solid #fdba74;border-radius:8px;font-size:12px;font-weight:700;color:#92400e;background:#fff;cursor:pointer;outline:none}
+.crit-note{font-weight:500;color:#a16207;font-size:11px}
+.group-block{border:1.5px solid #cbd5e1;border-radius:12px;padding:10px 12px;margin-bottom:14px;background:#f8fafc}
+.group-head{font-weight:800;color:#0f3460;font-size:13px;margin-bottom:8px}
+.group-sub{font-weight:600;color:#64748b;font-size:11px}
+thead.calc-group tr{background:#334155;color:#fff}
+.row-selected{background:#ecfdf5!important;box-shadow:inset 3px 0 0 #10b981}
+.row-selected td{border-bottom-color:#a7f3d0}
+.opt-star{color:#f59e0b;font-weight:800}
+.group-reco{margin-top:8px;font-size:12px;font-weight:700;color:#065f46;background:#d1fae5;border-radius:8px;padding:7px 10px}
+.group-reco.muted{color:#64748b;background:#eef2f7;font-weight:600}
+.muted{color:#94a3b8;font-weight:500;font-size:11px}
+.cmp-table th{font-size:10px}
+.cmp-opt{background:#fffbeb}
+.cmp-sel{background:#ecfdf5!important}
 .remove-btn{border:none;background:none;cursor:pointer;font-size:15px;color:#ccc}
 .remove-btn:hover{color:#e94560}
 .card{background:#f8f9fc;border-radius:10px;padding:12px 14px}
@@ -182,7 +198,7 @@ tbody tr:hover{background:#eef1f8!important}
   <div class="tab-panel" id="tab-calculator">
     <div class="card" style="border-left:4px solid #0f3460;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px">
       <span style="font-weight:700;color:#0f3460">📋 Bảng tính toán nhân lực</span>
-      <span class="default-days-note">💡 Nhập tiến độ riêng cho từng công tác ở cột "Số ngày"</span>
+      <span class="default-days-note">💡 Nhập tiến độ riêng cho từng công tác ở cột "Số ngày" · Gõ cùng tên vào ô <b>"Nhóm PA"</b> cho 2+ dòng để so sánh & chọn phương án tối ưu</span>
       <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn-add-new" style="margin-bottom:0" onclick="openBulkModal()">📋 Nhập hàng loạt</button>
         <button class="btn-download" onclick="downloadUpdatedFile()">💾 Lưu file</button>
@@ -687,13 +703,74 @@ function newUid() { return 'C' + (++calcUidSeq); }
 function calcCount(srcId) { return calcItems.filter(i => i.srcId === srcId).length; }
 function isInCalc(id) { return calcItems.some(item => item.srcId === id); }
 
+// ===== NHÓM PHƯƠNG ÁN & TỐI ƯU =====
+let groupPick = {};                 // { tênNhóm: uid đã chọn thủ công }
+let optCriterion = 'manpower';      // tiêu chí tối ưu: manpower | machines | fuel
+const CRIT_LABEL = {manpower:'Ít nhân lực nhất', machines:'Ít thiết bị/tổ nhất', fuel:'Ít nhiên liệu nhất'};
+function baseName(it){ return it.type === 'labor' ? it.task : it.equipment; }
+
+// tính toán đầy đủ chỉ số cho 1 dòng
+function computeMetrics(item){
+  const days = item.taskDays || 30;
+  if (item.type === 'labor'){
+    const totalLH = item.quantity * item.laborHours;
+    const d = item.quantity > 0 ? item.quantity / item.dailyOutput : 0;
+    const crews = d > 0 ? Math.ceil(d / days) : 0;
+    const workers = crews * item.crewSize;
+    return {...item, totalLH, d, crews, workers, machines:0, ops:0, hlps:0, fuel:0, manpower:workers};
+  } else {
+    const d = item.quantity > 0 ? item.quantity / item.output8h : 0;
+    const machines = d > 0 ? Math.ceil(d / days) : 0;
+    const ops = machines * item.operator;
+    const hlps = machines * item.helper;
+    const fuel = d * item.fuelPerHour * 8;
+    return {...item, totalLH:0, d, crews:0, workers:0, machines, ops, hlps, fuel, manpower:ops+hlps};
+  }
+}
+function critValue(r){
+  if (optCriterion === 'machines') return r.type==='labor' ? r.crews : r.machines;
+  if (optCriterion === 'fuel') return r.fuel;
+  return r.manpower; // mặc định nhân lực
+}
+// gom results thành các nhóm so sánh (>=2 dòng cùng group) + danh sách dòng đơn lẻ
+function buildGroups(results){
+  const map = {};            // tênNhóm -> [results]
+  const order = [];
+  results.forEach(r => {
+    const g = (r.group || '').trim();
+    if (g) { if(!map[g]){ map[g]=[]; order.push(g);} map[g].push(r); }
+  });
+  const groups = [];         // nhóm so sánh thực sự (>=2 phương án)
+  const soloKeys = {};       // group có 1 dòng -> coi như đơn lẻ
+  order.forEach(g => { if (map[g].length >= 2) groups.push({name:g, options:map[g]}); else soloKeys[map[g][0].uid]=true; });
+  const standalone = results.filter(r => { const g=(r.group||'').trim(); return !g || soloKeys[r.uid]; });
+  return {groups, standalone};
+}
+// chọn phương án tối ưu trong 1 nhóm theo tiêu chí (chỉ xét dòng đã nhập khối lượng)
+function optimalUid(options){
+  const valid = options.filter(o => o.quantity > 0);
+  if (!valid.length) return null;
+  let best = valid[0];
+  valid.forEach(o => { if (critValue(o) < critValue(best)) best = o; });
+  return best.uid;
+}
+// uid đang được chọn cho 1 nhóm (ưu tiên chọn thủ công hợp lệ, nếu không lấy tối ưu)
+function selectedUid(group){
+  const pick = groupPick[group.name];
+  if (pick && group.options.some(o => o.uid === pick)) return pick;
+  return optimalUid(group.options);
+}
+function selectGroupOption(name, uid){ groupPick[name] = uid; renderCalc(); }
+function setCriterion(v){ optCriterion = v; renderCalc(); if(document.getElementById('tab-report').classList.contains('active')) renderReport(); }
+
 // Thêm vào bảng tính — CHO PHÉP thêm cùng 1 mục nhiều lần (mỗi lần = 1 phương án)
 function addToCalc(id, type) {
   const data = type === 'labor' ? laborDataMut.find(r => r.id === id) : equipDataMut.find(r => r.id === id);
   if (!data) return;
   const n = calcCount(id);
-  const scenario = n > 0 ? ('PA' + (n + 1)) : '';   // tự gắn nhãn PA2, PA3... khi trùng
-  calcItems.push({...data, uid: newUid(), srcId: id, type, quantity: 0, taskDays: 30, scenario});
+  // Khi thêm trùng cùng 1 mục → tự gom vào nhóm theo tên công việc để so sánh
+  const group = n > 0 ? baseName({...data, type}) : '';
+  calcItems.push({...data, uid: newUid(), srcId: id, type, quantity: 0, taskDays: 30, group});
   if (type === 'labor') selectedLabor.add(id);
   else selectedEquip.add(id);
   renderLabor();
@@ -710,7 +787,14 @@ function removeCalcItem(uid) {
   renderCalc();
 }
 
-// Cập nhật nhãn phương án cho 1 dòng
+// Cập nhật nhóm phương án cho 1 dòng
+function commitGroup(uid, val) {
+  const it = calcItems.find(i => i.uid === uid);
+  if (!it) return;
+  it.group = (val || '').trim();
+  renderCalc();
+}
+// giữ tương thích tên cũ
 function commitScenario(uid, val) {
   const it = calcItems.find(i => i.uid === uid);
   if (!it) return;
@@ -816,7 +900,7 @@ function addAllLabor() {
   });
   data.forEach(r => {
     if (calcCount(r.id) === 0) {
-      calcItems.push({...r, uid:newUid(), srcId:r.id, type:'labor', quantity:0, taskDays:30, scenario:''});
+      calcItems.push({...r, uid:newUid(), srcId:r.id, type:'labor', quantity:0, taskDays:30, group:''});
       selectedLabor.add(r.id);
     }
   });
@@ -872,7 +956,7 @@ function addAllEquip() {
   });
   data.forEach(r => {
     if (calcCount(r.id) === 0) {
-      calcItems.push({...r, uid:newUid(), srcId:r.id, type:'equipment', quantity:0, taskDays:30, scenario:''});
+      calcItems.push({...r, uid:newUid(), srcId:r.id, type:'equipment', quantity:0, taskDays:30, group:''});
       selectedEquip.add(r.id);
     }
   });
@@ -918,6 +1002,18 @@ function equipSort(key) {
 }
 
 // ===== CALCULATOR RENDER =====
+function _escJs(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+function _critUnit(){ return optCriterion==='fuel' ? 'lít' : (optCriterion==='machines' ? 'máy/tổ' : 'người'); }
+function _qtyTd(r, tabIdx){
+  return '<td><input type="text" inputmode="decimal" tabindex="'+tabIdx+'" class="calc-input" id="qty_'+r.uid+'" value="'+(r.quantity||'')+'" placeholder="0" onfocus="this.select()" onkeydown="handleCalcKey(event,\'qty_'+r.uid+'\')" onblur="this.value=this.value.replace(/[^0-9.,]/g,\'\');commitQty(\''+r.uid+'\',this.value)"></td>';
+}
+function _daysTd(r, tabIdx){
+  return '<td class="tc"><input type="number" tabindex="'+tabIdx+'" class="task-days-input" id="days_'+r.uid+'" min="1" value="'+(r.taskDays||30)+'" onfocus="this.select()" onkeydown="handleCalcKey(event,\'days_'+r.uid+'\')" onblur="commitDays(\''+r.uid+'\',this.value)"></td>';
+}
+function _groupInput(r){
+  return '<input class="scenario-input" value="'+(r.group||'').replace(/"/g,'&quot;')+'" placeholder="+ Nhóm PA (gõ cùng tên để so sánh)" tabindex="-1" onblur="commitGroup(\''+r.uid+'\',this.value)">';
+}
+
 function renderCalc() {
   document.getElementById('clearAllBtn').style.display = calcItems.length ? '' : 'none';
 
@@ -927,26 +1023,17 @@ function renderCalc() {
     return;
   }
 
-  let tLH=0, tW=0, tM=0, tO=0, tH=0;
-  const results = calcItems.map(item => {
-    const days = item.taskDays || 30;
-    if (item.type === 'labor') {
-      const totalLH = item.quantity * item.laborHours;
-      const d = item.quantity > 0 ? item.quantity / item.dailyOutput : 0;
-      const crews = d > 0 ? Math.ceil(d / days) : 0;
-      const workers = crews * item.crewSize;
-      tLH += totalLH; tW += workers;
-      return {...item, totalLH, d, crews, workers};
-    } else {
-      const d = item.quantity > 0 ? item.quantity / item.output8h : 0;
-      const machines = d > 0 ? Math.ceil(d / days) : 0;
-      const ops = machines * item.operator;
-      const hlps = machines * item.helper;
-      const fuel = d * item.fuelPerHour * 8;
-      tM += machines; tO += ops; tH += hlps;
-      return {...item, d, machines, ops, hlps, fuel};
-    }
-  });
+  const results = calcItems.map(computeMetrics);
+  const {groups, standalone} = buildGroups(results);
+
+  let tab = 0; // tabindex toàn cục cho ô khối lượng/tiến độ
+
+  // ----- TỔNG: công việc đơn lẻ (đủ) + phương án ĐÃ CHỌN của mỗi nhóm -----
+  let tLH=0,tW=0,tM=0,tO=0,tH=0;
+  const add = r => { tLH+=r.totalLH; tW+=r.workers; tM+=r.machines; tO+=r.ops; tH+=r.hlps; };
+  standalone.forEach(add);
+  const selBy = {};
+  groups.forEach(g => { const su=selectedUid(g); selBy[g.name]=su; const s=g.options.find(o=>o.uid===su); if(s) add(s); });
 
   const cards = [
     {l:'Tổng giờ công',v:Math.round(tLH).toLocaleString('vi-VN'),c:'#0f3460'},
@@ -959,48 +1046,86 @@ function renderCalc() {
   document.getElementById('summaryCards').innerHTML = cards.map(c=>'<div class="card" style="border-left:4px solid '+c.c+'"><div class="card-val" style="color:'+c.c+'">'+c.v+'</div><div class="card-label">'+c.l+'</div></div>').join('');
 
   let html = '';
-  const laborResults = results.filter(r => r.type === 'labor');
-  const equipResults = results.filter(r => r.type === 'equipment');
 
-  if (laborResults.length) {
-    html += '<div style="margin-bottom:12px"><div class="section-title" style="color:#0f3460">👷 NHÂN CÔNG</div><div class="tbl-wrap"><table><thead class="calc-labor"><tr>';
-    ['Công tác','ĐVT','Khối lượng','GC/ĐV','Tổng GC','Số ngày cần','Tiến độ (ngày)','Tổ đội','Tổng CN',''].forEach(h => html += '<th style="font-size:10px">'+h+'</th>');
+  // thanh chọn tiêu chí (chỉ hiện khi có ít nhất 1 nhóm so sánh)
+  if (groups.length) {
+    html += '<div class="crit-bar">⭐ Tiêu chí tối ưu: <select onchange="setCriterion(this.value)">'+
+      Object.keys(CRIT_LABEL).map(k=>'<option value="'+k+'"'+(k===optCriterion?' selected':'')+'>'+CRIT_LABEL[k]+'</option>').join('')+
+      '</select><span class="crit-note">Tổng nhân lực phía trên = phương án <b>đã chọn</b> của mỗi nhóm + công việc đơn lẻ (không cộng dồn các phương án).</span></div>';
+  }
+
+  // ----- CÁC NHÓM SO SÁNH -----
+  groups.forEach((g, gi) => {
+    const su = selBy[g.name];
+    const opt = optimalUid(g.options);
+    html += '<div class="group-block"><div class="group-head">🔀 Nhóm: '+g.name+' <span class="group-sub">— '+g.options.length+' phương án</span></div>';
+    html += '<div class="tbl-wrap"><table><thead class="calc-group"><tr>';
+    ['Chọn','Phương án','ĐVT','Khối lượng','Tiến độ (ngày)','Nhân lực','Máy/Tổ','NL (lít)','Tổng GC','Nhóm PA',''].forEach(hh=>html+='<th style="font-size:10px">'+hh+'</th>');
     html += '</tr></thead><tbody>';
-    laborResults.forEach((r, i) => {
-      const qTab = (i*2)+1;
-      const dTab = (i*2)+2;
-      const tag = r.scenario ? '<span class="scenario-tag">'+r.scenario+'</span><br>' : '';
-      html += '<tr><td style="font-weight:500;max-width:200px">'+tag+r.task+'<input class="scenario-input" value="'+(r.scenario||'')+'" placeholder="+ tên phương án..." tabindex="-1" onblur="commitScenario(\''+r.uid+'\',this.value)"></td><td class="tc">'+r.unit+'</td>';
-      html += '<td><input type="text" inputmode="decimal" tabindex="'+qTab+'" class="calc-input" id="qty_'+r.uid+'" value="'+(r.quantity||'')+'" placeholder="0" onfocus="this.select()" onkeydown="handleCalcKey(event,\'qty_'+r.uid+'\')" onblur="this.value=this.value.replace(/[^0-9.,]/g,\'\');commitQty(\''+r.uid+'\',this.value)"></td>';
+    g.options.forEach(r => {
+      const q=++tab, d=++tab;
+      const isSel=r.uid===su, isOpt=r.uid===opt;
+      html += '<tr'+(isSel?' class="row-selected"':'')+'>';
+      html += '<td class="tc"><input type="radio" name="grp_'+gi+'" '+(isSel?'checked':'')+' tabindex="-1" onclick="selectGroupOption(\''+_escJs(g.name)+'\',\''+r.uid+'\')"></td>';
+      html += '<td style="font-weight:500;max-width:190px">'+(isOpt?'<span class="opt-star">⭐</span> ':'')+baseName(r)+(r.notes?'<div style="font-size:10px;color:#999">'+r.notes+'</div>':'')+'</td>';
+      html += '<td class="tc" style="font-size:11px">'+r.unit+'</td>';
+      html += _qtyTd(r,q);
+      html += _daysTd(r,d);
+      html += '<td class="tc" style="font-weight:800;color:#e94560;font-size:14px">'+(r.quantity>0?r.manpower:'—')+'</td>';
+      html += '<td class="tc" style="color:#0a9396;font-weight:700">'+(r.quantity>0?(r.type==='labor'?r.crews+' tổ':r.machines+' máy'):'—')+'</td>';
+      html += '<td class="num-r" style="color:#bb6016">'+(r.fuel?Math.round(r.fuel).toLocaleString('vi-VN'):'—')+'</td>';
+      html += '<td class="num-r" style="color:#0f3460">'+(r.totalLH?Math.round(r.totalLH).toLocaleString('vi-VN'):'—')+'</td>';
+      html += '<td>'+_groupInput(r)+'</td>';
+      html += '<td><button class="remove-btn" tabindex="-1" onclick="removeCalcItem(\''+r.uid+'\')">✕</button></td></tr>';
+    });
+    html += '</tbody></table></div>';
+    const o = g.options.find(x=>x.uid===opt);
+    if (o) html += '<div class="group-reco">✅ Đề xuất tối ưu ('+CRIT_LABEL[optCriterion]+'): <b>'+baseName(o)+'</b> — '+critValue(o)+' '+_critUnit()+(su!==opt?' <span class="muted">(bạn đang chọn thủ công phương án khác)</span>':'')+'</div>';
+    else html += '<div class="group-reco muted">↳ Nhập khối lượng cho các phương án để so sánh và chọn phương án tối ưu.</div>';
+    html += '</div>';
+  });
+
+  const sLabor = standalone.filter(r=>r.type==='labor');
+  const sEquip = standalone.filter(r=>r.type==='equipment');
+
+  // ----- NHÂN CÔNG (đơn lẻ) -----
+  if (sLabor.length) {
+    html += '<div style="margin-bottom:12px"><div class="section-title" style="color:#0f3460">👷 NHÂN CÔNG</div><div class="tbl-wrap"><table><thead class="calc-labor"><tr>';
+    ['Công tác','ĐVT','Khối lượng','GC/ĐV','Tổng GC','Số ngày cần','Tiến độ (ngày)','Tổ đội','Tổng CN','Nhóm PA',''].forEach(hh => html += '<th style="font-size:10px">'+hh+'</th>');
+    html += '</tr></thead><tbody>';
+    sLabor.forEach(r => {
+      const q=++tab, d=++tab;
+      html += '<tr><td style="font-weight:500;max-width:200px">'+r.task+'</td><td class="tc">'+r.unit+'</td>';
+      html += _qtyTd(r,q);
       html += '<td class="num-r" style="color:#888">'+fmtLH(r.laborHours)+'</td>';
       html += '<td class="num-r" style="font-weight:700;color:#0f3460">'+Math.round(r.totalLH).toLocaleString('vi-VN')+'</td>';
       html += '<td class="num-r" style="color:#555">'+r.d.toFixed(1)+'</td>';
-      html += '<td class="tc"><input type="number" tabindex="'+dTab+'" class="task-days-input" id="days_'+r.uid+'" min="1" value="'+(r.taskDays||30)+'" onfocus="this.select()" onkeydown="handleCalcKey(event,\'days_'+r.uid+'\')" onblur="commitDays(\''+r.uid+'\',this.value)"></td>';
+      html += _daysTd(r,d);
       html += '<td class="tc" style="font-weight:700;color:#0a9396">'+r.crews+'</td>';
       html += '<td class="tc" style="font-weight:800;color:#e94560;font-size:14px">'+r.workers+'</td>';
+      html += '<td>'+_groupInput(r)+'</td>';
       html += '<td><button class="remove-btn" tabindex="-1" onclick="removeCalcItem(\''+r.uid+'\')">✕</button></td></tr>';
     });
     html += '</tbody></table></div></div>';
   }
 
-  if (equipResults.length) {
-    const offset = laborResults.length * 2;
+  // ----- MÁY (đơn lẻ) -----
+  if (sEquip.length) {
     html += '<div style="margin-bottom:12px"><div class="section-title" style="color:#0a9396">🚜 MÁY THI CÔNG</div><div class="tbl-wrap"><table><thead class="calc-equip"><tr>';
-    ['Thiết bị','ĐVT','Khối lượng','NS/ca','Số ca cần','Tiến độ (ngày)','Số máy','VH','Phụ','NL(lít)',''].forEach(h => html += '<th style="font-size:10px">'+h+'</th>');
+    ['Thiết bị','ĐVT','Khối lượng','NS/ca','Số ca cần','Tiến độ (ngày)','Số máy','VH','Phụ','NL(lít)','Nhóm PA',''].forEach(hh => html += '<th style="font-size:10px">'+hh+'</th>');
     html += '</tr></thead><tbody>';
-    equipResults.forEach((r, i) => {
-      const qTab = offset + (i*2)+1;
-      const dTab = offset + (i*2)+2;
-      const tag = r.scenario ? '<span class="scenario-tag">'+r.scenario+'</span><br>' : '';
-      html += '<tr><td style="font-weight:500;max-width:200px">'+tag+r.equipment+'<input class="scenario-input" value="'+(r.scenario||'')+'" placeholder="+ tên phương án..." tabindex="-1" onblur="commitScenario(\''+r.uid+'\',this.value)"></td><td class="tc" style="font-size:11px">'+r.unit+'</td>';
-      html += '<td><input type="text" inputmode="decimal" tabindex="'+qTab+'" class="calc-input" id="qty_'+r.uid+'" value="'+(r.quantity||'')+'" placeholder="0" onfocus="this.select()" onkeydown="handleCalcKey(event,\'qty_'+r.uid+'\')" onblur="this.value=this.value.replace(/[^0-9.,]/g,\'\');commitQty(\''+r.uid+'\',this.value)"></td>';
+    sEquip.forEach(r => {
+      const q=++tab, d=++tab;
+      html += '<tr><td style="font-weight:500;max-width:200px">'+r.equipment+'</td><td class="tc" style="font-size:11px">'+r.unit+'</td>';
+      html += _qtyTd(r,q);
       html += '<td class="num-r" style="color:#888">'+fmt(r.output8h)+'</td>';
       html += '<td class="num-r" style="color:#555">'+r.d.toFixed(1)+'</td>';
-      html += '<td class="tc"><input type="number" tabindex="'+dTab+'" class="task-days-input" id="days_'+r.uid+'" min="1" value="'+(r.taskDays||30)+'" onfocus="this.select()" onkeydown="handleCalcKey(event,\'days_'+r.uid+'\')" onblur="commitDays(\''+r.uid+'\',this.value)"></td>';
+      html += _daysTd(r,d);
       html += '<td class="tc" style="font-weight:800;color:#0a9396;font-size:14px">'+r.machines+'</td>';
       html += '<td class="tc" style="font-weight:700">'+r.ops+'</td>';
       html += '<td class="tc">'+r.hlps+'</td>';
       html += '<td class="num-r" style="color:#bb6016">'+Math.round(r.fuel).toLocaleString('vi-VN')+'</td>';
+      html += '<td>'+_groupInput(r)+'</td>';
       html += '<td><button class="remove-btn" tabindex="-1" onclick="removeCalcItem(\''+r.uid+'\')">✕</button></td></tr>';
     });
     html += '</tbody></table></div></div>';
@@ -1008,6 +1133,7 @@ function renderCalc() {
 
   document.getElementById('calcContent').innerHTML = html;
 }
+
 
 // ===== MANAGE DATA TAB =====
 function renderManage() {
@@ -1169,7 +1295,7 @@ document.addEventListener('click', e => {
 function openBulkModal() {
   if (calcItems.length === 0) { alert('Vui lòng thêm công tác vào bảng tính toán trước!'); return; }
   // pre-fill hint
-  const hint = calcItems.map((i, idx) => (idx+1)+'. '+(i.scenario? '['+i.scenario+'] ':'')+(i.task || i.equipment)).join('\n');
+  const hint = calcItems.map((i, idx) => (idx+1)+'. '+(i.group? '['+i.group+'] ':'')+(i.task || i.equipment)).join('\n');
   document.getElementById('bulkTextarea').value = '';
   document.getElementById('bulkTextarea').placeholder = 'Thứ tự công tác hiện có (dán khối lượng theo đúng thứ tự, mỗi dòng 1 số):\n'+hint+'\n\nDán khối lượng vào đây...';
   document.getElementById('bulkModal').classList.add('open');
@@ -1190,7 +1316,7 @@ function applyBulkInput() {
       const val = parseFloat(parts[1].replace(',','.')) || 0;
       const item = calcItems.find(i =>
         (i.srcId && i.srcId.toLowerCase() === key.toLowerCase()) ||
-        (i.scenario && i.scenario.toLowerCase() === key.toLowerCase()) ||
+        (i.group && i.group.toLowerCase() === key.toLowerCase()) ||
         (i.task && i.task.toLowerCase().includes(key.toLowerCase())) ||
         (i.equipment && i.equipment.toLowerCase().includes(key.toLowerCase()))
       );
@@ -1242,34 +1368,78 @@ function renderReport() {
     return;
   }
 
-  const days = 30;  // placeholder - per-task days used in results below
+  const allResults = calcItems.map(computeMetrics);
+  const {groups, standalone} = buildGroups(allResults);
+
+  // ----- Phương án thi công ĐÃ CHỌN (chosen plan) = đơn lẻ + 1 phương án/nhóm -----
+  const chosen = standalone.slice();
+  const selBy = {};
+  groups.forEach(g => { const su=selectedUid(g); selBy[g.name]=su; const s=g.options.find(o=>o.uid===su); if(s) chosen.push({...s, _grp:g.name}); });
+
   let tLH=0, tW=0, tM=0, tO=0, tH=0;
   const laborItems = [];
   const equipItems = [];
-  
-  const results = calcItems.map(item => {
-    const d2 = item.taskDays || 30;
-    if (item.type === 'labor') {
-      const totalLH = item.quantity * item.laborHours;
-      const d = item.quantity > 0 ? item.quantity / item.dailyOutput : 0;
-      const crews = d > 0 ? Math.ceil(d / d2) : 0;
-      const workers = crews * item.crewSize;
-      tLH += totalLH; tW += workers;
-      laborItems.push({task: (item.scenario? item.scenario+': ':'')+item.task, workers});
-      return {...item, totalLH, d, crews, workers};
-    } else {
-      const d = item.quantity > 0 ? item.quantity / item.output8h : 0;
-      const machines = d > 0 ? Math.ceil(d / d2) : 0;
-      const ops = machines * item.operator;
-      const hlps = machines * item.helper;
-      tM += machines; tO += ops; tH += hlps;
-      equipItems.push({equipment: (item.scenario? item.scenario+': ':'')+item.equipment, ops, hlps});
-      return {...item, d, machines, ops, hlps};
-    }
+  chosen.forEach(r => {
+    tLH+=r.totalLH; tW+=r.workers; tM+=r.machines; tO+=r.ops; tH+=r.hlps;
+    const pre = r._grp ? '['+r._grp+'] ' : '';
+    if (r.type==='labor') laborItems.push({task: pre+r.task, workers:r.workers});
+    else equipItems.push({equipment: pre+r.equipment, ops:r.ops, hlps:r.hlps});
   });
 
-  let html = '<div style="margin-bottom:20px;padding:15px;background:#f8f9fc;border-radius:10px;border-left:4px solid #0f3460">';
-  html += '<div style="font-weight:700;font-size:14px;color:#0f3460;margin-bottom:10px">📊 Tóm tắt nhân lực dự án</div>';
+  let html = '';
+
+  // ===== 1) SO SÁNH PHƯƠNG ÁN & ĐỀ XUẤT TỐI ƯU =====
+  if (groups.length) {
+    html += '<div class="crit-bar">⭐ Tiêu chí tối ưu: <select onchange="setCriterion(this.value)">'+
+      Object.keys(CRIT_LABEL).map(k=>'<option value="'+k+'"'+(k===optCriterion?' selected':'')+'>'+CRIT_LABEL[k]+'</option>').join('')+
+      '</select><span class="crit-note">Đổi tiêu chí để hệ thống tự đề xuất phương án tối ưu cho từng nhóm.</span></div>';
+
+    groups.forEach(g => {
+      const opt = optimalUid(g.options);
+      const su  = selBy[g.name];
+      html += '<div style="margin-bottom:18px"><div class="section-title" style="color:#0f3460;margin-bottom:8px">🔀 So sánh nhóm: '+g.name+'</div>';
+      html += '<div class="tbl-wrap"><table class="cmp-table"><thead><tr>';
+      ['Phương án','ĐVT','Khối lượng','Tiến độ (ngày)','Nhân lực (người)','Máy/Tổ','Nhiên liệu (L)','Tổng GC','Trạng thái'].forEach(hh=>html+='<th>'+hh+'</th>');
+      html += '</tr></thead><tbody>';
+      g.options.forEach(r => {
+        const isOpt=r.uid===opt, isSel=r.uid===su;
+        const cls = isSel ? ' class="cmp-sel"' : (isOpt ? ' class="cmp-opt"' : '');
+        let badge = '';
+        if (isOpt) badge += '<span class="opt-star">⭐ Tối ưu</span> ';
+        if (isSel) badge += '<span style="color:#059669;font-weight:700">✅ Đang chọn</span>';
+        if (!badge) badge = '<span class="muted">—</span>';
+        html += '<tr'+cls+'>';
+        html += '<td style="font-weight:600">'+baseName(r)+(r.notes?'<div style="font-size:10px;color:#999">'+r.notes+'</div>':'')+'</td>';
+        html += '<td class="tc">'+r.unit+'</td>';
+        html += '<td class="num-r">'+(r.quantity||0).toFixed(2)+'</td>';
+        html += '<td class="num-r">'+(r.taskDays||30)+'</td>';
+        html += '<td class="num-r" style="font-weight:800;color:#e94560">'+(r.quantity>0?r.manpower:'—')+'</td>';
+        html += '<td class="num-r" style="color:#0a9396;font-weight:700">'+(r.quantity>0?(r.type==='labor'?r.crews+' tổ':r.machines+' máy'):'—')+'</td>';
+        html += '<td class="num-r" style="color:#bb6016">'+(r.fuel?Math.round(r.fuel).toLocaleString('vi-VN'):'—')+'</td>';
+        html += '<td class="num-r" style="color:#0f3460">'+(r.totalLH?Math.round(r.totalLH).toLocaleString('vi-VN'):'—')+'</td>';
+        html += '<td class="tc">'+badge+'</td>';
+        html += '</tr>';
+      });
+      html += '</tbody></table></div>';
+      const o = g.options.find(x=>x.uid===opt);
+      if (o) {
+        // mức tiết kiệm so với phương án "kém nhất" trong nhóm theo tiêu chí
+        const vals = g.options.filter(x=>x.quantity>0).map(critValue);
+        const worst = Math.max.apply(null, vals), bestv = critValue(o);
+        const save = worst>0 ? Math.round((1-bestv/worst)*100) : 0;
+        html += '<div class="group-reco">✅ Đề xuất phương án tối ưu ('+CRIT_LABEL[optCriterion]+'): <b>'+baseName(o)+'</b> — '+bestv+' '+_critUnit()+(save>0?(' · tiết kiệm ~'+save+'% so với phương án cao nhất trong nhóm'):'')+(su!==opt?' <span class="muted">(đang chọn thủ công phương án khác ở tab Tính toán)</span>':'')+'</div>';
+      } else {
+        html += '<div class="group-reco muted">↳ Nhập khối lượng cho các phương án để so sánh.</div>';
+      }
+      html += '</div>';
+    });
+  } else {
+    html += '<div class="group-reco muted" style="margin-bottom:16px">ℹ️ Chưa có nhóm phương án nào. Ở tab Tính toán, gõ cùng một tên vào ô "Nhóm PA" cho 2+ dòng (hoặc bấm "+ Tính" nhiều lần trên cùng 1 mục) để so sánh & chọn phương án tối ưu.</div>';
+  }
+
+  // ===== 2) TÓM TẮT THEO PHƯƠNG ÁN ĐÃ CHỌN =====
+  html += '<div style="margin-bottom:20px;padding:15px;background:#f8f9fc;border-radius:10px;border-left:4px solid #0f3460">';
+  html += '<div style="font-weight:700;font-size:14px;color:#0f3460;margin-bottom:10px">📊 Tóm tắt nhân lực dự án (theo phương án đã chọn)</div>';
   html += '<table class="summary-table">';
   html += '<tr><td>Tổng giờ công</td><td>'+Math.round(tLH).toLocaleString('vi-VN')+' giờ</td></tr>';
   html += '<tr><td>Công nhân thủ công</td><td><strong style="color:#e94560">'+tW+' người</strong></td></tr>';
@@ -1284,31 +1454,29 @@ function renderReport() {
     html += '<div style="margin-bottom:20px"><div class="section-title" style="color:#e94560;margin-bottom:15px">👷 Biểu đồ Nhân công theo công tác</div>';
     html += '<div class="chart-container"><canvas id="laborByTaskChart"></canvas></div></div>';
   }
-
   // Biểu đồ cột máy theo công tác
   if (equipItems.length > 0) {
     html += '<div style="margin-bottom:20px"><div class="section-title" style="color:#0a9396;margin-bottom:15px">🚜 Biểu đồ Máy theo công tác</div>';
     html += '<div class="chart-container"><canvas id="equipByTaskChart"></canvas></div></div>';
   }
-
   // Biểu đồ cột loại nhân công
   html += '<div style="margin-bottom:20px"><div class="section-title" style="color:#0f3460;margin-bottom:15px">📈 Phân bổ nhân lực theo loại</div>';
   html += '<div class="chart-container"><canvas id="laborTypeChart"></canvas></div></div>';
 
-  // Bảng chi tiết
+  // Bảng chi tiết (phương án đã chọn)
+  html += '<div class="section-title" style="color:#0f3460;margin-bottom:8px">📋 Chi tiết phương án thi công đã chọn</div>';
   html += '<div class="tbl-wrap"><table><thead><tr><th>Công tác</th><th>ĐVT</th><th class="tc">Khối lượng</th><th class="tc">Số ngày</th><th class="tc">Nhân lực cần</th></tr></thead><tbody>';
-  
-  results.forEach(r => {
-    const sc = r.scenario ? '<span class="scenario-tag">'+r.scenario+'</span> ' : '';
+  chosen.forEach(r => {
+    const sc = r._grp ? '<span class="scenario-tag">'+r._grp+'</span> ' : '';
     if (r.type === 'labor') {
       html += '<tr><td style="font-weight:500">'+sc+r.task+'</td><td>'+r.unit+'</td><td class="num-r">'+r.quantity.toFixed(2)+'</td><td class="num-r">'+r.d.toFixed(1)+'</td><td class="num-r" style="color:#e94560;font-weight:700">'+r.workers+'</td></tr>';
     } else {
       html += '<tr><td style="font-weight:500">'+sc+r.equipment+'</td><td>'+r.unit+'</td><td class="num-r">'+r.quantity.toFixed(2)+'</td><td class="num-r">'+r.d.toFixed(1)+'</td><td class="num-r" style="color:#bb6016;font-weight:700">'+r.ops+'</td></tr>';
     }
   });
-  
   html += '</tbody></table></div>';
-  document.getElementById('reportContent').innerHTML = html;
+  
+    document.getElementById('reportContent').innerHTML = html;
 
   // Vẽ charts
   setTimeout(() => {
