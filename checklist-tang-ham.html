@@ -190,6 +190,46 @@
     border-color: var(--primary-dark);
   }
 
+  .btn.ai {
+    background: #7c3aed;
+    border-color: #7c3aed;
+    color: white;
+  }
+  .btn.ai:hover { background: #6d28d9; border-color: #6d28d9; }
+
+  .ai-panel {
+    border: 1px solid #ddd6fe;
+    background: #faf5ff;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .ai-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    background: #f3e8ff;
+    border-bottom: 1px solid #ddd6fe;
+  }
+  .ai-panel-title { font-weight: 600; font-size: 14px; color: #6d28d9; }
+  .ai-close {
+    border: none; background: transparent; cursor: pointer;
+    font-size: 22px; line-height: 1; color: #7c3aed;
+  }
+  .ai-panel-body { padding: 16px; font-size: 13.5px; line-height: 1.6; color: var(--text); }
+  .ai-panel-body h4 { color: #6d28d9; font-size: 13px; margin: 12px 0 6px; }
+  .ai-panel-body ul { margin: 0 0 8px 20px; }
+  .ai-panel-body li { margin-bottom: 5px; }
+  .ai-disclaimer { font-size: 11.5px; color: var(--text-muted); margin-top: 12px; padding-top: 10px; border-top: 1px dashed #ddd6fe; }
+  .ai-loading { display: flex; align-items: center; gap: 10px; color: #6d28d9; }
+  .ai-spinner {
+    width: 16px; height: 16px; border: 2px solid #ddd6fe;
+    border-top-color: #7c3aed; border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
   .filter-label {
     font-size: 12px;
     font-weight: 500;
@@ -211,7 +251,7 @@
 
   .stats {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 10px;
     margin-bottom: 24px;
   }
@@ -246,6 +286,20 @@
   .stat.review .stat-num { color: var(--review); }
   .stat.progress { background: var(--primary-light); border-color: #b6d4fe; }
   .stat.progress .stat-num { color: var(--primary-dark); }
+  .stat.na { background: #f3f4f6; border-color: #d1d5db; }
+  .stat.na .stat-num { color: var(--text-muted); }
+
+  .search-box {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: white;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text);
+    min-width: 200px;
+  }
+  .search-box:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(13,110,253,0.1); }
 
   .tabs {
     display: flex;
@@ -521,6 +575,7 @@
     }
     .toolbar { display: none; }
     .tabs { display: none; }
+    .ai-panel { display: none !important; }
     .tab-content { display: block !important; }
     .group.collapsed .items { display: block !important; }
     .toggle-icon { display: none; }
@@ -570,43 +625,9 @@
     </div>
   </div>
 
-  <div class="project-info">
-    <div class="info-title">Thông tin dự án</div>
-    <div class="info-grid">
-      <div class="info-field">
-        <label>Tên dự án</label>
-        <input type="text" id="projectName" placeholder="VD: Champarama Resort & Spa">
-      </div>
-      <div class="info-field">
-        <label>Gói thầu / Hạng mục</label>
-        <input type="text" id="packageName" placeholder="VD: Tầng hầm khối khách sạn">
-      </div>
-      <div class="info-field">
-        <label>Chủ đầu tư</label>
-        <input type="text" id="owner" placeholder="VD: Công ty CP ABC">
-      </div>
-      <div class="info-field">
-        <label>Nhà thầu thi công</label>
-        <input type="text" id="contractor" placeholder="VD: Công ty Xây dựng XYZ">
-      </div>
-      <div class="info-field">
-        <label>Địa điểm</label>
-        <input type="text" id="location" placeholder="VD: Nha Trang, Khánh Hòa">
-      </div>
-      <div class="info-field">
-        <label>Phương án thi công áp dụng</label>
-        <input type="text" id="method" placeholder="VD: Semi top-down + tường vây + neo đất">
-      </div>
-      <div class="info-field" style="grid-column: 1 / -1;">
-        <label>Người lập checklist / Ngày</label>
-        <input type="text" id="preparedBy" placeholder="VD: Nguyễn Văn A — 08/05/2026">
-      </div>
-    </div>
-  </div>
-
   <div class="toolbar">
     <div class="toolbar-group">
-      <span class="filter-label">Lọc:</span>
+      <input type="search" id="searchBox" class="search-box" placeholder="Tìm hạng mục...">
       <select id="filterStatus" class="filter-select">
         <option value="all">Tất cả tình trạng</option>
         <option value="">Chưa đánh giá</option>
@@ -622,18 +643,31 @@
       </select>
     </div>
     <div class="toolbar-group">
-      <button class="btn" onclick="expandAll(true)">Mở tất cả</button>
-      <button class="btn" onclick="expandAll(false)">Đóng tất cả</button>
-      <button class="btn" onclick="resetData()">Xóa dữ liệu</button>
-      <button class="btn primary" onclick="window.print()">In / Lưu PDF</button>
+      <button class="btn" onclick="expandAll(true)">Mở</button>
+      <button class="btn" onclick="expandAll(false)">Đóng</button>
+      <button class="btn" onclick="exportData()">Xuất JSON</button>
+      <button class="btn" onclick="document.getElementById('importFile').click()">Nhập JSON</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(this)">
+      <button class="btn" onclick="resetData()">Xóa</button>
+      <button class="btn ai" onclick="runAIReview()">✨ AI rà soát</button>
+      <button class="btn primary" onclick="window.print()">In / PDF</button>
     </div>
   </div>
 
+  <div id="aiPanel" class="ai-panel" style="display:none">
+    <div class="ai-panel-header">
+      <span class="ai-panel-title">✨ AI rà soát rủi ro — <span id="aiTabName"></span></span>
+      <button class="ai-close" onclick="document.getElementById('aiPanel').style.display='none'">×</button>
+    </div>
+    <div id="aiPanelBody" class="ai-panel-body"></div>
+  </div>
+
   <div class="stats" id="stats">
-    <div class="stat"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Tổng hạng mục</div></div>
+    <div class="stat"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Hạng mục (tab này)</div></div>
     <div class="stat done"><div class="stat-num" id="statDone">0</div><div class="stat-label">Đã có</div></div>
     <div class="stat missing"><div class="stat-num" id="statMissing">0</div><div class="stat-label">Chưa có</div></div>
     <div class="stat review"><div class="stat-num" id="statReview">0</div><div class="stat-label">Cần xem lại</div></div>
+    <div class="stat na"><div class="stat-num" id="statNa">0</div><div class="stat-label">Không áp dụng</div></div>
     <div class="stat progress"><div class="stat-num" id="statProgress">0%</div><div class="stat-label">Hoàn thành</div></div>
   </div>
 
@@ -709,6 +743,7 @@ const CHECKLISTS = {
       ['Thông gió cưỡng bức', 'Đổi 6-8 lần thể tích/giờ; quạt hút công nghiệp', 'critical'],
       ['Bơm nước hố móng liên tục (dewatering)', 'Bơm chính + bơm dự phòng, điện 24/7', 'critical'],
       ['Đào hạ cốt từng phân khu', 'Theo trình tự; không thể đào đồng loạt', 'important'],
+      ['Kiểm tra ổn định đáy hố (basal heave/piping)', 'Đất sét yếu hoặc cát: nguy cơ trồi đáy, xói ngầm — tính hệ số an toàn', 'critical'],
       ['Tính lại năng suất đào trong dự toán', 'Chỉ đạt 40-60% năng suất đào hở', 'important']
     ]],
     ['IV. Chống thấm tường vây và sàn đáy', [
@@ -737,7 +772,9 @@ const CHECKLISTS = {
       ['Bê tông cột giữa hai tầng sàn', 'Đổ bằng phễu/bơm áp lực/grouting; SCC', 'critical'],
       ['Xử lý đầu cột chờ ở sàn trên', 'Tẩy bê tông yếu, vệ sinh thép chờ', 'important'],
       ['Sonic logging 100% cột giữa hai sàn', 'Bắt buộc kiểm tra chất lượng', 'critical'],
-      ['Ống chờ kỹ thuật xuyên sàn', 'Điện, nước, PCCC, thông gió — phải đặt trước khi đổ', 'critical']
+      ['Ống chờ kỹ thuật xuyên sàn', 'Điện, nước, PCCC, thông gió — phải đặt trước khi đổ', 'critical'],
+      ['Kiểm tra tải cẩu tháp/thiết bị đặt trên sàn top-down', 'Sàn vừa đỡ tải đất + thiết bị: kiểm tra trường hợp tải thi công', 'critical'],
+      ['ITP — nghiệm thu từng công đoạn với TVGS/CĐT', 'Lập kế hoạch nghiệm thu; mời nghiệm thu trước khi che lấp', 'critical']
     ]],
     ['VII. Hạ tầng phục vụ thi công', [
       ['Điện thi công xuống tầng hầm', 'Tủ điện phân tầng, dây cáp, chiếu sáng', 'critical'],
@@ -1010,6 +1047,103 @@ const CHECKLISTS = {
       ['Bảo hiểm thi công cọc nhồi', 'Rủi ro chất lượng cọc, sụt đất', 'important'],
       ['Phí khắc phục cọc khuyết tật', 'Khoan lấy lõi + xử lý epoxy/vữa', 'important']
     ]]
+  ],
+  dwall: [
+    ['I. Khảo sát và thiết kế', [
+      ['Khảo sát địa chất chi tiết theo tuyến tường', 'Lớp đất, mực nước ngầm, vật cản ngầm dọc tuyến panel', 'critical'],
+      ['Tính toán thiết kế tường vây (D-wall)', 'Chiều dày, chiều sâu, cốt thép, kiểm tra chuyển vị từng giai đoạn đào', 'critical'],
+      ['Phân chia panel (sơ đồ panel)', 'Panel sơ cấp/thứ cấp, chiều dài panel, trình tự thi công', 'critical'],
+      ['Thiết kế hệ chống đỡ phối hợp', 'Shoring/neo/sàn top-down kết hợp tường vây', 'critical'],
+      ['Bản vẽ shop drawing & chi tiết joint', 'Gioăng chống thấm mối nối (waterstop/CWS), stop-end', 'critical']
+    ]],
+    ['II. Tường dẫn (guide wall)', [
+      ['Thi công tường dẫn BTCT', 'Định vị tuyến đào, giữ ổn định miệng hào — sai số ≤ 25mm', 'critical'],
+      ['Kiểm tra cao độ & độ thẳng tường dẫn', 'Quyết định độ chính xác toàn tuyến tường vây', 'critical']
+    ]],
+    ['III. Đào hào và dung dịch giữ thành', [
+      ['Huy động gàu ngoạm/hydromill', 'Phù hợp chiều sâu & địa chất (đất / đá)', 'critical'],
+      ['Trạm trộn & xử lý dung dịch bentonite/polymer', 'Tỷ trọng, độ nhớt, pH — kiểm tra định kỳ', 'critical'],
+      ['Đào hào theo panel, duy trì cao độ dung dịch', 'Dung dịch luôn cao hơn mực nước ngầm ≥1m chống sập thành', 'critical'],
+      ['Kiểm tra độ thẳng đứng hào đào', 'Sai số ≤ 1/200 — đo bằng thiết bị chuyên dụng', 'critical'],
+      ['Đặt gioăng chống thấm / stop-end joint', 'Tại mép panel sơ cấp; làm sạch trước đổ panel kế', 'critical'],
+      ['Vét đáy & kiểm tra cặn lắng (desanding)', 'Hàm lượng cát trong dung dịch < ngưỡng trước khi đổ BT', 'critical']
+    ]],
+    ['IV. Cốt thép và đổ bê tông', [
+      ['Hạ lồng thép tường vây', 'Cẩu lồng nặng; con kê bảo vệ; định vị chính xác', 'critical'],
+      ['Đặt ống chờ sonic/box chờ liên kết sàn', 'Coupler/box-out cho cốt thép sàn — không bổ sung được sau', 'critical'],
+      ['Đổ bê tông bằng ống tremie', 'Đầu ống ngập BT ≥2m; đổ liên tục, đẩy dung dịch lên', 'critical'],
+      ['Thu hồi & lọc tái sử dụng dung dịch', 'Xử lý dung dịch thải đúng quy định môi trường', 'important'],
+      ['Rút stop-end đúng thời điểm', 'Sớm quá gây sập, muộn quá kẹt — kiểm soát cường độ', 'critical']
+    ]],
+    ['V. Kiểm tra chất lượng', [
+      ['Sonic logging tường vây', 'Tỷ lệ % theo TCVN — phát hiện rỗ, kẹt bùn', 'critical'],
+      ['Lấy mẫu bê tông R7/R28', 'Theo từng panel/ca đổ', 'critical'],
+      ['Đo độ thẳng đứng panel sau đổ', 'Đối chiếu hồ sơ đào hào', 'important'],
+      ['Đục đầu tường về cao độ thiết kế', 'Lộ thép chờ liên kết capping beam/sàn', 'critical']
+    ]],
+    ['VI. Chống thấm và hoàn thiện', [
+      ['Xử lý rò rỉ mối nối panel', 'Bơm vữa/PU trương nở — điểm thấm phổ biến nhất', 'critical'],
+      ['Chống thấm mặt trong tường vây', 'Xử lý rỗ, mạch dừng, joint trước hoàn thiện', 'critical'],
+      ['Capping beam liên kết đỉnh tường', 'BTCT phân phối lực & liên kết hệ chống', 'critical'],
+      ['Đánh sờn/trát phẳng mặt tường', 'Cho công tác hoàn thiện kiến trúc', 'important']
+    ]],
+    ['VII. Chi phí dễ tính thiếu', [
+      ['Dung dịch bentonite/polymer & xử lý thải', 'Tiêu hao lớn; chi phí xử lý môi trường', 'critical'],
+      ['Xử lý chất thải đào (slurry + đất)', 'Vận chuyển, đổ thải đúng nơi quy định', 'critical'],
+      ['Phí xử lý rò rỉ mối nối', 'Bơm PU/vữa — gần như luôn phát sinh', 'critical'],
+      ['Phí đục đầu tường & phá BT thừa', 'Nhân công + vận chuyển', 'important'],
+      ['Bảo hiểm & dự phòng sự cố sập thành hào', 'Rủi ro cao khi dung dịch mất kiểm soát', 'important']
+    ]]
+  ],
+  common: [
+    ['I. Pháp lý và giấy phép', [
+      ['Giấy phép thi công phần ngầm', 'Theo quy định địa phương; có thể tách riêng phần hầm', 'critical'],
+      ['Giấy phép hạ mực nước ngầm (dewatering)', 'Nhiều địa phương bắt buộc xin phép khai thác/hạ nước ngầm', 'critical'],
+      ['Thỏa thuận sử dụng đất ngoài ranh', 'Neo đất / vùng ảnh hưởng sang lô lân cận', 'important'],
+      ['Phương án & cấp phép vận chuyển đất thải', 'Tuyến đường, giờ cấm tải, bãi đổ hợp pháp', 'critical'],
+      ['Đăng kiểm thiết bị nâng (cẩu, vận thăng)', 'Kiểm định an toàn trước khi vận hành', 'critical'],
+      ['Phương án PCCC & thoát hiểm giai đoạn thi công', 'Trình duyệt với cơ quan PCCC', 'critical']
+    ]],
+    ['II. Mặt bằng và logistics', [
+      ['Định vị mốc tọa độ/cao độ gốc (benchmark)', 'Mốc chuẩn cố định, bảo vệ suốt dự án', 'critical'],
+      ['Bố trí mặt bằng công trường (site layout)', 'Vị trí cẩu, bãi tập kết, văn phòng, lối ra vào', 'critical'],
+      ['Hệ thống rửa xe trước khi ra đường', 'Tránh rơi vãi bùn đất — yêu cầu môi trường đô thị', 'important'],
+      ['Quản lý giao thông ra vào công trường', 'Người điều phối, biển báo, phối hợp giao thông khu vực', 'important'],
+      ['Bãi tập kết & luân chuyển đất đào', 'Tránh ùn ứ tại nút cổ chai (lỗ mở/cổng)', 'important'],
+      ['Cấp điện tổng & máy phát dự phòng', 'Đảm bảo bơm dewatering không gián đoạn', 'critical']
+    ]],
+    ['III. Hạ mực nước ngầm tổng thể', [
+      ['Thiết kế hệ dewatering tổng thể', 'Well point / giếng sâu / giếng giảm áp theo địa chất', 'critical'],
+      ['Đánh giá lún do hạ nước ngầm vùng lân cận', 'Hạ nước ngầm gây lún công trình xung quanh', 'critical'],
+      ['Giếng bổ cập nước (recharge well) nếu cần', 'Giữ mực nước ngầm ngoài hố, giảm lún lân cận', 'important'],
+      ['Bơm chính + bơm dự phòng + điện 24/7', 'Mất bơm = ngập hố, đẩy nổi kết cấu', 'critical'],
+      ['Quan trắc lưu lượng & mực nước bơm', 'Theo dõi để điều chỉnh, phát hiện bất thường', 'important'],
+      ['Xử lý nước bơm trước khi xả', 'Lắng cặn/đạt tiêu chuẩn xả thải', 'important']
+    ]],
+    ['IV. Quan trắc tổng thể (geotechnical monitoring)', [
+      ['Lập đề cương quan trắc & ngưỡng cảnh báo', 'Alert / Action level cho từng đại lượng — duyệt trước', 'critical'],
+      ['Mốc quan trắc lún công trình lân cận', 'Theo TCVN 9360:2012; khảo sát hiện trạng trước', 'critical'],
+      ['Inclinometer chuyển vị tường chắn', 'Đọc định kỳ, tăng tần suất khi đào sâu', 'critical'],
+      ['Piezometer mực nước ngầm trong/ngoài hố', 'Đặc biệt khi có dewatering', 'critical'],
+      ['Quan trắc lún mặt đất & vết nứt lân cận', 'Mốc bề mặt + theo dõi nứt nhà liền kề', 'critical'],
+      ['Quan trắc 24/7, không gián đoạn cuối tuần', 'Sự cố thường xảy ra ngoài giờ', 'critical'],
+      ['Báo cáo quan trắc & hành động khi vượt ngưỡng', 'Quy trình rõ ràng khi chạm Alert/Action level', 'critical']
+    ]],
+    ['V. Ứng phó sự cố và mùa mưa', [
+      ['Phương án ứng phó sự cố (emergency plan)', 'Tường chuyển vị vượt ngưỡng, ngập, mất điện bơm, sập thành', 'critical'],
+      ['Vật tư dự phòng khẩn cấp tại công trường', 'Bao cát, vữa trương nở, bơm dự phòng, máy phát', 'critical'],
+      ['Hệ thoát nước mưa bề mặt & hố thu', 'Tránh nước mưa tràn xuống hố đào mùa mưa', 'critical'],
+      ['Kế hoạch thi công theo mùa', 'Hạng mục nhạy nước tránh đỉnh mùa mưa', 'important'],
+      ['Số điện thoại & sơ đồ liên lạc khẩn cấp', 'Y tế, cứu hỏa, chỉ huy, đơn vị địa kỹ thuật', 'important']
+    ]],
+    ['VI. Chi phí mềm tổng dễ bỏ sót', [
+      ['Chi phí quan trắc toàn bộ dự án', 'Thiết bị + nhân công đọc + báo cáo định kỳ', 'critical'],
+      ['Chi phí dewatering & điện vận hành 24/7', 'Kéo dài theo tiến độ thực tế', 'critical'],
+      ['Bảo hiểm CAR & trách nhiệm bên thứ ba', 'Phần ngầm rủi ro cao, phí cao', 'critical'],
+      ['Dự phòng khắc phục lún/nứt công trình lân cận', 'Bồi thường, gia cố — khoản dự phòng quan trọng', 'critical'],
+      ['Chi phí xử lý & vận chuyển đất thải', 'Phí bãi đổ, tuyến đường, giờ giấc', 'critical'],
+      ['Chi phí kéo dài do chờ kỹ thuật/nghiệm thu', 'Thời gian chờ bê tông, chờ nghiệm thu từng đợt', 'important']
+    ]]
   ]
 };
 
@@ -1018,7 +1152,9 @@ const TABS = [
   { key: 'shoring', label: 'Hệ Shoring', title: 'II. Hệ Shoring (Thanh chống)' },
   { key: 'larsen', label: 'Cừ Larsen', title: 'III. Cừ Larsen (Sheet Pile)' },
   { key: 'anchor', label: 'Hệ Neo đất', title: 'IV. Hệ Neo đất (Ground Anchor)' },
-  { key: 'pile', label: 'Cọc vây', title: 'V. Cọc vây (Bored Pile Wall)' }
+  { key: 'pile', label: 'Cọc vây', title: 'V. Cọc vây (Bored Pile Wall)' },
+  { key: 'dwall', label: 'Tường vây D-wall', title: 'VI. Tường vây Barrette / D-wall (Diaphragm Wall)' },
+  { key: 'common', label: 'Công tác chung', title: 'VII. Công tác chung — áp dụng mọi biện pháp' }
 ];
 
 const state = {
@@ -1027,25 +1163,23 @@ const state = {
   collapsed: {},
   filterStatus: 'all',
   filterLevel: 'all',
-  projectInfo: {}
+  search: ''
 };
 
 function saveState() {
   try {
-    sessionStorage.setItem('checklist_state', JSON.stringify({
+    localStorage.setItem('checklist_state', JSON.stringify({
       data: state.data,
-      collapsed: state.collapsed,
-      projectInfo: state.projectInfo
+      collapsed: state.collapsed
     }));
   } catch(e) {}
 }
 
 function loadState() {
   try {
-    const s = JSON.parse(sessionStorage.getItem('checklist_state') || '{}');
+    const s = JSON.parse(localStorage.getItem('checklist_state') || '{}');
     if (s.data) state.data = s.data;
     if (s.collapsed) state.collapsed = s.collapsed;
-    if (s.projectInfo) state.projectInfo = s.projectInfo;
   } catch(e) {}
 }
 
@@ -1069,6 +1203,7 @@ function renderTabs() {
       state.currentTab = btn.dataset.tab;
       renderTabs();
       renderContent();
+      updateStats();
     });
   });
 }
@@ -1256,6 +1391,7 @@ function resetData() {
 }
 
 function applyFilters() {
+  const q = (state.search || '').trim().toLowerCase();
   document.querySelectorAll('.item').forEach(el => {
     const itemKey = el.dataset.item;
     const status = state.data[itemKey]?.status || '';
@@ -1268,7 +1404,12 @@ function applyFilters() {
     if (state.filterLevel !== 'all') {
       showByLevel = (state.filterLevel === level);
     }
-    el.style.display = (showByStatus && showByLevel) ? '' : 'none';
+    let showBySearch = true;
+    if (q) {
+      const text = (el.querySelector('.item-title')?.textContent + ' ' + el.querySelector('.item-note')?.textContent).toLowerCase();
+      showBySearch = text.includes(q);
+    }
+    el.style.display = (showByStatus && showByLevel && showBySearch) ? '' : 'none';
   });
   document.querySelectorAll('.group').forEach(group => {
     const visible = Array.from(group.querySelectorAll('.item')).filter(i => i.style.display !== 'none').length;
@@ -1277,36 +1418,26 @@ function applyFilters() {
 }
 
 function updateStats() {
-  let total = 0, done = 0, missing = 0, review = 0;
-  TABS.forEach(t => {
-    const groups = CHECKLISTS[t.key] || [];
-    groups.forEach((g, gi) => {
-      g[1].forEach((_, ii) => {
-        total++;
-        const status = state.data[`${t.key}-${gi}-${ii}`]?.status;
-        if (status === 'done') done++;
-        else if (status === 'missing') missing++;
-        else if (status === 'review') review++;
-      });
+  let total = 0, done = 0, missing = 0, review = 0, na = 0;
+  const groups = CHECKLISTS[state.currentTab] || [];
+  groups.forEach((g, gi) => {
+    g[1].forEach((_, ii) => {
+      total++;
+      const status = state.data[`${state.currentTab}-${gi}-${ii}`]?.status;
+      if (status === 'done') done++;
+      else if (status === 'missing') missing++;
+      else if (status === 'review') review++;
+      else if (status === 'na') na++;
     });
   });
   document.getElementById('statTotal').textContent = total;
   document.getElementById('statDone').textContent = done;
   document.getElementById('statMissing').textContent = missing;
   document.getElementById('statReview').textContent = review;
-  const progress = total > 0 ? Math.round((done / total) * 100) : 0;
+  document.getElementById('statNa').textContent = na;
+  const denom = total - na;
+  const progress = denom > 0 ? Math.round((done / denom) * 100) : 0;
   document.getElementById('statProgress').textContent = progress + '%';
-}
-
-function attachInfoListeners() {
-  ['projectName', 'packageName', 'owner', 'contractor', 'location', 'method', 'preparedBy'].forEach(id => {
-    const el = document.getElementById(id);
-    if (state.projectInfo[id]) el.value = state.projectInfo[id];
-    el.addEventListener('input', () => {
-      state.projectInfo[id] = el.value;
-      saveState();
-    });
-  });
 }
 
 function attachFilterListeners() {
@@ -1318,6 +1449,47 @@ function attachFilterListeners() {
     state.filterLevel = e.target.value;
     applyFilters();
   });
+  document.getElementById('searchBox').addEventListener('input', e => {
+    state.search = e.target.value;
+    applyFilters();
+  });
+}
+
+function exportData() {
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    version: '2.0',
+    data: state.data,
+    collapsed: state.collapsed
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'checklist-tang-ham-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const obj = JSON.parse(reader.result);
+      if (obj.data) state.data = obj.data;
+      if (obj.collapsed) state.collapsed = obj.collapsed;
+      saveState();
+      renderContent();
+      updateStats();
+      alert('Đã nhập dữ liệu thành công.');
+    } catch(e) {
+      alert('File không hợp lệ.');
+    }
+    input.value = '';
+  };
+  reader.readAsText(file);
 }
 
 function attachNoteDelegate() {
@@ -1336,11 +1508,90 @@ function setDate() {
     'Ngày tạo: ' + d.toLocaleDateString('vi-VN', opts);
 }
 
+async function runAIReview() {
+  const tab = TABS.find(t => t.key === state.currentTab);
+  const groups = CHECKLISTS[state.currentTab] || [];
+  const panel = document.getElementById('aiPanel');
+  const body = document.getElementById('aiPanelBody');
+  document.getElementById('aiTabName').textContent = tab ? tab.label : '';
+  panel.style.display = 'block';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  body.innerHTML = '<div class="ai-loading"><div class="ai-spinner"></div> Đang phân tích checklist...</div>';
+
+  // Gom hạng mục theo trạng thái
+  const missing = [], review = [], done = [];
+  groups.forEach((g, gi) => {
+    g[1].forEach((item, ii) => {
+      const status = state.data[`${state.currentTab}-${gi}-${ii}`]?.status;
+      if (status === 'missing') missing.push(item[0]);
+      else if (status === 'review') review.push(item[0]);
+      else if (status === 'done') done.push(item[0]);
+    });
+  });
+  const allItems = groups.flatMap(g => g[1].map(i => i[0]));
+
+  const prompt = `Bạn là kỹ sư trưởng thi công phần ngầm (tầng hầm) giàu kinh nghiệm tại Việt Nam, am hiểu TCVN và thực tế công trường.
+
+Biện pháp đang xét: "${tab ? tab.title : state.currentTab}".
+
+Danh sách hạng mục hiện có trong checklist:
+${allItems.map(x => '- ' + x).join('\n')}
+
+Trạng thái người dùng đã đánh giá:
+- ĐÃ CÓ (${done.length}): ${done.join('; ') || 'chưa đánh dấu'}
+- CHƯA CÓ (${missing.length}): ${missing.join('; ') || 'không có'}
+- CẦN XEM LẠI (${review.length}): ${review.join('; ') || 'không có'}
+
+Hãy trả lời bằng tiếng Việt, NGẮN GỌN, theo đúng 3 mục sau (dùng tiêu đề y hệt):
+
+RỦI RO LỚN NHẤT: Dựa trên các hạng mục CHƯA CÓ / CẦN XEM LẠI, chỉ ra 2-3 rủi ro thi công nghiêm trọng nhất và hệ quả thực tế nếu bỏ sót.
+
+HẠNG MỤC CÒN THIẾU: Liệt kê 3-5 công tác/hạng mục KHÔNG có trong danh sách trên mà lẽ ra cần có cho biện pháp này. Mỗi mục 1 dòng, kèm lý do ngắn.
+
+VIỆC CẦN LÀM NGAY: 2-3 hành động ưu tiên cao nhất.
+
+Không thêm lời mở đầu, không khách sáo. Mỗi gạch đầu dòng tối đa 25 từ.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const dataRes = await res.json();
+    const text = (dataRes.content || [])
+      .filter(b => b.type === 'text')
+      .map(b => b.text)
+      .join('\n');
+    body.innerHTML = formatAI(text) +
+      '<div class="ai-disclaimer">Nội dung do AI tạo ra mang tính gợi ý — phải được kỹ sư địa kỹ thuật &amp; kết cấu rà soát trước khi áp dụng.</div>';
+  } catch (e) {
+    body.innerHTML = '<div style="color:var(--critical)">Không gọi được AI. Hãy thử lại, hoặc dùng checklist thủ công.</div>';
+  }
+}
+
+function formatAI(text) {
+  const headings = ['RỦI RO LỚN NHẤT', 'HẠNG MỤC CÒN THIẾU', 'VIỆC CẦN LÀM NGAY'];
+  let html = esc(text);
+  headings.forEach(h => {
+    html = html.replace(new RegExp(esc(h) + '\\s*:?', 'g'), '</ul><h4>' + h + '</h4><ul>');
+  });
+  html = html.replace(/^[\-•]\s*(.+)$/gm, '<li>$1</li>');
+  html = html.replace(/\n{2,}/g, '');
+  html = html.replace(/<\/ul>/, '');
+  html += '</ul>';
+  html = html.replace(/<ul>\s*<\/ul>/g, '');
+  return html;
+}
+
 loadState();
 setDate();
 renderTabs();
 renderContent();
-attachInfoListeners();
 attachFilterListeners();
 attachNoteDelegate();
 </script>
