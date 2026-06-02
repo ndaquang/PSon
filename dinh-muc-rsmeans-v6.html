@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Định Mức Năng Suất Xây Dựng — RSMeans v6.0</title>
+<title>Định Mức Năng Suất Xây Dựng — RSMeans v7.0</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -46,6 +46,11 @@ tbody tr:hover{background:#eef1f8!important}
 .add-btn:disabled{background:#999;cursor:default}
 .add-btn.added{background:#0a9396}
 .add-btn.added:hover{background:#087a7e}
+.add-btn .cnt{display:inline-block;margin-left:5px;background:rgba(255,255,255,.35);padding:0 6px;border-radius:9px;font-size:10px;font-weight:800}
+.scenario-tag{display:inline-block;background:#fde68a;color:#92400e;font-size:10px;font-weight:700;padding:1px 7px;border-radius:6px;margin-bottom:3px}
+.scenario-input{display:block;margin-top:3px;width:100%;max-width:175px;font-size:11px;padding:3px 7px;border:1px dashed #cbd5e1;border-radius:6px;background:#fff;color:#0f3460;outline:none}
+.scenario-input::placeholder{color:#b8c0cc;font-style:italic}
+.scenario-input:focus{border-color:#0f3460;border-style:solid;background:#f8fbff}
 .remove-btn{border:none;background:none;cursor:pointer;font-size:15px;color:#ccc}
 .remove-btn:hover{color:#e94560}
 .card{background:#f8f9fc;border-radius:10px;padding:12px 14px}
@@ -131,7 +136,7 @@ tbody tr:hover{background:#eef1f8!important}
       <div class="logo">RS</div>
       <div>
         <h1>Định Mức Năng Suất Xây Dựng — Toàn Diện (Final)</h1>
-        <p>RSMeans, NECA, MCAA, SMACNA & Tiêu chuẩn ngành — v6.0 | Tiến độ riêng từng CT | Thêm/Sửa dữ liệu | Lưu file</p>
+        <p>RSMeans, NECA, MCAA, SMACNA & Tiêu chuẩn ngành — v7.0 | Tiến độ riêng từng CT | Thêm/Sửa dữ liệu | Lưu file</p>
       </div>
     </div>
     <div class="tags" id="headerTags"></div>
@@ -421,7 +426,142 @@ const laborData = [
   {id:"L081",division:"26 - Điện",task:"Lắp đèn downlight",crew:"1 thợ điện",unit:"bộ",dailyOutput:20.0,laborHours:0.400,crewSize:1},
   {id:"L082",division:"26 - Điện",task:"Lắp tủ điện 12-24 CB",crew:"2 thợ điện",unit:"tủ",dailyOutput:1.0,laborHours:16.0,crewSize:2},
   {id:"L083",division:"26 - Điện",task:"Lắp tủ điện tổng",crew:"3 thợ điện",unit:"tủ",dailyOutput:0.33,laborHours:72.7,crewSize:3},
-  {id:"L084",division:"26 - Điện",task:"Lắp thang cáp (cable tray)",crew:"2 thợ + 1 phụ",unit:"m",dailyOutput:15.2,laborHours:1.58,crewSize:3}
+  {id:"L084",division:"26 - Điện",task:"Lắp thang cáp (cable tray)",crew:"2 thợ + 1 phụ",unit:"m",dailyOutput:15.2,laborHours:1.58,crewSize:3},
+  {id:"LN001",division:"02 - Phá dỡ",task:"Phá dỡ nền BT có lưới thép (máy)",crew:"2 thợ + búa phá",unit:"m³",dailyOutput:18,laborHours:0.889,crewSize:2},
+  {id:"LN002",division:"02 - Phá dỡ",task:"Cắt khoan rút lõi BT (core drill)",crew:"2 thợ",unit:"m",dailyOutput:30,laborHours:0.533,crewSize:2},
+  {id:"LN003",division:"02 - Phá dỡ",task:"Phá dỡ vách thạch cao",crew:"2 LĐ",unit:"m²",dailyOutput:40,laborHours:0.400,crewSize:2},
+  {id:"LN004",division:"02 - Phá dỡ",task:"Bóc tách sàn gỗ/nhựa cũ",crew:"2 LĐ",unit:"m²",dailyOutput:35,laborHours:0.457,crewSize:2},
+  {id:"LN005",division:"02 - Phá dỡ",task:"Phá dỡ móng BT cũ (máy)",crew:"2 thợ + búa phá",unit:"m³",dailyOutput:8,laborHours:2.00,crewSize:2},
+  {id:"LN006",division:"02 - Phá dỡ",task:"Vận chuyển phế thải (thủ công)",crew:"4 LĐ phổ thông",unit:"m³",dailyOutput:25,laborHours:1.28,crewSize:4},
+  {id:"LN007",division:"02 - Phá dỡ",task:"Cắt thép kết cấu (oxy/plasma)",crew:"2 thợ",unit:"tấn",dailyOutput:2.5,laborHours:6.40,crewSize:2},
+  {id:"LN008",division:"03 - Bê tông",task:"Gia công lồng thép cọc nhồi",crew:"5 thợ sắt",unit:"tấn",dailyOutput:1.2,laborHours:33.33,crewSize:5},
+  {id:"LN009",division:"03 - Bê tông",task:"Ván khuôn tường vây (barrette)",crew:"C1: 4 thợ mộc + 1 phụ",unit:"m²",dailyOutput:9,laborHours:4.44,crewSize:5},
+  {id:"LN010",division:"03 - Bê tông",task:"Đổ BT tường vây (bơm)",crew:"C20: 6 người + bơm",unit:"m³",dailyOutput:50,laborHours:0.960,crewSize:6},
+  {id:"LN011",division:"03 - Bê tông",task:"Cáp dự ứng lực (luồn + kéo căng)",crew:"4 thợ chuyên dụng",unit:"tấn",dailyOutput:1.5,laborHours:21.33,crewSize:4},
+  {id:"LN012",division:"03 - Bê tông",task:"Đổ BT bù sàn deck (bơm)",crew:"C20: 6 người + bơm",unit:"m³",dailyOutput:70,laborHours:0.686,crewSize:6},
+  {id:"LN013",division:"03 - Bê tông",task:"Ván khuôn móng bè",crew:"C2: 5 thợ mộc + 2 phụ",unit:"m²",dailyOutput:25,laborHours:2.24,crewSize:7},
+  {id:"LN014",division:"03 - Bê tông",task:"Đổ BT cột mác cao C40 (bơm)",crew:"C20: 6 người + bơm",unit:"m³",dailyOutput:28,laborHours:1.71,crewSize:6},
+  {id:"LN015",division:"03 - Bê tông",task:"Chèn vữa không co ngót (grout)",crew:"3 thợ",unit:"m³",dailyOutput:4,laborHours:6.00,crewSize:3},
+  {id:"LN016",division:"03 - Bê tông",task:"Cắt tạo khe co giãn sàn BT",crew:"2 thợ",unit:"m",dailyOutput:120,laborHours:0.133,crewSize:2},
+  {id:"LN017",division:"03 - Bê tông",task:"Trám khe co giãn (sealant)",crew:"2 thợ",unit:"m",dailyOutput:80,laborHours:0.200,crewSize:2},
+  {id:"LN018",division:"03 - Bê tông",task:"Đánh bóng sàn BT (hardener)",crew:"3 thợ",unit:"m²",dailyOutput:80,laborHours:0.300,crewSize:3},
+  {id:"LN019",division:"03 - Bê tông",task:"Phun vữa shotcrete gia cố mái dốc",crew:"3 thợ + 1 phụ",unit:"m³",dailyOutput:12,laborHours:2.67,crewSize:4},
+  {id:"LN020",division:"04 - Xây/Trát",task:"Xây gạch trang trí (clinker)",crew:"2 thợ nề + 1 phụ",unit:"m²",dailyOutput:5,laborHours:4.80,crewSize:3},
+  {id:"LN021",division:"04 - Xây/Trát",task:"Xây tường đá hộc",crew:"3 thợ nề + 2 phụ",unit:"m³",dailyOutput:2.5,laborHours:16.00,crewSize:5},
+  {id:"LN022",division:"04 - Xây/Trát",task:"Trát đá rửa/granito",crew:"2 thợ nề",unit:"m²",dailyOutput:8,laborHours:2.00,crewSize:2},
+  {id:"LN023",division:"04 - Xây/Trát",task:"Ốp đá tự nhiên chân tường",crew:"2 thợ ốp + 1 phụ",unit:"m²",dailyOutput:6,laborHours:4.00,crewSize:3},
+  {id:"LN024",division:"04 - Xây/Trát",task:"Xây tường gạch kính (glass block)",crew:"2 thợ nề",unit:"m²",dailyOutput:4,laborHours:4.00,crewSize:2},
+  {id:"LN025",division:"04 - Xây/Trát",task:"Chèn vữa khe co giãn tường",crew:"1 thợ nề",unit:"m",dailyOutput:30,laborHours:0.267,crewSize:1},
+  {id:"LN026",division:"04 - Xây/Trát",task:"Xây hộp kỹ thuật/ống khói gạch",crew:"2 thợ nề + 1 phụ",unit:"m",dailyOutput:6,laborHours:4.00,crewSize:3},
+  {id:"LN027",division:"04 - Xây/Trát",task:"Quét vữa xi măng chống thấm chân tường",crew:"1 thợ nề",unit:"m²",dailyOutput:40,laborHours:0.200,crewSize:1},
+  {id:"LN028",division:"05 - Kết cấu thép",task:"Lắp sàn grating thép",crew:"3 thợ",unit:"m²",dailyOutput:40,laborHours:0.600,crewSize:3},
+  {id:"LN029",division:"05 - Kết cấu thép",task:"Lắp cầu thang thép (theo bậc)",crew:"3 thợ",unit:"bậc",dailyOutput:12,laborHours:2.00,crewSize:3},
+  {id:"LN030",division:"05 - Kết cấu thép",task:"Tổ hợp + lắp bồn/silo thép",crew:"6 thợ + cẩu",unit:"tấn",dailyOutput:2,laborHours:24.00,crewSize:6},
+  {id:"LN031",division:"05 - Kết cấu thép",task:"Sơn phủ chống cháy KC thép",crew:"2 thợ sơn",unit:"m²",dailyOutput:30,laborHours:0.533,crewSize:2},
+  {id:"LN032",division:"05 - Kết cấu thép",task:"Lắp dầm cầu trục (crane beam)",crew:"3 thợ + cẩu",unit:"m",dailyOutput:8,laborHours:3.00,crewSize:3},
+  {id:"LN033",division:"05 - Kết cấu thép",task:"Cắt CNC + tạo hình thép tấm",crew:"2 thợ",unit:"tấn",dailyOutput:3,laborHours:5.33,crewSize:2},
+  {id:"LN034",division:"05 - Kết cấu thép",task:"Lắp bu-lông neo (anchor bolt)",crew:"2 thợ",unit:"bộ",dailyOutput:30,laborHours:0.533,crewSize:2},
+  {id:"LN035",division:"06 - Gỗ/Nhựa",task:"Lát sàn gỗ tự nhiên (đóng đinh)",crew:"2 thợ",unit:"m²",dailyOutput:18,laborHours:0.889,crewSize:2},
+  {id:"LN036",division:"06 - Gỗ/Nhựa",task:"Ốp lam gỗ trang trí trần",crew:"2 thợ mộc",unit:"m²",dailyOutput:12,laborHours:1.33,crewSize:2},
+  {id:"LN037",division:"06 - Gỗ/Nhựa",task:"Ốp tấm nhựa PVC vân gỗ tường",crew:"2 thợ",unit:"m²",dailyOutput:30,laborHours:0.533,crewSize:2},
+  {id:"LN038",division:"06 - Gỗ/Nhựa",task:"Lắp cửa gỗ veneer cao cấp",crew:"2 thợ mộc",unit:"bộ",dailyOutput:3,laborHours:5.33,crewSize:2},
+  {id:"LN039",division:"06 - Gỗ/Nhựa",task:"Đóng trần ván gỗ ghép",crew:"3 thợ mộc",unit:"m²",dailyOutput:16,laborHours:1.50,crewSize:3},
+  {id:"LN040",division:"06 - Gỗ/Nhựa",task:"Lắp vách CNC trang trí",crew:"2 thợ mộc",unit:"m²",dailyOutput:8,laborHours:2.00,crewSize:2},
+  {id:"LN041",division:"07 - Chống thấm/Mái",task:"Lợp ngói màu",crew:"3 thợ + 1 phụ",unit:"m²",dailyOutput:35,laborHours:0.914,crewSize:4},
+  {id:"LN042",division:"07 - Chống thấm/Mái",task:"Lợp mái polycarbonate/kính",crew:"3 thợ",unit:"m²",dailyOutput:20,laborHours:1.20,crewSize:3},
+  {id:"LN043",division:"07 - Chống thấm/Mái",task:"Chống thấm màng khò nóng (bitum)",crew:"3 thợ + 1 phụ",unit:"m²",dailyOutput:60,laborHours:0.533,crewSize:4},
+  {id:"LN044",division:"07 - Chống thấm/Mái",task:"Chống thấm gốc xi măng tinh thể",crew:"2 thợ",unit:"m²",dailyOutput:45,laborHours:0.356,crewSize:2},
+  {id:"LN045",division:"07 - Chống thấm/Mái",task:"Lắp sê nô/máng thu nước mái",crew:"2 thợ",unit:"m",dailyOutput:18,laborHours:0.889,crewSize:2},
+  {id:"LN046",division:"07 - Chống thấm/Mái",task:"Sơn cách nhiệt phản quang mái tôn",crew:"2 thợ sơn",unit:"m²",dailyOutput:90,laborHours:0.178,crewSize:2},
+  {id:"LN047",division:"07 - Chống thấm/Mái",task:"Lắp tôn PU cách nhiệt mái",crew:"3 thợ + 1 phụ",unit:"m²",dailyOutput:50,laborHours:0.640,crewSize:4},
+  {id:"LN048",division:"08 - Cửa",task:"Lắp cửa kính cường lực bản lề sàn",crew:"3 thợ",unit:"bộ",dailyOutput:2,laborHours:12.00,crewSize:3},
+  {id:"LN049",division:"08 - Cửa",task:"Lắp cửa nhôm hệ (Xingfa) 4 cánh",crew:"2 thợ nhôm kính",unit:"bộ",dailyOutput:2,laborHours:8.00,crewSize:2},
+  {id:"LN050",division:"08 - Cửa",task:"Lắp khóa + phụ kiện cửa",crew:"1 thợ",unit:"bộ",dailyOutput:12,laborHours:0.667,crewSize:1},
+  {id:"LN051",division:"08 - Cửa",task:"Lắp cửa thép an ninh",crew:"2 thợ",unit:"bộ",dailyOutput:3,laborHours:5.33,crewSize:2},
+  {id:"LN052",division:"08 - Cửa",task:"Lắp vách kính văn phòng khung nhôm",crew:"3 thợ",unit:"m²",dailyOutput:7,laborHours:3.43,crewSize:3},
+  {id:"LN053",division:"08 - Cửa",task:"Lắp lam chắn nắng nhôm (louver)",crew:"2 thợ",unit:"m²",dailyOutput:9,laborHours:1.78,crewSize:2},
+  {id:"LN054",division:"09 - Hoàn thiện",task:"Lát gạch chân tường (len chân)",crew:"1 thợ ốp + 1 phụ",unit:"m",dailyOutput:50,laborHours:0.320,crewSize:2},
+  {id:"LN055",division:"09 - Hoàn thiện",task:"Ốp gạch vân gỗ tường",crew:"2 thợ ốp",unit:"m²",dailyOutput:9,laborHours:1.78,crewSize:2},
+  {id:"LN056",division:"09 - Hoàn thiện",task:"Lát sàn epoxy 3D",crew:"3 thợ",unit:"m²",dailyOutput:30,laborHours:0.800,crewSize:3},
+  {id:"LN057",division:"09 - Hoàn thiện",task:"Sơn hiệu ứng giả đá/bê tông",crew:"2 thợ sơn",unit:"m²",dailyOutput:25,laborHours:0.640,crewSize:2},
+  {id:"LN058",division:"09 - Hoàn thiện",task:"Dán giấy dán tường",crew:"2 thợ",unit:"m²",dailyOutput:40,laborHours:0.400,crewSize:2},
+  {id:"LN059",division:"09 - Hoàn thiện",task:"Trải thảm cuộn",crew:"2 thợ",unit:"m²",dailyOutput:60,laborHours:0.267,crewSize:2},
+  {id:"LN060",division:"09 - Hoàn thiện",task:"Lắp trần xuyên sáng (stretch ceiling)",crew:"3 thợ",unit:"m²",dailyOutput:15,laborHours:1.60,crewSize:3},
+  {id:"LN061",division:"09 - Hoàn thiện",task:"Lắp tấm 3D trang trí tường",crew:"2 thợ",unit:"m²",dailyOutput:12,laborHours:1.33,crewSize:2},
+  {id:"LN062",division:"09 - Hoàn thiện",task:"Đổ + mài đá terrazzo tại chỗ",crew:"3 thợ",unit:"m²",dailyOutput:18,laborHours:1.33,crewSize:3},
+  {id:"LN063",division:"09 - Hoàn thiện",task:"Mài đánh bóng sàn đá granite",crew:"2 thợ",unit:"m²",dailyOutput:25,laborHours:0.640,crewSize:2},
+  {id:"LN064",division:"09 - Hoàn thiện",task:"Lắp nẹp inox/đồng chỉ ron",crew:"1 thợ",unit:"m",dailyOutput:40,laborHours:0.200,crewSize:1},
+  {id:"LN065",division:"09 - Hoàn thiện",task:"Bả + sơn trần (2 nước)",crew:"1 thợ sơn",unit:"m²",dailyOutput:35,laborHours:0.229,crewSize:1},
+  {id:"LN066",division:"10 - Nội thất CĐ",task:"Lắp tủ locker thép",crew:"2 thợ",unit:"bộ",dailyOutput:10,laborHours:1.60,crewSize:2},
+  {id:"LN067",division:"10 - Nội thất CĐ",task:"Lắp vách ngăn di động (movable)",crew:"3 thợ",unit:"m²",dailyOutput:12,laborHours:2.00,crewSize:3},
+  {id:"LN068",division:"10 - Nội thất CĐ",task:"Lắp lan can kính cường lực",crew:"2 thợ",unit:"m",dailyOutput:6,laborHours:2.67,crewSize:2},
+  {id:"LN069",division:"10 - Nội thất CĐ",task:"Lắp hệ pergola/mái nhôm",crew:"3 thợ",unit:"m²",dailyOutput:10,laborHours:2.40,crewSize:3},
+  {id:"LN070",division:"10 - Nội thất CĐ",task:"Lắp bảng/whiteboard tương tác",crew:"2 thợ",unit:"cái",dailyOutput:8,laborHours:2.00,crewSize:2},
+  {id:"LN071",division:"12 - Nội thất",task:"Lắp rèm cửa cuốn/sáo",crew:"1 thợ",unit:"bộ",dailyOutput:10,laborHours:0.800,crewSize:1},
+  {id:"LN072",division:"12 - Nội thất",task:"Lắp ghế hội trường cố định",crew:"3 thợ",unit:"ghế",dailyOutput:40,laborHours:0.600,crewSize:3},
+  {id:"LN073",division:"12 - Nội thất",task:"Lắp quầy lễ tân gỗ CN",crew:"3 thợ mộc",unit:"bộ",dailyOutput:0.5,laborHours:48.00,crewSize:3},
+  {id:"LN074",division:"12 - Nội thất",task:"Lắp kệ trưng bày/siêu thị",crew:"2 thợ",unit:"m",dailyOutput:12,laborHours:1.33,crewSize:2},
+  {id:"LN075",division:"12 - Nội thất",task:"Thi công nội thất gỗ phòng (combo)",crew:"3 thợ mộc",unit:"m²",dailyOutput:6,laborHours:4.00,crewSize:3},
+  {id:"LN076",division:"13 - Đặc biệt",task:"Lắp dựng nhà thép tiền chế",crew:"6 thợ + cẩu",unit:"tấn",dailyOutput:4,laborHours:12.00,crewSize:6},
+  {id:"LN077",division:"13 - Đặc biệt",task:"Lắp bể bơi composite",crew:"4 thợ + cẩu",unit:"bộ",dailyOutput:0.25,laborHours:128.00,crewSize:4},
+  {id:"LN078",division:"13 - Đặc biệt",task:"Lắp panel phòng sạch (clean room)",crew:"4 thợ",unit:"m²",dailyOutput:25,laborHours:1.28,crewSize:4},
+  {id:"LN079",division:"13 - Đặc biệt",task:"Lắp panel kho lạnh cách nhiệt",crew:"4 thợ",unit:"m²",dailyOutput:30,laborHours:1.07,crewSize:4},
+  {id:"LN080",division:"14 - Thang máy",task:"Lắp thang máy quan sát (panoramic)",crew:"5 thợ chuyên dụng",unit:"bộ",dailyOutput:0.025,laborHours:1600.00,crewSize:5},
+  {id:"LN081",division:"14 - Thang máy",task:"Bảo trì/căn chỉnh thang máy",crew:"2 thợ",unit:"bộ",dailyOutput:1,laborHours:16.00,crewSize:2},
+  {id:"LN082",division:"21 - PCCC",task:"Ống thép PCCC Ø150",crew:"3 thợ ống",unit:"m",dailyOutput:6,laborHours:4.00,crewSize:3},
+  {id:"LN083",division:"21 - PCCC",task:"Lắp van báo động (alarm valve)",crew:"2 thợ",unit:"bộ",dailyOutput:1,laborHours:16.00,crewSize:2},
+  {id:"LN084",division:"21 - PCCC",task:"Lắp hệ chữa cháy khí FM200",crew:"3 thợ",unit:"bộ",dailyOutput:0.5,laborHours:48.00,crewSize:3},
+  {id:"LN085",division:"21 - PCCC",task:"Lắp chuông + đèn báo cháy",crew:"1 thợ PCCC",unit:"bộ",dailyOutput:14,laborHours:0.571,crewSize:1},
+  {id:"LN086",division:"22 - Cấp thoát nước",task:"Ống PPR Ø50",crew:"2 thợ + 1 phụ",unit:"m",dailyOutput:18,laborHours:1.33,crewSize:3},
+  {id:"LN087",division:"22 - Cấp thoát nước",task:"Ống PPR Ø63",crew:"2 thợ + 1 phụ",unit:"m",dailyOutput:14,laborHours:1.71,crewSize:3},
+  {id:"LN088",division:"22 - Cấp thoát nước",task:"Ống HDPE hàn nhiệt Ø110",crew:"3 thợ",unit:"m",dailyOutput:12,laborHours:2.00,crewSize:3},
+  {id:"LN089",division:"22 - Cấp thoát nước",task:"Lắp đồng hồ nước + hố van",crew:"2 thợ",unit:"bộ",dailyOutput:4,laborHours:4.00,crewSize:2},
+  {id:"LN090",division:"22 - Cấp thoát nước",task:"Lắp bình nước nóng NLMT",crew:"2 thợ",unit:"bộ",dailyOutput:1.5,laborHours:10.67,crewSize:2},
+  {id:"LN091",division:"22 - Cấp thoát nước",task:"Lắp bể tự hoại nhựa (septic)",crew:"3 thợ",unit:"bộ",dailyOutput:1,laborHours:24.00,crewSize:3},
+  {id:"LN092",division:"22 - Cấp thoát nước",task:"Thử áp lực đường ống",crew:"2 thợ",unit:"m",dailyOutput:100,laborHours:0.160,crewSize:2},
+  {id:"LN093",division:"23 - HVAC",task:"Lắp ống đồng lạnh Ø12.7",crew:"2 thợ lạnh",unit:"m",dailyOutput:28,laborHours:0.571,crewSize:2},
+  {id:"LN094",division:"23 - HVAC",task:"Lắp tháp giải nhiệt (cooling tower)",crew:"5 thợ + cẩu",unit:"bộ",dailyOutput:0.2,laborHours:200.00,crewSize:5},
+  {id:"LN095",division:"23 - HVAC",task:"Lắp bơm nước lạnh chiller",crew:"3 thợ",unit:"bộ",dailyOutput:1,laborHours:24.00,crewSize:3},
+  {id:"LN096",division:"23 - HVAC",task:"Cân bằng gió hệ thống (TAB)",crew:"2 thợ",unit:"miệng",dailyOutput:20,laborHours:0.800,crewSize:2},
+  {id:"LN097",division:"23 - HVAC",task:"Lắp hộp VAV",crew:"2 thợ",unit:"bộ",dailyOutput:6,laborHours:2.67,crewSize:2},
+  {id:"LN098",division:"23 - HVAC",task:"Bọc bảo ôn ống nước lạnh",crew:"2 thợ",unit:"m",dailyOutput:35,laborHours:0.457,crewSize:2},
+  {id:"LN099",division:"26 - Điện",task:"Kéo cáp trung thế 24kV",crew:"4 thợ điện",unit:"m",dailyOutput:18,laborHours:1.78,crewSize:4},
+  {id:"LN100",division:"26 - Điện",task:"Lắp máy biến áp (TBA)",crew:"4 thợ + cẩu",unit:"bộ",dailyOutput:0.25,laborHours:128.00,crewSize:4},
+  {id:"LN101",division:"26 - Điện",task:"Lắp tủ trung thế (RMU)",crew:"3 thợ điện",unit:"tủ",dailyOutput:0.5,laborHours:48.00,crewSize:3},
+  {id:"LN102",division:"26 - Điện",task:"Đi máng cáp sơn tĩnh điện",crew:"3 thợ",unit:"m",dailyOutput:18,laborHours:1.33,crewSize:3},
+  {id:"LN103",division:"26 - Điện",task:"Lắp hệ chống sét (kim + dây dẫn)",crew:"3 thợ",unit:"bộ",dailyOutput:1,laborHours:24.00,crewSize:3},
+  {id:"LN104",division:"26 - Điện",task:"Đóng cọc + đấu hệ tiếp địa",crew:"2 thợ điện",unit:"bộ",dailyOutput:4,laborHours:4.00,crewSize:2},
+  {id:"LN105",division:"26 - Điện",task:"Lắp đèn pha LED ngoài trời",crew:"2 thợ",unit:"bộ",dailyOutput:8,laborHours:2.00,crewSize:2},
+  {id:"LN106",division:"26 - Điện",task:"Lắp đèn đường + cột cao áp",crew:"3 thợ",unit:"cột",dailyOutput:4,laborHours:6.00,crewSize:3},
+  {id:"LN107",division:"26 - Điện",task:"Đấu nối + test tủ điện",crew:"2 thợ điện",unit:"tủ",dailyOutput:1,laborHours:16.00,crewSize:2},
+  {id:"LN108",division:"26 - Điện",task:"Lắp pin năng lượng mặt trời (solar)",crew:"3 thợ",unit:"kWp",dailyOutput:3,laborHours:8.00,crewSize:3},
+  {id:"LN109",division:"27 - Thông tin LL",task:"Kéo cáp mạng Cat6",crew:"2 thợ",unit:"m",dailyOutput:80,laborHours:0.200,crewSize:2},
+  {id:"LN110",division:"27 - Thông tin LL",task:"Kéo cáp quang (fiber)",crew:"2 thợ",unit:"m",dailyOutput:100,laborHours:0.160,crewSize:2},
+  {id:"LN111",division:"27 - Thông tin LL",task:"Lắp tủ rack + patch panel",crew:"2 thợ",unit:"tủ",dailyOutput:1,laborHours:16.00,crewSize:2},
+  {id:"LN112",division:"27 - Thông tin LL",task:"Lắp camera IP + cấu hình",crew:"1 thợ",unit:"bộ",dailyOutput:8,laborHours:1.00,crewSize:1},
+  {id:"LN113",division:"27 - Thông tin LL",task:"Lắp loa thông báo (PA)",crew:"1 thợ",unit:"bộ",dailyOutput:12,laborHours:0.667,crewSize:1},
+  {id:"LN114",division:"28 - An ninh",task:"Lắp đầu đọc thẻ kiểm soát ra vào",crew:"2 thợ",unit:"bộ",dailyOutput:6,laborHours:2.67,crewSize:2},
+  {id:"LN115",division:"28 - An ninh",task:"Lắp barrier/cổng tự động",crew:"2 thợ",unit:"bộ",dailyOutput:1,laborHours:16.00,crewSize:2},
+  {id:"LN116",division:"28 - An ninh",task:"Lắp hệ báo trộm (cảm biến)",crew:"1 thợ",unit:"bộ",dailyOutput:10,laborHours:0.800,crewSize:1},
+  {id:"LN117",division:"31 - Đào đắp",task:"Đào đất hố móng (thủ công)",crew:"4 LĐ phổ thông",unit:"m³",dailyOutput:8,laborHours:4.00,crewSize:4},
+  {id:"LN118",division:"31 - Đào đắp",task:"Đắp đất đầm chặt (thủ công)",crew:"4 LĐ phổ thông",unit:"m³",dailyOutput:10,laborHours:3.20,crewSize:4},
+  {id:"LN119",division:"31 - Đào đắp",task:"San gạt mặt bằng (thủ công)",crew:"4 LĐ phổ thông",unit:"m²",dailyOutput:120,laborHours:0.267,crewSize:4},
+  {id:"LN120",division:"31 - Đào đắp",task:"Đào rãnh kỹ thuật (thủ công)",crew:"3 LĐ phổ thông",unit:"m³",dailyOutput:6,laborHours:4.00,crewSize:3},
+  {id:"LN121",division:"31 - Đào đắp",task:"Trải vải địa kỹ thuật",crew:"3 LĐ",unit:"m²",dailyOutput:200,laborHours:0.120,crewSize:3},
+  {id:"LN122",division:"31 - Đào đắp",task:"Đắp cát nền san phẳng (thủ công)",crew:"4 LĐ phổ thông",unit:"m³",dailyOutput:14,laborHours:2.29,crewSize:4},
+  {id:"LN123",division:"32 - Sân vườn",task:"Lát gạch terrazzo sân/vỉa hè",crew:"2 thợ ốp + 1 phụ",unit:"m²",dailyOutput:25,laborHours:0.960,crewSize:3},
+  {id:"LN124",division:"32 - Sân vườn",task:"Lát đá granite vỉa hè",crew:"2 thợ ốp + 1 phụ",unit:"m²",dailyOutput:12,laborHours:2.00,crewSize:3},
+  {id:"LN125",division:"32 - Sân vườn",task:"Lắp bó vỉa BT đúc sẵn",crew:"3 thợ",unit:"m",dailyOutput:30,laborHours:0.800,crewSize:3},
+  {id:"LN126",division:"32 - Sân vườn",task:"Trồng cỏ nền (thảm cỏ)",crew:"4 LĐ",unit:"m²",dailyOutput:150,laborHours:0.213,crewSize:4},
+  {id:"LN127",division:"32 - Sân vườn",task:"Trồng cây xanh (bầu lớn)",crew:"3 LĐ",unit:"cây",dailyOutput:12,laborHours:2.00,crewSize:3},
+  {id:"LN128",division:"32 - Sân vườn",task:"Lắp hàng rào lưới B40",crew:"2 thợ",unit:"m",dailyOutput:25,laborHours:0.640,crewSize:2},
+  {id:"LN129",division:"32 - Sân vườn",task:"Sơn kẻ vạch sân/bãi xe",crew:"2 thợ",unit:"m²",dailyOutput:200,laborHours:0.080,crewSize:2},
+  {id:"LN130",division:"33 - Hạ tầng",task:"Lắp ống cống BTLT Ø600",crew:"4 thợ + cẩu",unit:"m",dailyOutput:30,laborHours:1.07,crewSize:4},
+  {id:"LN131",division:"33 - Hạ tầng",task:"Lắp ống cống BTLT Ø1000",crew:"4 thợ + cẩu",unit:"m",dailyOutput:18,laborHours:1.78,crewSize:4},
+  {id:"LN132",division:"33 - Hạ tầng",task:"Xây hố ga/hố thăm (manhole)",crew:"3 thợ nề",unit:"bộ",dailyOutput:1,laborHours:24.00,crewSize:3},
+  {id:"LN133",division:"33 - Hạ tầng",task:"Lắp ống cấp nước HDPE Ø160",crew:"3 thợ",unit:"m",dailyOutput:25,laborHours:0.960,crewSize:3},
+  {id:"LN134",division:"33 - Hạ tầng",task:"Lắp đan rãnh BT đúc sẵn",crew:"3 thợ",unit:"tấm",dailyOutput:40,laborHours:0.600,crewSize:3},
+  {id:"LN135",division:"33 - Hạ tầng",task:"Đào + lấp đặt ống ngầm (thủ công)",crew:"4 LĐ",unit:"m",dailyOutput:20,laborHours:1.60,crewSize:4}
 ];
 
 const equipmentData = [
@@ -476,7 +616,32 @@ const equipmentData = [
   {id:"E041",category:"Phụ trợ",equipment:"Máy hàn điện 400A",unit:"m/ca",output8h:60,operator:1,helper:0,fuelPerHour:0,notes:"Hàn KC thép"},
   {id:"E042",category:"Phụ trợ",equipment:"Giàn giáo (dựng/tháo)",unit:"m²/ca",output8h:45,operator:0,helper:4,fuelPerHour:0,notes:"GG ngoài"},
   {id:"E044",category:"Phụ trợ",equipment:"Máy cắt BT (joint cutter)",unit:"m/ca",output8h:120,operator:1,helper:0,fuelPerHour:3,notes:"Khe co giãn"},
-  {id:"E045",category:"Phụ trợ",equipment:"Máy phun vữa shotcrete",unit:"m³/ca",output8h:15,operator:1,helper:2,fuelPerHour:12,notes:"Gia cố taluy"}
+  {id:"E045",category:"Phụ trợ",equipment:"Máy phun vữa shotcrete",unit:"m³/ca",output8h:15,operator:1,helper:2,fuelPerHour:12,notes:"Gia cố taluy"},
+  {id:"EN001",category:"Đào đất",equipment:"Máy đào PC400 (2.0m³)",unit:"m³/ca",output8h:600,operator:1,helper:1,fuelPerHour:38,notes:"Đất cấp I-II"},
+  {id:"EN002",category:"Đào đất",equipment:"Máy đào bánh lốp (wheel)",unit:"m³/ca",output8h:200,operator:1,helper:0,fuelPerHour:12,notes:"Đô thị, mặt cứng"},
+  {id:"EN003",category:"Đào đất",equipment:"Máy đào gàu dây (dragline)",unit:"m³/ca",output8h:350,operator:1,helper:1,fuelPerHour:30,notes:"Đào sâu, dưới nước"},
+  {id:"EN004",category:"San ủi",equipment:"Máy ủi D4 (90HP)",unit:"m³/ca",output8h:350,operator:1,helper:0,fuelPerHour:14,notes:"San lấp nhỏ"},
+  {id:"EN005",category:"Đầm nén",equipment:"Lu chân cừu 18T",unit:"m³/ca",output8h:600,operator:1,helper:0,fuelPerHour:18,notes:"Đầm đất dính"},
+  {id:"EN006",category:"Đầm nén",equipment:"Lu tĩnh 3 bánh thép 8T",unit:"m²/ca",output8h:3000,operator:1,helper:0,fuelPerHour:10,notes:"Hoàn thiện nền"},
+  {id:"EN007",category:"Xúc/Vận chuyển",equipment:"Xe ben 25m³ (15km)",unit:"m³/ca",output8h:100,operator:1,helper:0,fuelPerHour:28,notes:"Cự ly 15km"},
+  {id:"EN008",category:"Xúc/Vận chuyển",equipment:"Băng tải vận chuyển (conveyor)",unit:"m³/ca",output8h:400,operator:1,helper:1,fuelPerHour:0,notes:"Điện, cấp liệu"},
+  {id:"EN009",category:"Bê tông",equipment:"Bơm cần BT (52m)",unit:"m³/ca",output8h:240,operator:1,helper:2,fuelPerHour:42,notes:"Nhà cao tầng"},
+  {id:"EN010",category:"Bê tông",equipment:"Máy phun PU foam cách nhiệt",unit:"m²/ca",output8h:200,operator:1,helper:1,fuelPerHour:5,notes:"Mái, vách"},
+  {id:"EN011",category:"Bê tông",equipment:"Máy cắt khe BT công suất lớn",unit:"m/ca",output8h:200,operator:1,helper:0,fuelPerHour:5,notes:"Khe co giãn sàn"},
+  {id:"EN012",category:"Bê tông",equipment:"Máy đánh bóng sàn BT (planetary)",unit:"m²/ca",output8h:250,operator:1,helper:0,fuelPerHour:4,notes:"Sàn hardener"},
+  {id:"EN013",category:"Cẩu/Nâng",equipment:"Cẩu tháp TC7030 (70m)",unit:"tấn/ca",output8h:45,operator:1,helper:2,fuelPerHour:0,notes:"Điện, 12T đầu cần"},
+  {id:"EN014",category:"Cẩu/Nâng",equipment:"Cẩu bánh lốp 100T",unit:"tấn/ca",output8h:90,operator:1,helper:3,fuelPerHour:35,notes:"Cẩu nặng"},
+  {id:"EN015",category:"Cẩu/Nâng",equipment:"Cẩu bánh lốp 250T",unit:"tấn/ca",output8h:130,operator:1,helper:4,fuelPerHour:55,notes:"Siêu trọng, lắp ghép"},
+  {id:"EN016",category:"Cẩu/Nâng",equipment:"Vận thăng lồng đôi 2T",unit:"chuyến/ca",output8h:140,operator:1,helper:1,fuelPerHour:0,notes:"Điện, người+VL"},
+  {id:"EN017",category:"Ép/Khoan cọc",equipment:"Máy khoan cọc nhồi D1200",unit:"m/ca",output8h:6,operator:3,helper:6,fuelPerHour:75,notes:"Đất cấp II-III"},
+  {id:"EN018",category:"Ép/Khoan cọc",equipment:"Máy khoan cọc CFA",unit:"m/ca",output8h:80,operator:2,helper:4,fuelPerHour:50,notes:"Cọc khoan nhồi liên tục"},
+  {id:"EN019",category:"Ép/Khoan cọc",equipment:"Máy ép neo (anchor) cọc 400T",unit:"m/ca",output8h:40,operator:2,helper:4,fuelPerHour:30,notes:"Cọc 350x350"},
+  {id:"EN020",category:"Đường/BTN",equipment:"Xe tưới nhựa thấm bám",unit:"m²/ca",output8h:8000,operator:1,helper:1,fuelPerHour:15,notes:"Lớp dính bám"},
+  {id:"EN021",category:"Đường/BTN",equipment:"Máy rải base/đá dăm",unit:"m²/ca",output8h:5000,operator:1,helper:2,fuelPerHour:22,notes:"Lớp móng đường"},
+  {id:"EN022",category:"Phụ trợ",equipment:"Máy nén khí 10m³/min",unit:"ca",output8h:1,operator:1,helper:0,fuelPerHour:30,notes:"Cấp khí thi công"},
+  {id:"EN023",category:"Phụ trợ",equipment:"Xe bồn nước 10m³",unit:"chuyến/ca",output8h:6,operator:1,helper:0,fuelPerHour:12,notes:"Tưới ẩm, cấp nước"},
+  {id:"EN024",category:"Phụ trợ",equipment:"Máy khoan ngang HDD",unit:"m/ca",output8h:60,operator:2,helper:2,fuelPerHour:25,notes:"Khoan ngầm không đào"},
+  {id:"EN025",category:"Phụ trợ",equipment:"Máy sơn kẻ vạch (line marking)",unit:"m²/ca",output8h:1000,operator:1,helper:1,fuelPerHour:4,notes:"Vạch sơn nhiệt dẻo"}
 ];
 
 let calcItems = [];
@@ -511,15 +676,24 @@ function populateFilters() {
   const cats = [...new Set(equipDataMut.map(r => r.category))].sort();
   document.getElementById('laborDiv').innerHTML = '<option value="Tất cả">Tất cả</option>' + divs.map(d => '<option>'+d+'</option>').join('');
   document.getElementById('equipCat').innerHTML = '<option value="Tất cả">Tất cả</option>' + cats.map(c => '<option>'+c+'</option>').join('');
+  var _lc=document.getElementById('laborCount'); if(_lc) _lc.textContent=laborDataMut.length;
+  var _ec=document.getElementById('equipCount'); if(_ec) _ec.textContent=equipDataMut.length;
+  var _ht=document.getElementById('headerTags'); if(_ht) _ht.innerHTML='<span>'+laborDataMut.length+' công tác nhân công</span><span>'+equipDataMut.length+' thiết bị</span><span>+160 đầu mục mở rộng (v7)</span><span>CSI 02–33</span>';
 }
 
-function isInCalc(id) { return calcItems.some(item => item.id === id); }
+let calcUidSeq = 0;
+function newUid() { return 'C' + (++calcUidSeq); }
+// số lần một công việc/máy (theo mã nguồn) đang có trong bảng tính
+function calcCount(srcId) { return calcItems.filter(i => i.srcId === srcId).length; }
+function isInCalc(id) { return calcItems.some(item => item.srcId === id); }
 
+// Thêm vào bảng tính — CHO PHÉP thêm cùng 1 mục nhiều lần (mỗi lần = 1 phương án)
 function addToCalc(id, type) {
-  if (isInCalc(id)) return;
   const data = type === 'labor' ? laborDataMut.find(r => r.id === id) : equipDataMut.find(r => r.id === id);
   if (!data) return;
-  calcItems.push({...data, type, quantity: 0, taskDays: 30});
+  const n = calcCount(id);
+  const scenario = n > 0 ? ('PA' + (n + 1)) : '';   // tự gắn nhãn PA2, PA3... khi trùng
+  calcItems.push({...data, uid: newUid(), srcId: id, type, quantity: 0, taskDays: 30, scenario});
   if (type === 'labor') selectedLabor.add(id);
   else selectedEquip.add(id);
   renderLabor();
@@ -527,17 +701,25 @@ function addToCalc(id, type) {
   renderCalc();
 }
 
-function removeCalcItem(id) {
-  calcItems = calcItems.filter(item => item.id !== id);
-  selectedLabor.delete(id);
-  selectedEquip.delete(id);
+function removeCalcItem(uid) {
+  const it = calcItems.find(i => i.uid === uid);
+  calcItems = calcItems.filter(item => item.uid !== uid);
+  if (it && !isInCalc(it.srcId)) { selectedLabor.delete(it.srcId); selectedEquip.delete(it.srcId); }
   renderLabor();
   renderEquip();
   renderCalc();
 }
 
-function commitQty(id, val) {
-  const item = calcItems.find(i => i.id === id);
+// Cập nhật nhãn phương án cho 1 dòng
+function commitScenario(uid, val) {
+  const it = calcItems.find(i => i.uid === uid);
+  if (!it) return;
+  it.scenario = (val || '').trim();
+  renderCalc();
+}
+
+function commitQty(uid, val) {
+  const item = calcItems.find(i => i.uid === uid);
   if (!item) return;
   const clean = val.replace(',', '.').replace(/[^0-9.]/g, '');
   const num = parseFloat(clean) || 0;
@@ -545,17 +727,17 @@ function commitQty(id, val) {
   item.quantity = num;
   renderCalc();
   // restore focus to same cell after re-render
-  setTimeout(() => { const el = document.getElementById('qty_'+id); if(el){el.focus();el.select();} }, 0);
+  setTimeout(() => { const el = document.getElementById('qty_'+uid); if(el){el.focus();el.select();} }, 0);
 }
 
-function commitDays(id, val) {
-  const item = calcItems.find(i => i.id === id);
+function commitDays(uid, val) {
+  const item = calcItems.find(i => i.uid === uid);
   if (!item) return;
   const num = parseInt(val) || 1;
   if (item.taskDays === num) return;
   item.taskDays = num;
   renderCalc();
-  setTimeout(() => { const el = document.getElementById('days_'+id); if(el){el.focus();el.select();} }, 0);
+  setTimeout(() => { const el = document.getElementById('days_'+uid); if(el){el.focus();el.select();} }, 0);
 }
 
 // Enter or Tab → move to next input in tabindex order without losing value
@@ -566,13 +748,13 @@ function handleCalcKey(e, currentId) {
     if (!current) return;
     // commit current value first
     const isQty = currentId.startsWith('qty_');
-    const id = currentId.replace(/^(qty_|days_)/, '');
+    const uid = currentId.replace(/^(qty_|days_)/, '');
     if (isQty) {
       const val = current.value.replace(',', '.').replace(/[^0-9.]/g, '');
-      const item = calcItems.find(i => i.id === id);
+      const item = calcItems.find(i => i.uid === uid);
       if (item) { item.quantity = parseFloat(val) || 0; }
     } else {
-      const item = calcItems.find(i => i.id === id);
+      const item = calcItems.find(i => i.uid === uid);
       if (item) { item.taskDays = parseInt(current.value) || 1; }
     }
     // find next focusable input
@@ -633,8 +815,8 @@ function addAllLabor() {
     return true;
   });
   data.forEach(r => {
-    if (!isInCalc(r.id)) {
-      calcItems.push({...r, type:'labor', quantity:0, taskDays:30});
+    if (calcCount(r.id) === 0) {
+      calcItems.push({...r, uid:newUid(), srcId:r.id, type:'labor', quantity:0, taskDays:30, scenario:''});
       selectedLabor.add(r.id);
     }
   });
@@ -664,8 +846,9 @@ function renderLabor() {
   const cols = [{k:'division',l:'Công tác'},{k:'task',l:'Công việc'},{k:'crew',l:'Tổ'},{k:'unit',l:'ĐVT'},{k:'dailyOutput',l:'NS/ngày'},{k:'laborHours',l:'GC/ĐV'},{k:'crewSize',l:'Tổ'},{k:'_',l:''}];
   document.getElementById('laborTHead').innerHTML = '<tr>'+cols.map(c=>'<th onclick="laborSort(\''+c.k+'\')">'+c.l+(c.k!=='_'?sortIcon(c.k,laborSortKey,laborSortDir):'')+'</th>').join('')+'</tr>';
   document.getElementById('laborTBody').innerHTML = data.map(r => {
-    const inCalc = isInCalc(r.id);
-    return '<tr><td><span class="badge">'+r.division+'</span></td><td style="font-weight:500">'+r.task+'</td><td style="font-size:11px;color:#666">'+r.crew+'</td><td class="tc" style="font-weight:600">'+r.unit+'</td><td class="num-r num-g">'+fmt(r.dailyOutput)+'</td><td class="num-r num-red">'+fmtLH(r.laborHours)+'</td><td class="tc">'+r.crewSize+'</td><td><button class="add-btn '+(inCalc?'added':'')+'" onclick="addToCalc(\''+r.id+'\',\'labor\')"'+(inCalc?' disabled':'')+'>'+(inCalc?'✓':'+ Tính')+'</button></td></tr>';
+    const n = calcCount(r.id);
+    const btn = '<button class="add-btn'+(n>0?' added':'')+'" onclick="addToCalc(\''+r.id+'\',\'labor\')" title="'+(n>0?('Đã thêm '+n+' lần — bấm để thêm phương án nữa'):'Thêm vào bảng tính')+'">+ Tính'+(n>0?'<span class="cnt">×'+n+'</span>':'')+'</button>';
+    return '<tr><td><span class="badge">'+r.division+'</span></td><td style="font-weight:500">'+r.task+'</td><td style="font-size:11px;color:#666">'+r.crew+'</td><td class="tc" style="font-weight:600">'+r.unit+'</td><td class="num-r num-g">'+fmt(r.dailyOutput)+'</td><td class="num-r num-red">'+fmtLH(r.laborHours)+'</td><td class="tc">'+r.crewSize+'</td><td>'+btn+'</td></tr>';
   }).join('');
   document.getElementById('laborActionBar').style.display = data.length ? '' : 'none';
   document.getElementById('laborInfo').textContent = data.length+'/'+laborDataMut.length+' công tác';
@@ -688,8 +871,8 @@ function addAllEquip() {
     return true;
   });
   data.forEach(r => {
-    if (!isInCalc(r.id)) {
-      calcItems.push({...r, type:'equipment', quantity:0, taskDays:30});
+    if (calcCount(r.id) === 0) {
+      calcItems.push({...r, uid:newUid(), srcId:r.id, type:'equipment', quantity:0, taskDays:30, scenario:''});
       selectedEquip.add(r.id);
     }
   });
@@ -719,8 +902,9 @@ function renderEquip() {
   const cols = [{k:'category',l:'Nhóm'},{k:'equipment',l:'Thiết bị'},{k:'unit',l:'ĐVT'},{k:'output8h',l:'NS/ca'},{k:'operator',l:'VH'},{k:'helper',l:'Phụ'},{k:'fuelPerHour',l:'NL(l/h)'},{k:'notes',l:'Ghi chú'},{k:'_',l:''}];
   document.getElementById('equipTHead').innerHTML = '<tr>'+cols.map(c=>'<th onclick="equipSort(\''+c.k+'\')">'+c.l+(c.k!=='_'?sortIcon(c.k,equipSortKey,equipSortDir):'')+'</th>').join('')+'</tr>';
   document.getElementById('equipTBody').innerHTML = data.map(r => {
-    const inCalc = isInCalc(r.id);
-    return '<tr><td><span class="badge badge-eq">'+r.category+'</span></td><td style="font-weight:500">'+r.equipment+'</td><td class="tc" style="font-size:11px">'+r.unit+'</td><td class="num-r num-g">'+fmt(r.output8h)+'</td><td class="tc">'+r.operator+'</td><td class="tc">'+r.helper+'</td><td class="num-r" style="color:#888">'+(r.fuelPerHour||'—')+'</td><td style="font-size:11px;color:#777">'+r.notes+'</td><td><button class="add-btn '+(inCalc?'added':'')+'" onclick="addToCalc(\''+r.id+'\',\'equipment\')"'+(inCalc?' disabled':'')+'>'+(inCalc?'✓':'+ Tính')+'</button></td></tr>';
+    const n = calcCount(r.id);
+    const btn = '<button class="add-btn'+(n>0?' added':'')+'" onclick="addToCalc(\''+r.id+'\',\'equipment\')" title="'+(n>0?('Đã thêm '+n+' lần — bấm để thêm phương án nữa'):'Thêm vào bảng tính')+'">+ Tính'+(n>0?'<span class="cnt">×'+n+'</span>':'')+'</button>';
+    return '<tr><td><span class="badge badge-eq">'+r.category+'</span></td><td style="font-weight:500">'+r.equipment+'</td><td class="tc" style="font-size:11px">'+r.unit+'</td><td class="num-r num-g">'+fmt(r.output8h)+'</td><td class="tc">'+r.operator+'</td><td class="tc">'+r.helper+'</td><td class="num-r" style="color:#888">'+(r.fuelPerHour||'—')+'</td><td style="font-size:11px;color:#777">'+r.notes+'</td><td>'+btn+'</td></tr>';
   }).join('');
   document.getElementById('equipActionBar').style.display = data.length ? '' : 'none';
   document.getElementById('equipInfo').textContent = data.length+'/'+equipDataMut.length+' thiết bị';
@@ -785,15 +969,16 @@ function renderCalc() {
     laborResults.forEach((r, i) => {
       const qTab = (i*2)+1;
       const dTab = (i*2)+2;
-      html += '<tr><td style="font-weight:500;max-width:180px">'+r.task+'</td><td class="tc">'+r.unit+'</td>';
-      html += '<td><input type="text" inputmode="decimal" tabindex="'+qTab+'" class="calc-input" id="qty_'+r.id+'" value="'+(r.quantity||'')+'" placeholder="0" onfocus="this.select()" onkeydown="handleCalcKey(event,\'qty_'+r.id+'\')" onblur="this.value=this.value.replace(/[^0-9.,]/g,\'\');commitQty(\''+r.id+'\',this.value)"></td>';
+      const tag = r.scenario ? '<span class="scenario-tag">'+r.scenario+'</span><br>' : '';
+      html += '<tr><td style="font-weight:500;max-width:200px">'+tag+r.task+'<input class="scenario-input" value="'+(r.scenario||'')+'" placeholder="+ tên phương án..." tabindex="-1" onblur="commitScenario(\''+r.uid+'\',this.value)"></td><td class="tc">'+r.unit+'</td>';
+      html += '<td><input type="text" inputmode="decimal" tabindex="'+qTab+'" class="calc-input" id="qty_'+r.uid+'" value="'+(r.quantity||'')+'" placeholder="0" onfocus="this.select()" onkeydown="handleCalcKey(event,\'qty_'+r.uid+'\')" onblur="this.value=this.value.replace(/[^0-9.,]/g,\'\');commitQty(\''+r.uid+'\',this.value)"></td>';
       html += '<td class="num-r" style="color:#888">'+fmtLH(r.laborHours)+'</td>';
       html += '<td class="num-r" style="font-weight:700;color:#0f3460">'+Math.round(r.totalLH).toLocaleString('vi-VN')+'</td>';
       html += '<td class="num-r" style="color:#555">'+r.d.toFixed(1)+'</td>';
-      html += '<td class="tc"><input type="number" tabindex="'+dTab+'" class="task-days-input" id="days_'+r.id+'" min="1" value="'+(r.taskDays||30)+'" onfocus="this.select()" onkeydown="handleCalcKey(event,\'days_'+r.id+'\')" onblur="commitDays(\''+r.id+'\',this.value)"></td>';
+      html += '<td class="tc"><input type="number" tabindex="'+dTab+'" class="task-days-input" id="days_'+r.uid+'" min="1" value="'+(r.taskDays||30)+'" onfocus="this.select()" onkeydown="handleCalcKey(event,\'days_'+r.uid+'\')" onblur="commitDays(\''+r.uid+'\',this.value)"></td>';
       html += '<td class="tc" style="font-weight:700;color:#0a9396">'+r.crews+'</td>';
       html += '<td class="tc" style="font-weight:800;color:#e94560;font-size:14px">'+r.workers+'</td>';
-      html += '<td><button class="remove-btn" tabindex="-1" onclick="removeCalcItem(\''+r.id+'\')">✕</button></td></tr>';
+      html += '<td><button class="remove-btn" tabindex="-1" onclick="removeCalcItem(\''+r.uid+'\')">✕</button></td></tr>';
     });
     html += '</tbody></table></div></div>';
   }
@@ -806,16 +991,17 @@ function renderCalc() {
     equipResults.forEach((r, i) => {
       const qTab = offset + (i*2)+1;
       const dTab = offset + (i*2)+2;
-      html += '<tr><td style="font-weight:500;max-width:180px">'+r.equipment+'</td><td class="tc" style="font-size:11px">'+r.unit+'</td>';
-      html += '<td><input type="text" inputmode="decimal" tabindex="'+qTab+'" class="calc-input" id="qty_'+r.id+'" value="'+(r.quantity||'')+'" placeholder="0" onfocus="this.select()" onkeydown="handleCalcKey(event,\'qty_'+r.id+'\')" onblur="this.value=this.value.replace(/[^0-9.,]/g,\'\');commitQty(\''+r.id+'\',this.value)"></td>';
+      const tag = r.scenario ? '<span class="scenario-tag">'+r.scenario+'</span><br>' : '';
+      html += '<tr><td style="font-weight:500;max-width:200px">'+tag+r.equipment+'<input class="scenario-input" value="'+(r.scenario||'')+'" placeholder="+ tên phương án..." tabindex="-1" onblur="commitScenario(\''+r.uid+'\',this.value)"></td><td class="tc" style="font-size:11px">'+r.unit+'</td>';
+      html += '<td><input type="text" inputmode="decimal" tabindex="'+qTab+'" class="calc-input" id="qty_'+r.uid+'" value="'+(r.quantity||'')+'" placeholder="0" onfocus="this.select()" onkeydown="handleCalcKey(event,\'qty_'+r.uid+'\')" onblur="this.value=this.value.replace(/[^0-9.,]/g,\'\');commitQty(\''+r.uid+'\',this.value)"></td>';
       html += '<td class="num-r" style="color:#888">'+fmt(r.output8h)+'</td>';
       html += '<td class="num-r" style="color:#555">'+r.d.toFixed(1)+'</td>';
-      html += '<td class="tc"><input type="number" tabindex="'+dTab+'" class="task-days-input" id="days_'+r.id+'" min="1" value="'+(r.taskDays||30)+'" onfocus="this.select()" onkeydown="handleCalcKey(event,\'days_'+r.id+'\')" onblur="commitDays(\''+r.id+'\',this.value)"></td>';
+      html += '<td class="tc"><input type="number" tabindex="'+dTab+'" class="task-days-input" id="days_'+r.uid+'" min="1" value="'+(r.taskDays||30)+'" onfocus="this.select()" onkeydown="handleCalcKey(event,\'days_'+r.uid+'\')" onblur="commitDays(\''+r.uid+'\',this.value)"></td>';
       html += '<td class="tc" style="font-weight:800;color:#0a9396;font-size:14px">'+r.machines+'</td>';
       html += '<td class="tc" style="font-weight:700">'+r.ops+'</td>';
       html += '<td class="tc">'+r.hlps+'</td>';
       html += '<td class="num-r" style="color:#bb6016">'+Math.round(r.fuel).toLocaleString('vi-VN')+'</td>';
-      html += '<td><button class="remove-btn" tabindex="-1" onclick="removeCalcItem(\''+r.id+'\')">✕</button></td></tr>';
+      html += '<td><button class="remove-btn" tabindex="-1" onclick="removeCalcItem(\''+r.uid+'\')">✕</button></td></tr>';
     });
     html += '</tbody></table></div></div>';
   }
@@ -983,9 +1169,9 @@ document.addEventListener('click', e => {
 function openBulkModal() {
   if (calcItems.length === 0) { alert('Vui lòng thêm công tác vào bảng tính toán trước!'); return; }
   // pre-fill hint
-  const hint = calcItems.map((i, idx) => (i.id)+'  →  '+(i.task || i.equipment)).join('\n');
+  const hint = calcItems.map((i, idx) => (idx+1)+'. '+(i.scenario? '['+i.scenario+'] ':'')+(i.task || i.equipment)).join('\n');
   document.getElementById('bulkTextarea').value = '';
-  document.getElementById('bulkTextarea').placeholder = 'Thứ tự công tác hiện có:\n'+hint+'\n\nDán khối lượng vào đây...';
+  document.getElementById('bulkTextarea').placeholder = 'Thứ tự công tác hiện có (dán khối lượng theo đúng thứ tự, mỗi dòng 1 số):\n'+hint+'\n\nDán khối lượng vào đây...';
   document.getElementById('bulkModal').classList.add('open');
 }
 
@@ -997,25 +1183,23 @@ function applyBulkInput() {
   // Try to detect if lines have IDs (2-column) or just values (1-column)
   const hasTwoCol = lines.some(l => /[\t;]/.test(l) || /^[A-Za-z]\w+\s+[\d.,]+$/.test(l));
   lines.forEach((line, idx) => {
-    let itemId = null, val = 0;
     if (hasTwoCol) {
       const parts = line.split(/[\t;]+/);
-      if (parts.length >= 2) {
-        itemId = parts[0].trim();
-        val = parseFloat(parts[1].replace(',','.')) || 0;
-      }
+      if (parts.length < 2) return;
+      const key = parts[0].trim();
+      const val = parseFloat(parts[1].replace(',','.')) || 0;
+      const item = calcItems.find(i =>
+        (i.srcId && i.srcId.toLowerCase() === key.toLowerCase()) ||
+        (i.scenario && i.scenario.toLowerCase() === key.toLowerCase()) ||
+        (i.task && i.task.toLowerCase().includes(key.toLowerCase())) ||
+        (i.equipment && i.equipment.toLowerCase().includes(key.toLowerCase()))
+      );
+      if (item) { item.quantity = val; applied++; }
     } else {
-      val = parseFloat(line.replace(',','.')) || 0;
-      if (idx < calcItems.length) itemId = calcItems[idx].id;
+      // 1 cột: gán theo đúng thứ tự dòng (kể cả các phương án trùng nhau)
+      const val = parseFloat(line.replace(',','.')) || 0;
+      if (idx < calcItems.length) { calcItems[idx].quantity = val; applied++; }
     }
-    if (!itemId) return;
-    const item = calcItems.find(i =>
-      i.id.toLowerCase() === itemId.toLowerCase() ||
-      (i.task && i.task.toLowerCase().includes(itemId.toLowerCase())) ||
-      (i.equipment && i.equipment.toLowerCase().includes(itemId.toLowerCase()))
-    );
-    if (item) { item.quantity = val; applied++; }
-    else if (!hasTwoCol && idx < calcItems.length) { calcItems[idx].quantity = val; applied++; }
   });
   closeModal('bulkModal');
   renderCalc();
@@ -1037,7 +1221,7 @@ function downloadUpdatedFile() {
   const blob = new Blob(['<!DOCTYPE html>\n'+src], {type:'text/html;charset=utf-8'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'Dinh-Muc-Xay-Dung-RSMeans-v6.html';
+  a.download = 'Dinh-Muc-Xay-Dung-RSMeans-v7.html';
   a.click();
   URL.revokeObjectURL(a.href);
   const msg = document.createElement('div');
@@ -1071,7 +1255,7 @@ function renderReport() {
       const crews = d > 0 ? Math.ceil(d / d2) : 0;
       const workers = crews * item.crewSize;
       tLH += totalLH; tW += workers;
-      laborItems.push({task: item.task, workers});
+      laborItems.push({task: (item.scenario? item.scenario+': ':'')+item.task, workers});
       return {...item, totalLH, d, crews, workers};
     } else {
       const d = item.quantity > 0 ? item.quantity / item.output8h : 0;
@@ -1079,7 +1263,7 @@ function renderReport() {
       const ops = machines * item.operator;
       const hlps = machines * item.helper;
       tM += machines; tO += ops; tH += hlps;
-      equipItems.push({equipment: item.equipment, ops, hlps});
+      equipItems.push({equipment: (item.scenario? item.scenario+': ':'')+item.equipment, ops, hlps});
       return {...item, d, machines, ops, hlps};
     }
   });
@@ -1115,10 +1299,11 @@ function renderReport() {
   html += '<div class="tbl-wrap"><table><thead><tr><th>Công tác</th><th>ĐVT</th><th class="tc">Khối lượng</th><th class="tc">Số ngày</th><th class="tc">Nhân lực cần</th></tr></thead><tbody>';
   
   results.forEach(r => {
+    const sc = r.scenario ? '<span class="scenario-tag">'+r.scenario+'</span> ' : '';
     if (r.type === 'labor') {
-      html += '<tr><td style="font-weight:500">'+r.task+'</td><td>'+r.unit+'</td><td class="num-r">'+r.quantity.toFixed(2)+'</td><td class="num-r">'+r.d.toFixed(1)+'</td><td class="num-r" style="color:#e94560;font-weight:700">'+r.workers+'</td></tr>';
+      html += '<tr><td style="font-weight:500">'+sc+r.task+'</td><td>'+r.unit+'</td><td class="num-r">'+r.quantity.toFixed(2)+'</td><td class="num-r">'+r.d.toFixed(1)+'</td><td class="num-r" style="color:#e94560;font-weight:700">'+r.workers+'</td></tr>';
     } else {
-      html += '<tr><td style="font-weight:500">'+r.equipment+'</td><td>'+r.unit+'</td><td class="num-r">'+r.quantity.toFixed(2)+'</td><td class="num-r">'+r.d.toFixed(1)+'</td><td class="num-r" style="color:#bb6016;font-weight:700">'+r.ops+'</td></tr>';
+      html += '<tr><td style="font-weight:500">'+sc+r.equipment+'</td><td>'+r.unit+'</td><td class="num-r">'+r.quantity.toFixed(2)+'</td><td class="num-r">'+r.d.toFixed(1)+'</td><td class="num-r" style="color:#bb6016;font-weight:700">'+r.ops+'</td></tr>';
     }
   });
   
