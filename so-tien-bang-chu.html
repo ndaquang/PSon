@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Công Cụ Đổi Số Tiền Thành Chữ · VN / EN</title>
+<style>
+  :root{
+    --navy:#17223E;
+    --navy-2:#202D50;
+    --navy-3:#2A3A66;
+    --accent:#E14F63;
+    --accent-soft:#E14F6320;
+    --page-bg:#EEF1F6;
+    --card-bg:#FFFFFF;
+    --border:#DDE3EE;
+    --text:#1F2937;
+    --text-soft:#6B7280;
+    --table-head:#FBF3D1;
+    --table-head-text:#8A6D1E;
+    --num-blue:#1B3A6B;
+    --highlight-row:#E3EEFC;
+    --good:#1E8E5A;
+    --good-soft:#1E8E5A18;
+    --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--page-bg);
+    color:var(--text);
+    font-family:var(--font);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar{background:var(--navy);color:#fff;}
+  .topbar-main{
+    max-width:1040px;margin:0 auto;padding:18px 20px 14px;
+    display:flex;align-items:center;gap:16px;
+  }
+  .logo{
+    flex:0 0 auto;width:46px;height:46px;border-radius:10px;
+    background:var(--accent);color:#fff;font-weight:800;font-size:1.05rem;
+    display:flex;align-items:center;justify-content:center;letter-spacing:.02em;
+  }
+  .title-block h1{
+    margin:0 0 4px;font-size:clamp(1.05rem,3.4vw,1.4rem);font-weight:700;
+  }
+  .title-block .subtags{
+    margin:0;font-size:.8rem;color:#C7CEE0;
+  }
+  .subtags .sep{margin:0 8px;color:#4A567A;}
+  .topbar-sub{
+    background:var(--navy-2);border-top:1px solid #2C3A63;
+  }
+  .topbar-sub-inner{
+    max-width:1040px;margin:0 auto;padding:9px 20px;
+    font-size:.74rem;color:#AEB8D2;display:flex;flex-wrap:wrap;
+  }
+  .topbar-sub-inner .sep{margin:0 10px;color:#4A567A;}
+
+  /* ---------- Tabs ---------- */
+  .tabbar{
+    background:#E4E9F2;border-bottom:1px solid var(--border);
+  }
+  .tabbar-inner{
+    max-width:1040px;margin:0 auto;padding:0 20px;display:flex;gap:4px;
+  }
+  .tab{
+    appearance:none;border:none;background:transparent;cursor:pointer;
+    font-family:var(--font);font-size:.86rem;font-weight:600;color:var(--text-soft);
+    padding:13px 18px;border-radius:8px 8px 0 0;
+    display:flex;align-items:center;gap:7px;
+  }
+  .tab.active{background:var(--navy);color:#fff;}
+  .tab:not(.active):hover{background:#D7DEEC;color:var(--text);}
+  .tab:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
+
+  /* ---------- Content ---------- */
+  .content{max-width:1040px;margin:0 auto;padding:22px 20px 60px;}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+
+  .card{
+    background:var(--card-bg);border:1px solid var(--border);border-radius:8px;
+    box-shadow:0 1px 2px rgba(23,34,62,.05);
+    padding:20px 22px 18px;margin-bottom:20px;
+  }
+  .card-title{
+    font-size:.95rem;font-weight:700;color:var(--navy);
+    margin:0 0 16px;display:flex;align-items:center;gap:8px;
+  }
+
+  /* ---------- Form ---------- */
+  .form-grid{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:16px 18px;
+  }
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field-wide{grid-column:1 / -1;}
+  .field label{
+    font-size:.74rem;font-weight:600;color:var(--text-soft);
+    text-transform:uppercase;letter-spacing:.03em;
+  }
+  .field label .req{color:var(--accent);margin-left:2px;}
+  .field input[type=text]{
+    font-family:var(--font);font-size:1rem;color:var(--text);
+    border:1px solid var(--border);border-radius:6px;
+    padding:9px 11px;background:#fff;width:100%;
+  }
+  .field input[type=text]:focus{
+    outline:none;border-color:var(--navy-3);
+    box-shadow:0 0 0 3px var(--accent-soft);
+  }
+  #amountInput{
+    font-size:1.15rem;font-variant-numeric:tabular-nums;letter-spacing:.02em;
+  }
+  .preview-row{
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-top:2px;
+  }
+  .preview{font-size:.8rem;color:var(--text-soft);font-variant-numeric:tabular-nums;}
+  .error-msg{color:var(--accent);font-size:.8rem;font-weight:600;}
+
+  .field-checkbox{grid-column:1 / -1;justify-content:center;}
+  .toggle{
+    display:inline-flex;align-items:center;gap:8px;font-size:.86rem;
+    color:var(--text);cursor:pointer;user-select:none;
+  }
+  .toggle input{accent-color:var(--navy-3);width:16px;height:16px;}
+
+  .hint{
+    font-size:.78rem;color:var(--text-soft);margin:14px 0 0;
+    border-top:1px dashed var(--border);padding-top:12px;
+  }
+
+  /* ---------- Result table ---------- */
+  table.result-table{width:100%;border-collapse:collapse;}
+  .result-table thead th{
+    background:var(--table-head);color:var(--table-head-text);
+    font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+    text-align:left;padding:10px 12px;border-bottom:1px solid #EADFA6;
+  }
+  .result-table tbody td{
+    padding:14px 12px;border-bottom:1px solid var(--border);vertical-align:top;
+  }
+  .result-table tbody tr:last-child td{border-bottom:none;}
+  .result-table tbody tr.highlight{background:var(--highlight-row);}
+  .lang-badge{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:34px;height:24px;border-radius:5px;font-size:.72rem;font-weight:800;
+    color:#fff;padding:0 6px;
+  }
+  .lang-badge.vn{background:var(--navy);}
+  .lang-badge.en{background:var(--navy-3);}
+  .result-cell{
+    color:var(--num-blue);font-weight:600;font-size:1rem;line-height:1.5;
+  }
+  .copy-btn{
+    font-family:var(--font);font-size:.78rem;font-weight:700;color:var(--navy-3);
+    background:#fff;border:1px solid var(--border);border-radius:6px;
+    padding:7px 12px;cursor:pointer;white-space:nowrap;
+  }
+  .copy-btn:hover{border-color:var(--navy-3);}
+  .copy-btn.copied{background:var(--good-soft);border-color:var(--good);color:var(--good);}
+  .copy-btn:focus-visible,#amountInput:focus-visible,.tab:focus-visible{
+    outline:2px solid var(--accent);outline-offset:2px;
+  }
+
+  /* ---------- Guide tab ---------- */
+  .guide-list{margin:0;padding-left:20px;font-size:.88rem;color:var(--text);}
+  .guide-list li{margin-bottom:10px;}
+  .guide-list strong{color:var(--navy);}
+
+  @media (max-width:720px){
+    .form-grid{grid-template-columns:repeat(2,1fr);}
+  }
+  @media (max-width:520px){
+    .form-grid{grid-template-columns:1fr;}
+    .result-table, .result-table thead, .result-table tbody, .result-table th, .result-table td, .result-table tr{display:block;}
+    .result-table thead{display:none;}
+    .result-table tbody tr{border-bottom:1px solid var(--border);padding:10px 0;}
+    .result-table tbody td{border-bottom:none;padding:4px 0;}
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="topbar-main">
+      <div class="logo">NC</div>
+      <div class="title-block">
+        <h1>Công Cụ Đổi Số Tiền Thành Chữ</h1>
+        <p class="subtags">Tiếng Việt<span class="sep">|</span>English<span class="sep">|</span>Kiểu văn bản kế toán<span class="sep">|</span>Sao chép 1 chạm</p>
+      </div>
+    </div>
+    <div class="topbar-sub">
+      <div class="topbar-sub-inner">
+        <span>VNĐ &amp; USD</span><span class="sep">|</span>
+        <span>Tự thêm "chẵn" / "only"</span><span class="sep">|</span>
+        <span>Tuỳ chỉnh tên đơn vị tiền tệ</span><span class="sep">|</span>
+        <span>Hỗ trợ tới 18 chữ số</span>
+      </div>
+    </div>
+  </div>
+
+  <nav class="tabbar">
+    <div class="tabbar-inner">
+      <button class="tab active" data-tab="convert" type="button">🧮&nbsp;Chuyển đổi</button>
+      <button class="tab" data-tab="guide" type="button">📖&nbsp;Hướng dẫn</button>
+    </div>
+  </nav>
+
+  <main class="content">
+
+    <section id="tab-convert" class="tab-panel active">
+
+      <div class="card">
+        <h2 class="card-title">📋 Nhập số tiền cần đổi</h2>
+        <div class="form-grid">
+          <div class="field field-wide">
+            <label for="amountInput">Số tiền <span class="req">*</span></label>
+            <input id="amountInput" type="text" inputmode="decimal" placeholder="Ví dụ: 1234567.89" autocomplete="off" spellcheck="false">
+            <div class="preview-row">
+              <span id="preview" class="preview">= 0</span>
+              <span id="errorMsg" class="error-msg"></span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="vnUnit">Đơn vị (VN)</label>
+            <input id="vnUnit" type="text" value="đồng">
+          </div>
+          <div class="field">
+            <label for="enMajor">Đơn vị lớn (EN)</label>
+            <input id="enMajor" type="text" value="dollars">
+          </div>
+          <div class="field">
+            <label for="enMinor">Đơn vị nhỏ (EN)</label>
+            <input id="enMinor" type="text" value="cents">
+          </div>
+          <div class="field"></div>
+          <div class="field field-checkbox">
+            <label class="toggle">
+              <input type="checkbox" id="formalToggle" checked>
+              Văn phong chính thức ("chẵn" / "only")
+            </label>
+          </div>
+        </div>
+        <p class="hint">* Chỉ nhập chữ số. Dùng dấu chấm ( . ) cho phần thập phân. Có thể dán số có dấu phẩy phân cách hàng nghìn — công cụ sẽ tự bỏ qua.</p>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">🧾 Kết quả bằng chữ</h2>
+        <table class="result-table">
+          <thead>
+            <tr><th>Ngôn ngữ</th><th>Kết quả bằng chữ</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr class="highlight">
+              <td><span class="lang-badge vn">VN</span></td>
+              <td id="outVN" class="result-cell"></td>
+              <td><button class="copy-btn" data-target="outVN">Sao chép</button></td>
+            </tr>
+            <tr>
+              <td><span class="lang-badge en">EN</span></td>
+              <td id="outEN" class="result-cell"></td>
+              <td><button class="copy-btn" data-target="outEN">Copy</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="hint">💡 Dòng Tiếng Việt được tô sáng vì đây là ngôn ngữ dùng chính cho chứng từ / hoá đơn tại Việt Nam.</p>
+      </div>
+
+    </section>
+
+    <section id="tab-guide" class="tab-panel">
+      <div class="card">
+        <h2 class="card-title">📖 Quy ước đọc số &amp; hướng dẫn dùng</h2>
+        <ul class="guide-list">
+          <li><strong>Tiếng Việt:</strong> dùng "linh" theo cách đọc phổ biến của kế toán; tự động chuyển "mốt / lăm / tư" đúng ngữ pháp (ví dụ 21 → hai mươi <em>mốt</em>, 25 → hai mươi <em>lăm</em>, 24 → hai mươi <em>tư</em>); tự thêm "không trăm" khi một nhóm ở giữa toàn số 0 (ví dụ 1.000.005 → "một triệu không trăm linh năm").</li>
+          <li><strong>Tiếng Anh:</strong> viết theo kiểu Mỹ, không dùng "and" giữa hàng trăm và hàng chục (ví dụ "one hundred five", không phải "one hundred and five").</li>
+          <li><strong>Văn phong chính thức:</strong> khi bật, cuối câu sẽ tự thêm "chẵn./." (VN) hoặc "only" (EN) — dùng cho hoá đơn, hợp đồng, chứng từ thanh toán để tránh sửa số sau khi ghi.</li>
+          <li><strong>Đơn vị tiền tệ:</strong> có thể đổi tên đơn vị (ví dụ "đồng" → "USD", "dollars" → "yên") ngay trong ô nhập ở thẻ Chuyển đổi.</li>
+          <li>Công cụ hỗ trợ tối đa <strong>18 chữ số</strong> phần nguyên (đến hàng "tỷ tỷ" / quintillion) và 2 chữ số phần thập phân (hào/xu, cents).</li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============ VIETNAMESE ============ */
+  const VN_DIGIT=['không','một','hai','ba','bốn','năm','sáu','bảy','tám','chín'];
+
+  function vnReadGroup(num, isFirst){
+    const h=Math.floor(num/100), t=Math.floor((num%100)/10), u=num%10;
+    let parts=[];
+    if(h>0){ parts.push(VN_DIGIT[h],'trăm'); }
+    else if(!isFirst){ parts.push('không','trăm'); }
+    if(t===0){
+      if(u>0){
+        if(h>0 || !isFirst) parts.push('linh');
+        parts.push(u===5?'năm':VN_DIGIT[u]);
+      }
+    } else if(t===1){
+      parts.push('mười');
+      if(u===1) parts.push('một');
+      else if(u===5) parts.push('lăm');
+      else if(u>0) parts.push(VN_DIGIT[u]);
+    } else {
+      parts.push(VN_DIGIT[t],'mươi');
+      if(u===1) parts.push('mốt');
+      else if(u===4) parts.push('tư');
+      else if(u===5) parts.push('lăm');
+      else if(u>0) parts.push(VN_DIGIT[u]);
+    }
+    return parts.join(' ');
+  }
+
+  function vnGroupUnit(i){
+    if(i===0) return '';
+    const small={1:'nghìn',2:'triệu'};
+    const mod=i%3, bigCount=Math.floor(i/3);
+    let parts=[];
+    if(mod!==0) parts.push(small[mod]);
+    for(let k=0;k<bigCount;k++) parts.push('tỷ');
+    return parts.join(' ');
+  }
+
+  function vnInteger(digitStr){
+    digitStr = digitStr.replace(/^0+(?=\d)/,'');
+    if(digitStr==='0') return 'không';
+    const n=digitStr.length;
+    const groupCount=Math.ceil(n/3);
+    const padded=digitStr.padStart(groupCount*3,'0');
+    const groups=[];
+    for(let g=0;g<groupCount;g++) groups.push(padded.substr(g*3,3));
+    const firstNonZeroIdx = groups.findIndex(g=>Number(g)>0);
+    let resultParts=[];
+    for(let g=0; g<groups.length; g++){
+      const val=Number(groups[g]);
+      if(val===0) continue;
+      const isFirst=(g===firstNonZeroIdx);
+      const words=vnReadGroup(val, isFirst);
+      const idxFromRight = groups.length-1-g;
+      const unitName = vnGroupUnit(idxFromRight);
+      resultParts.push(unitName? words+' '+unitName : words);
+    }
+    return resultParts.join(' ');
+  }
+
+  function vnMoney(parsed, unitLabel, formal){
+    let s = vnInteger(parsed.intDigits);
+    if(parsed.negative) s = 'âm ' + s;
+    s += ' ' + (unitLabel || 'đồng');
+    if(parsed.hasDecimal){
+      const decVal = Number(parsed.decDigits);
+      s += ' ' + vnReadGroup(decVal, true) + ' xu';
+    }
+    if(formal){
+      s += parsed.hasDecimal ? './.' : ' chẵn./.';
+    }
+    return cap(s);
+  }
+
+  /* ============ ENGLISH ============ */
+  const EN_ONES=['zero','one','two','three','four','five','six','seven','eight','nine','ten',
+    'eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'];
+  const EN_TENS=['','','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
+  const EN_SCALES=['','thousand','million','billion','trillion','quadrillion','quintillion','sextillion'];
+
+  function enGroup(num){
+    const h=Math.floor(num/100), r=num%100;
+    let parts=[];
+    if(h>0) parts.push(EN_ONES[h],'hundred');
+    if(r>0){
+      if(r<20) parts.push(EN_ONES[r]);
+      else{
+        const t=Math.floor(r/10), u=r%10;
+        parts.push(u>0? EN_TENS[t]+'-'+EN_ONES[u] : EN_TENS[t]);
+      }
+    }
+    return parts.join(' ');
+  }
+
+  function enInteger(digitStr){
+    digitStr = digitStr.replace(/^0+(?=\d)/,'');
+    if(digitStr==='0') return 'zero';
+    const n=digitStr.length;
+    const groupCount=Math.ceil(n/3);
+    const padded=digitStr.padStart(groupCount*3,'0');
+    const groups=[];
+    for(let g=0;g<groupCount;g++) groups.push(Number(padded.substr(g*3,3)));
+    let parts=[];
+    for(let g=0; g<groups.length; g++){
+      const val=groups[g];
+      if(val===0) continue;
+      const scaleIdx = groups.length-1-g;
+      const words = enGroup(val);
+      parts.push(scaleIdx>0 && EN_SCALES[scaleIdx] ? words+' '+EN_SCALES[scaleIdx] : words);
+    }
+    return parts.join(' ');
+  }
+
+  function enMoney(parsed, major, minor, formal){
+    let s = enInteger(parsed.intDigits);
+    if(parsed.negative) s = 'negative ' + s;
+    s += ' ' + (major || 'dollars');
+    if(parsed.hasDecimal){
+      const decVal = Number(parsed.decDigits);
+      s += ' and ' + enInteger(String(decVal)) + ' ' + (minor || 'cents');
+    }
+    if(formal && !parsed.hasDecimal){
+      s += ' only';
+    }
+    return cap(s);
+  }
+
+  /* ============ Shared helpers ============ */
+  function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+
+  function parseInput(raw){
+    let str = raw.trim();
+    let negative = false;
+    if(str.startsWith('-')){ negative = true; str = str.slice(1); }
+    str = str.replace(/[^0-9.]/g,'');
+    let dotIdx = str.indexOf('.');
+    let intPart, decPart;
+    if(dotIdx === -1){
+      intPart = str; decPart = '';
+    } else {
+      intPart = str.slice(0, dotIdx);
+      decPart = str.slice(dotIdx+1).replace(/\./g,'').slice(0,2);
+    }
+    intPart = intPart.replace(/^0+(?=\d)/,'');
+    if(intPart === '') intPart = '0';
+    const hasDecimal = decPart.replace(/0+$/,'').length > 0;
+    const decDigits = hasDecimal ? decPart.padEnd(2,'0') : '00';
+    return { negative, intDigits: intPart, decDigits, hasDecimal, tooLarge: intPart.length > 18 };
+  }
+
+  function formatPreview(parsed){
+    const grouped = parsed.intDigits.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    let s = (parsed.negative? '-':'') + grouped;
+    if(parsed.hasDecimal) s += '.' + parsed.decDigits;
+    return '= ' + s;
+  }
+
+  /* ============ Tabs ============ */
+  document.querySelectorAll('.tab').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  /* ============ Wire up conversion ============ */
+  const amountInput = document.getElementById('amountInput');
+  const previewEl = document.getElementById('preview');
+  const errorEl = document.getElementById('errorMsg');
+  const formalToggle = document.getElementById('formalToggle');
+  const vnUnitInput = document.getElementById('vnUnit');
+  const enMajorInput = document.getElementById('enMajor');
+  const enMinorInput = document.getElementById('enMinor');
+  const outVN = document.getElementById('outVN');
+  const outEN = document.getElementById('outEN');
+
+  function render(){
+    const raw = amountInput.value;
+    const parsed = parseInput(raw);
+    previewEl.textContent = formatPreview(parsed);
+
+    if(parsed.tooLarge){
+      errorEl.textContent = 'Số quá lớn (tối đa 18 chữ số phần nguyên).';
+      outVN.textContent = outEN.textContent = '';
+      return;
+    }
+    errorEl.textContent = '';
+
+    const formal = formalToggle.checked;
+    outVN.textContent = vnMoney(parsed, vnUnitInput.value, formal);
+    outEN.textContent = enMoney(parsed, enMajorInput.value, enMinorInput.value, formal);
+  }
+
+  [amountInput, formalToggle, vnUnitInput, enMajorInput, enMinorInput]
+    .forEach(el => el.addEventListener('input', render));
+
+  document.querySelectorAll('.copy-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const targetEl = document.getElementById(btn.dataset.target);
+      const text = targetEl.textContent;
+      if(!text) return;
+      const done = ()=>{
+        const original = btn.textContent;
+        btn.textContent = 'Đã chép ✓';
+        btn.classList.add('copied');
+        setTimeout(()=>{ btn.textContent = original; btn.classList.remove('copied'); }, 1400);
+      };
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text, done));
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  });
+
+  function fallbackCopy(text, cb){
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try{ document.execCommand('copy'); }catch(e){}
+    document.body.removeChild(ta);
+    cb();
+  }
+
+  // Seed with an example on load
+  amountInput.value = '1234567.89';
+  render();
+})();
+</script>
+</body>
+</html>
