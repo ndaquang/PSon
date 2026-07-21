@@ -75,6 +75,9 @@ td.c{text-align:center}
 .toast.show{opacity:1;transform:translateY(0)}
 .filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:12px 18px;background:var(--soft);border-bottom:1px solid var(--line)}
 .filters select,.filters input{padding:7px 10px;border:1px solid var(--line);border-radius:6px;font-size:12.5px;font-family:inherit}
+.b-step{background:#eef4fb;color:var(--brand);border:1px solid #cfe0f5;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:800;white-space:nowrap;flex:0 0 auto}
+.b-step:hover{background:#dbeafe}
+.b-step.on{background:#f0fdf4;color:#15803d;border-color:#86efac}
 .hide{display:none!important}
 @media print{header{position:static}.btns,.filters{display:none}.step-b{display:block!important}}
 </style>
@@ -948,7 +951,7 @@ function renderPhases(){
           <option value="open">Chưa xong (Chưa làm + Đang làm)</option>
           <option value="late">Trễ hạn</option>
         </select>
-        <button class="b-pri" style="background:#e6eefc" onclick="bulk('${ph.id}','done')">Đánh dấu xong cả giai đoạn</button>
+        <button class="b-pri" style="background:#dcfce7;color:#15803d" onclick="doneAllSteps('${ph.id}')">✓✓ Hoàn thành TOÀN BỘ công việc chính</button>
         <button class="b-pri" style="background:#f1f5f9" onclick="bulk('${ph.id}','todo')">Reset giai đoạn</button>
       </div>
       <div id="body-${ph.id}">
@@ -977,6 +980,7 @@ function stepHTML(ph,st){
         ${st.ctrl && st.ctrl!=="—" ? `<span class="tag">✓ ${st.ctrl}</span>`:""}
         ${st.forms.map(f=>`<span class="tag f">${f}</span>`).join("")}
       </span>
+      <button class="b-step" id="btn-${sid}" title="Đánh dấu hoàn thành toàn bộ đầu việc của bước này" onclick="event.stopPropagation();doneStep('${ph.id}',${st.no})">✓ Xong bước</button>
       <span class="mini"><i id="mini-${sid}" style="width:0%"></i></span>
       <span style="font-size:11px;color:var(--muted);width:52px;text-align:right" id="cnt-${sid}">0/0</span>
     </div>
@@ -1026,6 +1030,30 @@ function setItem(id,key,val){
   }
   refresh();
 }
+function doneStep(phId,no){
+  const ph=DATA.phases.find(p=>p.id===phId);
+  const st=ph.steps.find(s=>s.no===no);
+  const act=st.items.filter(i=>i.status!=="na");
+  if(!act.length){ toast("Bước "+no+": tất cả đầu việc đang là Không áp dụng"); return; }
+  const full=act.every(i=>i.status==="done");
+  const target=full?"todo":"done";
+  act.forEach(i=>{
+    i.status=target;
+    const sel=document.querySelector(`#row-${i.id} select.st`);
+    if(sel){ sel.value=target; sel.className="st "+STATUS[target].c; }
+    const row=document.getElementById(`row-${i.id}`);
+    if(row) row.dataset.status=target;
+  });
+  refresh();
+  toast(full ? `Đã bỏ đánh dấu bước ${no}` : `Đã hoàn thành bước ${no} — ${act.length} đầu việc`);
+}
+function doneAllSteps(phId){
+  const ph=DATA.phases.find(p=>p.id===phId);
+  let n=0;
+  ph.steps.forEach(st=>st.items.forEach(i=>{ if(i.status!=="na"){ i.status="done"; n++; } }));
+  renderPhases(); refresh();
+  toast(`Đã hoàn thành toàn bộ ${ph.steps.length} bước chính — ${n} đầu việc`);
+}
 function bulk(phId,status){
   const ph = DATA.phases.find(p=>p.id===phId);
   ph.steps.forEach(st=>st.items.forEach(it=>{ if(it.status!=="na") it.status=status; }));
@@ -1052,6 +1080,12 @@ function refresh(){
       const mini=document.getElementById(`mini-${sid}`), cnt=document.getElementById(`cnt-${sid}`);
       if(mini) mini.style.width = c.pct+"%";
       if(cnt)  cnt.textContent  = `${c.done}/${c.total}`;
+      const btn=document.getElementById(`btn-${sid}`);
+      if(btn){
+        const full = c.total>0 && c.done===c.total;
+        btn.textContent = full ? "↺ Bỏ xong" : "✓ Xong bước";
+        btn.classList.toggle("on", full);
+      }
       pItems = pItems.concat(st.items);
       st.items.forEach(it=>{
         const row=document.getElementById(`row-${it.id}`);
