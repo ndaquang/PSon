@@ -8,619 +8,107 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0a0e14;
-    --bg-soft: #0f141c;
-    --surface: #141a24;
-    --surface-2: #1a2230;
-    --border: #232c3d;
-    --border-strong: #2f3a52;
-    --text: #e8ecf3;
-    --text-soft: #aab3c5;
-    --text-muted: #6b7689;
-    --accent: #ffb648;
-    --accent-2: #ff7a45;
-    --ok: #5ad19a;
-    --blue: #5b8dee;
-    --purple: #a472f0;
-    --pink: #ec5ea8;
-    --shadow: 0 12px 40px rgba(0,0,0,.4);
-  }
+  :root{--ink:#0f1319;--ink2:#0b0e13;--panel:#171c24;--panel2:#1d232d;--line:#2a313c;--line2:#3a434f;
+    --text:#eef1f5;--soft:#a6aeba;--muted:#6d7686;--gold:#d6a54c;--gold2:#eabd6a;--steel:#7293b7;--concrete:#9aa1ab}
+  *{box-sizing:border-box;margin:0;padding:0}
+  a{color:var(--gold);text-decoration:none}
+  a:hover{color:var(--gold2)}
+  html,body{background:var(--ink);color:var(--text);min-height:100vh;line-height:1.55;-webkit-font-smoothing:antialiased;
+    font-family:'Be Vietnam Pro',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+  body{background:radial-gradient(1200px 600px at 8% -10%,rgba(214,165,76,.08),transparent 60%),
+    radial-gradient(1000px 520px at 112% 6%,rgba(114,147,183,.07),transparent 60%),var(--ink);background-attachment:fixed}
+  .mono{font-family:'JetBrains Mono',monospace}
+  .wrap{max-width:1200px;margin:0 auto;padding:44px 28px 72px}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  /* topbar */
+  .top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:26px;margin-bottom:40px;border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:13px}
+  .mark{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(140deg,var(--gold2),var(--gold));color:#1a1206;font-weight:800;font-size:16px;letter-spacing:.02em;
+    box-shadow:0 12px 28px -8px rgba(214,165,76,.55)}
+  .brand h1{font-size:18px;font-weight:700;letter-spacing:-.01em}
+  .brand p{font-size:11px;color:var(--muted);letter-spacing:.03em;margin-top:2px}
+  .pill{display:inline-flex;align-items:center;gap:8px;font-size:10.5px;color:var(--soft);padding:8px 14px;
+    background:var(--panel);border:1px solid var(--line);border-radius:20px}
+  .dot{width:6px;height:6px;border-radius:50%;background:#5ad19a;box-shadow:0 0 8px #5ad19a}
 
-  html, body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    min-height: 100vh;
-    line-height: 1.55;
-    -webkit-font-smoothing: antialiased;
-  }
+  /* group header */
+  .gh{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .gh .gi{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    background:rgba(214,165,76,.12);border:1px solid rgba(214,165,76,.28);color:var(--gold);flex:none}
+  .gh.st .gi{background:rgba(114,147,183,.14);border-color:rgba(114,147,183,.32);color:var(--steel)}
+  .gh .gi svg{width:17px;height:17px}
+  .gh h3{font-size:14px;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
+  .gh .ct{font-size:11px;color:var(--muted);font-weight:500}
+  .gh .rl{flex:1;height:1px;background:var(--line)}
 
-  body {
-    background:
-      radial-gradient(1200px 600px at 10% -10%, rgba(255,182,72,.08), transparent 60%),
-      radial-gradient(1000px 500px at 110% 10%, rgba(91,141,238,.06), transparent 60%),
-      var(--bg);
-    background-attachment: fixed;
-  }
+  /* icon tiles */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:14px;margin-bottom:40px}
+  .tile{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;
+    padding:24px 14px 18px;border-radius:15px;color:inherit;background:var(--panel);border:1px solid var(--line);
+    transition:transform .2s ease,border-color .2s ease,background .2s ease,box-shadow .2s ease}
+  .tile:hover{transform:translateY(-4px);background:var(--panel2);border-color:rgba(214,165,76,.5);box-shadow:0 22px 44px -18px rgba(0,0,0,.7)}
+  .tile.st:hover{border-color:rgba(114,147,183,.55)}
+  .tile .ic{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+    background:rgba(214,165,76,.1);border:1px solid rgba(214,165,76,.24);color:var(--gold)}
+  .tile.st .ic{background:rgba(114,147,183,.12);border-color:rgba(114,147,183,.3);color:var(--steel)}
+  .tile .ic svg{width:26px;height:26px}
+  .tile .name{font-size:13px;font-weight:600;letter-spacing:-.01em;line-height:1.3}
+  .tile .tag{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:3px 8px;
+    background:var(--ink2);border:1px solid var(--line);border-radius:20px}
 
-  .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 48px 24px 80px;
-  }
-
-  /* HEADER */
-  .header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 56px;
-    padding-bottom: 24px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
-
-  .brand-mark {
-    width: 44px;
-    height: 44px;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    font-size: 20px;
-    color: #1a1108;
-    box-shadow: 0 8px 24px rgba(255,122,69,.25);
-  }
-
-  .brand-text h1 {
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-  }
-
-  .brand-text p {
-    font-size: 12px;
-    color: var(--text-muted);
-    font-family: 'JetBrains Mono', monospace;
-    letter-spacing: 0.02em;
-    margin-top: 2px;
-  }
-
-  .meta-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 11px;
-    color: var(--text-soft);
-    font-family: 'JetBrains Mono', monospace;
-    padding: 8px 14px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-  }
-
-  .meta-pill .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--ok);
-    box-shadow: 0 0 8px var(--ok);
-  }
-
-  /* HERO */
-  .hero {
-    margin-bottom: 48px;
-  }
-
-  .hero h2 {
-    font-size: clamp(28px, 4vw, 44px);
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    line-height: 1.15;
-    margin-bottom: 14px;
-    max-width: 800px;
-  }
-
-  .hero h2 .accent {
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  .hero p {
-    font-size: 16px;
-    color: var(--text-soft);
-    max-width: 640px;
-  }
-
-  /* SECTION LABEL */
-  .section-label {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    color: var(--text-muted);
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  .section-label::before {
-    content: '';
-    width: 24px;
-    height: 1px;
-    background: var(--border-strong);
-  }
-
-  /* GRID */
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 18px;
-  }
-
-  /* CARD */
-  .card {
-    position: relative;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 24px;
-    text-decoration: none;
-    color: inherit;
-    transition: transform .2s ease, border-color .2s ease, background .2s ease;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    min-height: 220px;
-  }
-
-  .card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: var(--card-glow, transparent);
-    opacity: 0;
-    transition: opacity .3s ease;
-    pointer-events: none;
-  }
-
-  .card:hover {
-    transform: translateY(-3px);
-    border-color: var(--border-strong);
-    background: var(--surface-2);
-  }
-
-  .card:hover::before {
-    opacity: 1;
-  }
-
-  .card-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-
-  .card-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--icon-bg, var(--surface-2));
-    border: 1px solid var(--icon-border, var(--border));
-    color: var(--icon-color, var(--accent));
-    flex-shrink: 0;
-  }
-
-  .card-icon svg {
-    width: 22px;
-    height: 22px;
-    stroke-width: 1.75;
-  }
-
-  .card-tag {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--text-muted);
-    font-family: 'JetBrains Mono', monospace;
-    padding: 4px 8px;
-    background: var(--bg-soft);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-  }
-
-  .card-title {
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    margin-bottom: 8px;
-  }
-
-  .card-desc {
-    font-size: 13px;
-    color: var(--text-soft);
-    line-height: 1.55;
-    flex: 1;
-  }
-
-  .card-foot {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 18px;
-    padding-top: 14px;
-    border-top: 1px solid var(--border);
-  }
-
-  .card-tech {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
-
-  .tech-chip {
-    font-size: 10px;
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--text-muted);
-    padding: 3px 7px;
-    background: var(--bg-soft);
-    border-radius: 4px;
-  }
-
-  .card-arrow {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--accent);
-    font-family: 'JetBrains Mono', monospace;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    transition: gap .2s ease;
-  }
-
-  .card:hover .card-arrow {
-    gap: 8px;
-  }
-
-  /* Per-card color themes */
-  .card.theme-amber { --icon-bg: rgba(255,182,72,.1); --icon-border: rgba(255,182,72,.25); --icon-color: var(--accent); --card-glow: radial-gradient(400px 200px at 0% 0%, rgba(255,182,72,.06), transparent 70%); }
-  .card.theme-blue  { --icon-bg: rgba(91,141,238,.1); --icon-border: rgba(91,141,238,.25); --icon-color: var(--blue); --card-glow: radial-gradient(400px 200px at 0% 0%, rgba(91,141,238,.06), transparent 70%); }
-  .card.theme-green { --icon-bg: rgba(90,209,154,.1); --icon-border: rgba(90,209,154,.25); --icon-color: var(--ok); --card-glow: radial-gradient(400px 200px at 0% 0%, rgba(90,209,154,.06), transparent 70%); }
-  .card.theme-purple { --icon-bg: rgba(164,114,240,.1); --icon-border: rgba(164,114,240,.25); --icon-color: var(--purple); --card-glow: radial-gradient(400px 200px at 0% 0%, rgba(164,114,240,.06), transparent 70%); }
-  .card.theme-pink { --icon-bg: rgba(236,94,168,.1); --icon-border: rgba(236,94,168,.25); --icon-color: var(--pink); --card-glow: radial-gradient(400px 200px at 0% 0%, rgba(236,94,168,.06), transparent 70%); }
-
-  .card.theme-blue .card-arrow { color: var(--blue); }
-  .card.theme-green .card-arrow { color: var(--ok); }
-  .card.theme-purple .card-arrow { color: var(--purple); }
-  .card.theme-pink .card-arrow { color: var(--pink); }
-
-  /* FOOTER */
-  .footer {
-    margin-top: 64px;
-    padding-top: 24px;
-    border-top: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
-    font-size: 12px;
-    color: var(--text-muted);
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  .footer a {
-    color: var(--text-soft);
-    text-decoration: none;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 1px;
-    transition: color .2s ease, border-color .2s ease;
-  }
-
-  .footer a:hover {
-    color: var(--accent);
-    border-bottom-color: var(--accent);
-  }
-
-  @media (max-width: 640px) {
-    .container { padding: 32px 16px 60px; }
-    .hero { margin-bottom: 36px; }
-    .grid { gap: 14px; }
-    .card { padding: 20px; min-height: auto; }
-  }
+  .foot{margin-top:20px;padding-top:24px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;
+    flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted)}
+  .foot a{color:var(--soft);border-bottom:1px solid var(--line);padding-bottom:1px}
+  .foot a:hover{color:var(--gold);border-bottom-color:var(--gold)}
 </style>
 </head>
 <body>
-  <div class="container">
+<div class="wrap">
 
-    <header class="header">
-      <div class="brand">
-        <div class="brand-mark">⚒</div>
-        <div class="brand-text">
-          <h1>Construction Toolkit</h1>
-          <p>vi · bộ công cụ xây dựng nội bộ</p>
-        </div>
-      </div>
-      <div class="meta-pill">
-        <span class="dot"></span>
-        <span>5 modules · static · offline-ready</span>
-      </div>
-    </header>
+  <header class="top">
+    <div class="brand"><div class="mark">CT</div><div><h1>Construction Toolkit</h1><p class="mono">vi · bộ công cụ xây dựng nội bộ</p></div></div>
+    <div class="pill"><span class="dot"></span><span class="mono">13 công cụ · 5 nhóm · offline-ready</span></div>
+  </header>
 
-    <section class="hero">
-      <h2>Bộ công cụ thi công, dự toán &amp;<br><span class="accent">phân tích định mức</span> xây dựng.</h2>
-      <p>Tập hợp các tiện ích chuyên dụng cho công trường: định mức RSMeans, biểu đồ huy động, tính khối lượng thép, checklist tầng hầm và làm sạch dữ liệu Excel. Chạy hoàn toàn trên trình duyệt — không cần server.</p>
-    </section>
-
-    <div class="section-label">Modules</div>
-
-    <div class="grid">
-
-      <a href="Dinh-Muc-Xay-Dung-RSMeans-v7.html" class="card theme-amber">
-        <div class="card-head">
-          <div class="card-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16l4-4 3 3 5-6"/><circle cx="7" cy="16" r="1.2"/><circle cx="11" cy="12" r="1.2"/><circle cx="14" cy="15" r="1.2"/><circle cx="19" cy="9" r="1.2"/></svg>
-          </div>
-          <span class="card-tag">v7.0</span>
-        </div>
-        <h3 class="card-title">Định Mức Năng Suất — RSMeans</h3>
-        <p class="card-desc">Tra cứu và tính toán định mức năng suất xây dựng theo chuẩn RSMeans. Hỗ trợ biểu đồ trực quan cho các hạng mục thi công chính.</p>
-        <div class="card-foot">
-          <div class="card-tech">
-            <span class="tech-chip">Chart.js</span>
-            <span class="tech-chip">RSMeans</span>
-          </div>
-          <span class="card-arrow">Open →</span>
-        </div>
-      </a>
-
-      <a href="bieu-do-huy-dong.html" class="card theme-amber">
-        <div class="card-head">
-          <div class="card-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="4" height="16" rx="1"/><rect x="10" y="9" width="4" height="11" rx="1"/><rect x="17" y="6" width="4" height="14" rx="1"/></svg>
-          </div>
-          <span class="card-tag">chart</span>
-        </div>
-        <h3 class="card-title">Biểu Đồ Huy Động Nhân Lực &amp; Máy Móc</h3>
-        <p class="card-desc">Tạo biểu đồ huy động nhân công và thiết bị cho dự án nhà xưởng. Xuất PDF chất lượng cao để in ấn và trình duyệt khách hàng.</p>
-        <div class="card-foot">
-          <div class="card-tech">
-            <span class="tech-chip">jsPDF</span>
-            <span class="tech-chip">html2canvas</span>
-          </div>
-          <span class="card-arrow">Open →</span>
-        </div>
-      </a>
-
-      <a href="metal-calculator.html" class="card theme-amber">
-        <div class="card-head">
-          <div class="card-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
-          </div>
-          <span class="card-tag">calc</span>
-        </div>
-        <h3 class="card-title">Metal Profiles Calculator</h3>
-        <p class="card-desc">Tính khối lượng thép hình theo profile: H, I, U, L, hộp, ống... Hỗ trợ nhiều quy cách và xuất kết quả nhanh chóng.</p>
-        <div class="card-foot">
-          <div class="card-tech">
-            <span class="tech-chip">Vanilla JS</span>
-            <span class="tech-chip">Steel</span>
-          </div>
-          <span class="card-arrow">Open →</span>
-        </div>
-      </a>
-
-            <a href="so-tien-bang-chu.html" class="card theme-amber">
-        <div class="card-head">
-          <div class="card-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
-          </div>
-          <span class="card-tag">Text</span>
-        </div>
-        <h3 class="card-title">Number To Word</h3>
-        <p class="card-desc">Chuyển số thành chữ English/ VietNam.</p>
-        <div class="card-foot">
-          <div class="card-tech">
-            <span class="tech-chip">Vanilla JS</span>
-            <span class="tech-chip">Steel</span>
-          </div>
-          <span class="card-arrow">Open →</span>
-        </div>
-      </a>
-
-
-      <a href="checklist-tang-ham.html" class="card theme-green">
-        <div class="card-head">
-          <div class="card-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-          </div>
-          <span class="card-tag">QA/QCV2</span>
-        </div>
-        <h3 class="card-title">Checklist Thi Công Tầng Hầm</h3>
-        <p class="card-desc">Danh mục kiểm tra đầy đủ cho công tác thi công tầng hầm: từ tường vây, đào đất, chống thấm đến đổ bê tông. In ra giấy A4 sẵn dùng.</p>
-        <div class="card-foot">
-          <div class="card-tech">
-            <span class="tech-chip">Print-ready</span>
-            <span class="tech-chip">A4</span>
-          </div>
-          <span class="card-arrow">Open →</span>
-        </div>
-      </a>
-
-      
-      <a href="CHECKLIST-01-QUY-TRINH-DAU-THAU.html" class="card theme-green">
-        <div class="card-head">
-          <div class="card-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-          </div>
-          <span class="card-tag">CheckList</span>
-        </div>
-        <h3 class="card-title">QT Đấu Thầu</h3>
-        <p class="card-desc">Danh mục kiểm tra QT đấu thầu.</p>
-        <div class="card-foot">
-          <div class="card-tech">
-            <span class="tech-chip">Print-ready</span>
-            <span class="tech-chip">A4</span>
-          </div>
-          <span class="card-arrow">Open →</span>
-        </div>
-      </a>
-            <a href="CHECKLIST-02-QUY-TRINH-DU-AN-DB.html" class="card theme-green">
-        <div class="card-head">
-          <div class="card-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-          </div>
-          <span class="card-tag">CheckList</span>
-        </div>
-        <h3 class="card-title">QT Đấu Thầu</h3>
-        <p class="card-desc">Danh mục kiểm tra QT đấu thầu D&B.</p>
-        <div class="card-foot">
-          <div class="card-tech">
-            <span class="tech-chip">Print-ready</span>
-            <span class="tech-chip">A4</span>
-          </div>
-          <span class="card-arrow">Open →</span>
-        </div>
-      </a>
-
-
-            <a href="TCQ RFI template.html" class="card theme-green">
-        <div class="card-head">
-          <div class="card-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-          </div>
-          <span class="card-tag">TCQ/RFI</span>
-        </div>
-        <h3 class="card-title">Tổng Hợp TCQ RFI Template</h3>
-        <p class="card-desc">Danh mục danh sách câu hỏi TCQ/RFI.</p>
-        <div class="card-foot">
-          <div class="card-tech">
-            <span class="tech-chip">Print-ready</span>
-            <span class="tech-chip">A4</span>
-          </div>
-          <span class="card-arrow">Open →</span>
-        </div>
-      </a>
-
-      <a href="excel-cleaner.html" class="card theme-purple">
-        <div class="card-head">
-          <div class="card-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 14l2 2 4-4"/></svg>
-          </div>
-          <span class="card-tag">utility</span>
-        </div>
-        <h3 class="card-title">Excel Cleaner</h3>
-        <p class="card-desc">Làm sạch file Excel: bỏ formatting thừa, ô trống, dòng rỗng, dữ liệu rác. Xử lý hoàn toàn trên trình duyệt, không upload server.</p>
-        <div class="card-foot">
-          <div class="card-tech">
-            <span class="tech-chip">JSZip</span>
-            <span class="tech-chip">.xlsx</span>
-          </div>
-          <span class="card-arrow">Open →</span>
-        </div>
-      </a>
-
-      <a href="Tinh-Chi-Phi-Nhan-Su-Du-An-v1.6.html" class="card theme-pink">
-  <div class="card-head">
-    <div class="card-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-    </div>
-    <span class="card-tag">v1.6</span>
+  <div class="gh"><span class="gi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="4" height="16" rx="1"/><rect x="10" y="9" width="4" height="11" rx="1"/><rect x="17" y="6" width="4" height="14" rx="1"/></svg></span><h3>Thi Công</h3><span class="ct mono">04</span><span class="rl"></span></div>
+  <div class="tiles">
+    <a href="Dinh-Muc-Xay-Dung-RSMeans-v7.html" class="tile"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16l4-4 3 3 5-6"/></svg></span><span class="name">Định Mức RSMeans</span><span class="tag mono">v7.0</span></a>
+    <a href="bieu-do-huy-dong.html" class="tile"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="4" height="16" rx="1"/><rect x="10" y="9" width="4" height="11" rx="1"/><rect x="17" y="6" width="4" height="14" rx="1"/></svg></span><span class="name">Biểu Đồ Huy Động</span><span class="tag mono">chart</span></a>
+    <a href="metal-calculator.html" class="tile"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg></span><span class="name">Metal Calculator</span><span class="tag mono">calc</span></a>
+    <a href="checklist-tang-ham.html" class="tile"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><span class="name">Checklist Tầng Hầm</span><span class="tag mono">QA/QC</span></a>
   </div>
-  <h3 class="card-title">Tính Chi Phí Nhân Sự Dự Án</h3>
-  <p class="card-desc">Tính toán chi phí lương, phụ cấp và bảo hiểm cho nhân sự dự án dựa trên thời gian thực tế và các định mức quy định.</p>
-  <div class="card-foot">
-    <div class="card-tech">
-      <span class="tech-chip">Financial</span>
-      <span class="tech-chip">Formula</span>
-    </div>
-    <span class="card-arrow">Open →</span>
-  </div>
-</a>
-            <a href="Du_tru_chi_phi_CTT.html" class="card theme-pink">
-  <div class="card-head">
-    <div class="card-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-    </div>
-    <span class="card-tag">v1</span>
-  </div>
-  <h3 class="card-title">Tính Chi Phí Công Tác Tạm</h3>
-  <p class="card-desc">Tính toán chi phí CTT.</p>
-  <div class="card-foot">
-    <div class="card-tech">
-      <span class="tech-chip">Financial</span>
-      <span class="tech-chip">Formula</span>
-    </div>
-    <span class="card-arrow">Open →</span>
-  </div>
-</a>
-<a href="CAM NANG DAM PHAN HD_FIDIC.html" class="card theme-pink">
-  <div class="card-head">
-    <div class="card-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-    </div>
-    <span class="card-tag">v1</span>
-  </div>
-  <h3 class="card-title">HD FIDIC</h3>
-  <p class="card-desc">HỢP ĐỒNG XÂY DỰNG.</p>
-  <div class="card-foot">
-    <div class="card-tech">
-      <span class="tech-chip">Financial</span>
-      <span class="tech-chip">Formula</span>
-    </div>
-    <span class="card-arrow">Open →</span>
-  </div>
-  
-<a href="ThongTin.html" class="card theme-pink">
-  <div class="card-head">
-    <div class="card-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10"></circle>
-        <path d="M12 8v8M8 12h8"></path>
-      </svg>
-    </div>
-    <span class="card-tag">v1.0</span>
-  </div>
-  <div class="card-content">
-    <h3 class="card-title">Danh Bạ Email</h3>
-    <p class="card-desc">Cập nhật danh bạ khách hàng bằng Email.</p>
-  </div>
-  <div class="card-foot">
-    <div class="card-tech">
-      <span class="tech-chip">Financial</span>
-      <span class="tech-chip">Formula</span>
-    </div>
-    <span class="card-arrow">Xem chi tiết &rarr;</span>
-  </div>
-</a>
-    </div>
 
-    <footer class="footer">
-      <div>© Construction Toolkit · static deploy · GitHub Pages</div>
-      <div>Built with vanilla HTML/CSS/JS</div>
-    </footer>
-
+  <div class="gh st"><span class="gi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><h3>Đấu Thầu</h3><span class="ct mono">03</span><span class="rl"></span></div>
+  <div class="tiles">
+    <a href="CHECKLIST-01-QUY-TRINH-DAU-THAU.html" class="tile st"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><span class="name">QT Đấu Thầu</span><span class="tag mono">checklist</span></a>
+    <a href="CHECKLIST-02-QUY-TRINH-DU-AN-DB.html" class="tile st"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><span class="name">QT Đấu Thầu D&amp;B</span><span class="tag mono">checklist</span></a>
+    <a href="TCQ RFI template.html" class="tile st"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></span><span class="name">Tổng Hợp TCQ RFI</span><span class="tag mono">TCQ/RFI</span></a>
   </div>
+
+  <div class="gh"><span class="gi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><h3>Tài Chính</h3><span class="ct mono">02</span><span class="rl"></span></div>
+  <div class="tiles">
+    <a href="Tinh-Chi-Phi-Nhan-Su-Du-An-v1.6.html" class="tile"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><span class="name">Chi Phí Nhân Sự</span><span class="tag mono">v1.6</span></a>
+    <a href="Du_tru_chi_phi_CTT.html" class="tile"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><span class="name">Chi Phí Công Tác Tạm</span><span class="tag mono">v1</span></a>
+  </div>
+
+  <div class="gh st"><span class="gi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 14l2 2 4-4"/></svg></span><h3>Tiện Ích</h3><span class="ct mono">03</span><span class="rl"></span></div>
+  <div class="tiles">
+    <a href="so-tien-bang-chu.html" class="tile st"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 8h10M7 12h10M7 16h6"/></svg></span><span class="name">Number To Word</span><span class="tag mono">text</span></a>
+    <a href="excel-cleaner.html" class="tile st"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 14l2 2 4-4"/></svg></span><span class="name">Excel Cleaner</span><span class="tag mono">utility</span></a>
+    <a href="ThongTin.html" class="tile st"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg></span><span class="name">Danh Bạ Email</span><span class="tag mono">v1.0</span></a>
+  </div>
+
+  <div class="gh"><span class="gi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span><h3>Tài Liệu</h3><span class="ct mono">01</span><span class="rl"></span></div>
+  <div class="tiles">
+    <a href="CAM NANG DAM PHAN HD_FIDIC.html" class="tile"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span><span class="name">Cẩm Nang HĐ FIDIC</span><span class="tag mono">FIDIC</span></a>
+  </div>
+
+  <footer class="foot">
+    <div class="mono">© Construction Toolkit · static deploy · GitHub Pages</div>
+    <div class="mono">Built with vanilla HTML/CSS/JS</div>
+  </footer>
+
+</div>
 </body>
 </html>
