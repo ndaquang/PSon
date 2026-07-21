@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checklist Quy trình đấu thầu — VITECCONS</title>
+<style>
+:root{
+  --bg:#0f172a; --panel:#ffffff; --ink:#0f172a; --muted:#64748b; --line:#e2e8f0;
+  --brand:#0b4a8f; --brand2:#1266c4; --accent:#f59e0b;
+  --todo:#94a3b8; --doing:#f59e0b; --done:#16a34a; --na:#cbd5e1; --late:#dc2626;
+  --soft:#f8fafc;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",Roboto,Arial,sans-serif;background:#eef2f7;color:var(--ink);font-size:14px}
+header{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;padding:18px 24px;position:sticky;top:0;z-index:50;box-shadow:0 2px 12px rgba(0,0,0,.15)}
+.hdr-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:space-between}
+h1{margin:0;font-size:19px;letter-spacing:.3px}
+.sub{font-size:12px;opacity:.85;margin-top:3px}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+button{border:0;border-radius:7px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;transition:.15s}
+.b-pri{background:#fff;color:var(--brand)}
+.b-pri:hover{background:#e6eefc}
+.b-gho{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.4)}
+.b-gho:hover{background:rgba(255,255,255,.28)}
+.wrap{max-width:1500px;margin:0 auto;padding:20px 24px 60px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:18px;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,.06)}
+.card-h{padding:13px 18px;background:var(--soft);border-bottom:1px solid var(--line);font-weight:700;font-size:14px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.card-b{padding:18px}
+/* project grid */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.fld label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:700;margin-bottom:4px}
+.fld input,.fld textarea,.fld select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-family:inherit;background:#fff}
+.fld input:focus,.fld textarea:focus,.fld select:focus{outline:2px solid var(--brand2);outline-offset:-1px}
+/* dashboard */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.stat .n{font-size:26px;font-weight:800;line-height:1.1}
+.stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.4px;margin-top:3px}
+.bar{height:10px;background:#e8edf4;border-radius:6px;overflow:hidden;margin-top:8px}
+.bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--brand2),#22c55e);transition:width .3s}
+/* phase */
+.phase-h{display:flex;align-items:center;gap:12px;padding:14px 18px;background:linear-gradient(90deg,#0b4a8f,#1266c4);color:#fff;font-weight:700;cursor:pointer}
+.phase-h .pill{background:rgba(255,255,255,.2);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.phase-h .pct{margin-left:auto;font-size:13px;background:rgba(255,255,255,.18);padding:4px 12px;border-radius:20px}
+.step{border-bottom:1px solid var(--line)}
+.step:last-child{border-bottom:0}
+.step-h{display:flex;align-items:center;gap:10px;padding:11px 16px;cursor:pointer;background:#fff}
+.step-h:hover{background:#f5f8fc}
+.step-no{background:var(--brand);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex:0 0 26px}
+.step-t{font-weight:700;font-size:13.5px;flex:1}
+.step-meta{font-size:11px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tag{background:#eef4fb;color:var(--brand);padding:2px 8px;border-radius:5px;font-size:10.5px;font-weight:700;white-space:nowrap}
+.tag.f{background:#fef3c7;color:#92400e}
+.mini{width:70px;height:6px;background:#e8edf4;border-radius:4px;overflow:hidden}
+.mini > i{display:block;height:100%;background:#22c55e}
+.chev{color:var(--muted);font-size:11px;transition:.2s}
+.open .chev{transform:rotate(90deg)}
+.step-b{display:none;padding:0 0 8px}
+.step.open .step-b{display:block}
+table{width:100%;border-collapse:collapse}
+th{background:#f1f5f9;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);text-align:left;padding:7px 8px;font-weight:800;border-bottom:1px solid var(--line)}
+td{padding:7px 8px;border-bottom:1px solid #f1f5f9;vertical-align:middle;font-size:13px}
+tr.done-row td:nth-child(2){text-decoration:line-through;color:var(--muted)}
+tr.late td:nth-child(6) input{border-color:var(--late);background:#fef2f2;color:var(--late);font-weight:700}
+td select,td input{width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:5px;font-size:12px;font-family:inherit;background:#fff}
+td.c{text-align:center}
+.st{font-weight:700;font-size:11.5px;border-radius:5px;padding:5px 6px;border:1px solid var(--line)}
+.st-todo{color:#475569}.st-doing{color:#b45309;background:#fffbeb;border-color:#fcd34d}
+.st-done{color:#15803d;background:#f0fdf4;border-color:#86efac}.st-na{color:#94a3b8;background:#f8fafc}
+.fcode{font-family:Consolas,monospace;font-size:11px;color:#92400e;background:#fef3c7;padding:2px 6px;border-radius:4px;white-space:nowrap}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);padding:10px 18px;background:var(--soft);border-top:1px solid var(--line)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+.toast{position:fixed;bottom:24px;right:24px;background:#0f172a;color:#fff;padding:13px 20px;border-radius:9px;font-size:13px;font-weight:600;opacity:0;transform:translateY(12px);transition:.25s;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.toast.show{opacity:1;transform:translateY(0)}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:12px 18px;background:var(--soft);border-bottom:1px solid var(--line)}
+.filters select,.filters input{padding:7px 10px;border:1px solid var(--line);border-radius:6px;font-size:12.5px;font-family:inherit}
+.hide{display:none!important}
+@media print{header{position:static}.btns,.filters{display:none}.step-b{display:block!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-row">
+    <div>
+      <h1>CHECKLIST QUY TRÌNH ĐẤU THẦU</h1>
+      <div class="sub">VITECCONS · QT-TC14 — Quy trình đấu thầu (Ban hành lần 09 · 30/06/2026)</div>
+    </div>
+    <div class="btns">
+      <button class="b-pri" onclick="exportJSON()">⬇ Export JSON</button>
+      <button class="b-gho" onclick="document.getElementById('fileIn').click()">⬆ Import JSON</button>
+      <button class="b-gho" onclick="expandAll(true)">Mở tất cả</button>
+      <button class="b-gho" onclick="expandAll(false)">Thu gọn</button>
+      <button class="b-gho" onclick="window.print()">🖨 In</button>
+      <input type="file" id="fileIn" accept=".json" class="hide" onchange="importJSON(this)">
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- THÔNG TIN DỰ ÁN -->
+  <div class="card">
+    <div class="card-h">📋 THÔNG TIN DỰ ÁN</div>
+    <div class="card-b">
+      <div class="pgrid" id="projGrid"></div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="card">
+    <div class="card-h">📊 TIẾN ĐỘ TỔNG THỂ</div>
+    <div class="card-b">
+      <div class="stats" id="stats"></div>
+      <div class="bar"><i id="mainBar" style="width:0%"></i></div>
+    </div>
+  </div>
+
+  <!-- CHECKLIST -->
+  <div id="phases"></div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   DỮ LIỆU MẶC ĐỊNH — Checklist dựng theo:
+   • QT-TC14 "Quy trình đấu thầu" (ban hành lần 09, 30/06/2026)
+   • QT25    "Quy trình thực hiện dự án D&B"
+   Dự án mẫu: CTP Nhơn Trạch – Giai đoạn 1 (CTPark Vinatex Nhơn Trạch)
+   ============================================================ */
+
+const PROJECT_FIELDS = [
+  {k:"name",        l:"Tên dự án",                 t:"text"},
+  {k:"code",        l:"Mã dự án",                  t:"text"},
+  {k:"package",     l:"Gói thầu",                  t:"text"},
+  {k:"investor",    l:"Chủ đầu tư (CĐT)",          t:"text"},
+  {k:"qs",          l:"Tư vấn QS / Bên mời thầu",  t:"text"},
+  {k:"location",    l:"Địa điểm",                  t:"text"},
+  {k:"contractType",l:"Hình thức hợp đồng",        t:"text"},
+  {k:"duration",    l:"Thời gian thi công",        t:"text"},
+  {k:"receiveDate", l:"Ngày nhận HSMT",            t:"date"},
+  {k:"submitDate",  l:"Hạn nộp hồ sơ thầu",        t:"date"},
+  {k:"pm",          l:"Giám đốc dự án (GĐDA)",     t:"text"},
+  {k:"tenderLead",  l:"Chủ trì dự án (CTDA)",      t:"text"},
+  {k:"note",        l:"Ghi chú chung",             t:"textarea"}
+];
+
+const DEFAULT_DATA = {
+  "meta": {
+    "schema": "viteccons-checklist-v1",
+    "version": "1.1",
+    "process": "QT-TC14",
+    "processName": "QUY TRÌNH ĐẤU THẦU — 15 BƯỚC",
+    "createdAt": "",
+    "exportedAt": "",
+    "editedAt": ""
+  },
+  "project": {
+    "name": "",
+    "code": "",
+    "package": "",
+    "investor": "",
+    "qs": "",
+    "location": "",
+    "contractType": "",
+    "duration": "",
+    "receiveDate": "",
+    "submitDate": "",
+    "pm": "",
+    "tenderLead": "",
+    "note": ""
+  },
+  "phases": [
+    {
+      "id": "P1",
+      "code": "QT-TC14",
+      "title": "QUY TRÌNH ĐẤU THẦU — 15 BƯỚC",
+      "ref": "QT-TC14 · Ban hành lần 09 · 30/06/2026 · Phòng Đấu thầu Xây dựng",
+      "steps": [
+        {
+          "no": 1,
+          "title": "Thu thập thông tin đấu thầu",
+          "dur": "Theo thực tế",
+          "doer": "P.ĐTXD / P.ĐTCĐ",
+          "ctrl": "GĐDA nắm thông tin",
+          "forms": [],
+          "items": [
+            {
+              "t": "Tìm kiếm, thu thập thông tin đấu thầu các dự án tiềm năng",
+              "id": "P1-1-1",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Nhận thư mời thầu và hồ sơ mời thầu (HSMT) từ CĐT/BMT",
+              "id": "P1-1-2",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Xác định rõ ngày nhận HSMT và ngày phải nộp hồ sơ dự thầu",
+              "id": "P1-1-3",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Xác nhận thư mời thầu (Acknowledgement) gửi lại CĐT/BMT đúng hạn",
+              "id": "P1-1-4",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            }
+          ]
+        },
+        {
+          "no": 2,
+          "title": "Quyết định đấu thầu",
+          "dur": "01 ngày",
+          "doer": "TP ĐTXD / TP ĐTCĐ",
+          "ctrl": "TGĐ phê duyệt",
+          "forms": [
+            "QT-TC14-BM01"
+          ],
+          "items": [
+            {
+              "t": "Lập Bảng phân tích đánh giá rủi ro dự án trước khi đấu thầu",
+              "f": "BM01",
+              "id": "P1-2-1",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": ""
+            },
+            {
+              "t": "Báo cáo GĐĐH & TGĐ về thông tin dự án kèm bảng đánh giá rủi ro",
+              "id": "P1-2-2",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "TGĐ ra quyết định tham gia / không tham gia đấu thầu",
+              "id": "P1-2-3",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Nếu KHÔNG tham dự: P.ĐTXD phản hồi CĐT/BMT và lưu hồ sơ",
+              "id": "P1-2-4",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            }
+          ]
+        },
+        {
+          "no": 3,
+          "title": "Tổ chức họp kick-off dự án, phân chia công việc",
+          "dur": "02 ngày",
+          "doer": "CTDA",
+          "ctrl": "TP ĐTXD kiểm soát · P.CCM phối hợp",
+          "forms": [
+            "QT-TC14-BM02",
+            "QT-TC14-BM03",
+            "QT-TC14-BM04"
+          ],
+          "items": [
+            {
+              "t": "TP.ĐTXD/ĐTCĐ phân công nhân sự Chủ trì dự án (CTDA)",
+              "id": "P1-3-1",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "CTDA cập nhật HSMT + tài liệu liên quan lên server P.ĐTXD (tối đa 24h)",
+              "id": "P1-3-2",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Cập nhật Danh sách các dự án đấu thầu",
+              "f": "BM02",
+              "id": "P1-3-3",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": ""
+            },
+            {
+              "t": "Lập Danh mục tóm tắt gói thầu",
+              "f": "BM03",
+              "id": "P1-3-4",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": ""
+            },
+            {
+              "t": "Lập Bảng phân chia công việc đấu thầu (giao việc NVKL/NVBG)",
+              "f": "BM04",
+              "id": "P1-3-5",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": ""
+            },
+            {
+              "t": "Tổ chức họp kick-off, thống nhất chiến lược & lịch trình nội bộ",
+              "id": "P1-3-6",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            }
+          ]
+        },
+        {
+          "no": 4,
+          "title": "Thực hiện các công việc liên quan đến công tác đấu thầu",
+          "dur": "Theo kế hoạch",
+          "doer": "CTDA · NVKL · NVBG",
+          "ctrl": "GĐDA phê duyệt · TP ĐTXD kiểm soát",
+          "forms": [
+            "QT-TC14-BM05",
+            "QT-TC14-BM06",
+            "QT-TC14-BM07",
+            "QT-TC14-BM08"
+          ],
+          "items": [
+            {
+              "t": "Phân chia công việc tính khối lượng, đơn giá và các hồ sơ khác theo HSMT",
+              "id": "P1-4-1",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "NVKL tính toán khối lượng các hạng mục theo HSMT (bóc tách BOQ)",
+              "id": "P1-4-2",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "NVBG áp đơn giá vào bảng khối lượng",
+              "id": "P1-4-3",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "P.CCM cung cấp dữ liệu đơn giá gốc vật tư chính & chi phí nhân công",
+              "id": "P1-4-4",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Lập Danh mục nhà cung cấp / nhà thầu phụ (NTP/NCC)",
+              "f": "BM07",
+              "id": "P1-4-5",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": ""
+            },
+            {
+              "t": "Gửi Yêu cầu báo giá, đàm phán thương lượng với đối tác",
+              "f": "BM08",
+              "id": "P1-4-6",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": ""
+            },
+            {
+              "t": "Đảm bảo có 02–03 đơn vị NTP/NCC tương đương cho 01 hạng mục/công việc",
+              "id": "P1-4-7",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "GĐDA phê duyệt danh sách NTP/NCC đề xuất giai đoạn đấu thầu",
+              "id": "P1-4-8",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "TP/PP ĐTXD & CTDA kiểm tra lại giá, đơn giá, tỷ lệ cấu tạo giá",
+              "id": "P1-4-9",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "P.PC&HT rà soát và tư vấn các điều khoản pháp lý hợp đồng",
+              "id": "P1-4-10",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "P.KT&QLTKKC lập biện pháp thi công phục vụ đấu thầu",
+              "id": "P1-4-11",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "P.TB đề xuất giải pháp thiết bị (tính toán, báo giá, phương án cạnh tranh)",
+              "id": "P1-4-12",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "GĐDA quyết định giải pháp thi công, chiến lược giá, đơn giá, tiến độ, lực lượng thi công",
+              "id": "P1-4-13",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "GĐDA trực tiếp lập file tiến độ thi công & giải trình BGĐ (dự án phức tạp)",
+              "id": "P1-4-14",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "GĐĐH chỉ đạo chiến lược tổng thể, nghiên cứu CĐT & đối thủ cạnh tranh",
+              "id": "P1-4-15",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Gửi câu hỏi Yêu cầu làm rõ hồ sơ thầu (TCQ/RFI) cho CĐT",
+              "f": "BM05",
+              "id": "P1-4-16",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": ""
+            },
+            {
+              "t": "Cập nhật Danh mục theo dõi yêu cầu làm rõ HSMT khi nhận giải thích từ CĐT",
+              "f": "BM06",
+              "id": "P1-4-17",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": ""
+            }
+          ]
+        },
+        {
+          "no": 5,
+          "title": "Hoàn thiện hồ sơ nộp thầu",
+          "dur": "Theo kế hoạch",
+          "doer": "CTDA + các Phòng liên quan",
+          "ctrl": "TP ĐTXD kiểm soát",
+          "forms": [],
+          "items": [
+            {
+              "t": "Phối hợp các Phòng kiểm tra và hoàn thiện hồ sơ theo yêu cầu HSMT",
+              "id": "P1-5-1",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Mốc hoàn thành — dự án làm hồ sơ DƯỚI 2 tuần: xong ít nhất TRƯỚC 2 NGÀY so với ngày nộp",
+              "id": "P1-5-2",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Mốc hoàn thành — dự án làm hồ sơ DƯỚI 3 tuần: xong ít nhất TRƯỚC 3 NGÀY so với ngày nộp",
+              "id": "P1-5-3",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Mốc hoàn thành — dự án làm hồ sơ TRÊN 3 tuần: xong ít nhất TRƯỚC 4 NGÀY so với ngày nộp",
+              "id": "P1-5-4",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            }
+          ]
+        },
+        {
+          "no": 6,
+          "title": "Kiểm tra hồ sơ nộp thầu",
+          "dur": "Theo kế hoạch",
+          "doer": "CTDA",
+          "ctrl": "TP/PP ĐTXD · ĐTCĐ",
+          "forms": [],
+          "items": [
+            {
+              "t": "So sánh, đối chiếu đầy đủ các biểu mẫu theo yêu cầu của HSMT",
+              "id": "P1-6-1",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Kiểm tra đối chiếu bảng khối lượng (BOQ) — số học, đơn vị, hạng mục thiếu",
+              "id": "P1-6-2",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Kiểm tra thư báo giá thầu và các phụ lục kèm theo",
+              "id": "P1-6-3",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Kiểm tra thư bảo lãnh dự thầu (giá trị, hiệu lực, mẫu ngân hàng)",
+              "id": "P1-6-4",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Kiểm tra biện pháp thi công, tiến độ, sơ đồ tổ chức công trường",
+              "id": "P1-6-5",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Nếu ĐẠT → chuyển bước 07; nếu KHÔNG ĐẠT → chỉnh sửa, bổ sung hồ sơ",
+              "id": "P1-6-6",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            }
+          ]
+        },
+        {
+          "no": 7,
+          "title": "Báo cáo, trình ký Ban Giám đốc",
+          "dur": "01 ngày",
+          "doer": "TP/PP ĐTXD · CTDA",
+          "ctrl": "BGĐ phê duyệt",
+          "forms": [],
+          "items": [
+            {
+              "t": "Lập báo cáo tóm tắt phương án giá & rủi ro trình BGĐ",
+              "id": "P1-7-1",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Trình hồ sơ thầu để BGĐ phê duyệt và ký",
+              "id": "P1-7-2",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            }
+          ]
+        },
+        {
+          "no": 8,
+          "title": "Nộp hồ sơ thầu",
+          "dur": "Theo kế hoạch",
+          "doer": "CTDA",
+          "ctrl": "TP ĐTXD kiểm soát",
+          "forms": [],
+          "items": [
+            {
+              "t": "Kiểm tra danh mục các đầu mục nộp hồ sơ theo dự án; bổ sung/chỉnh sửa nếu thiếu",
+              "id": "P1-8-1",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Niêm phong hồ sơ theo đúng yêu cầu của HSMT",
+              "id": "P1-8-2",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Thực hiện giao nhận hồ sơ nộp dự thầu (có biên bản/giấy giao nhận)",
+              "id": "P1-8-3",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            }
+          ]
+        },
+        {
+          "no": 9,
+          "title": "Phỏng vấn thầu",
+          "dur": "Theo thực tế",
+          "doer": "GĐDA · TP/PP ĐTXD · CTDA",
+          "ctrl": "GĐĐH hoặc người được ủy quyền",
+          "forms": [],
+          "items": [
+            {
+              "t": "Chuẩn bị nội dung & tài liệu thuyết trình phỏng vấn thầu",
+              "id": "P1-9-1",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Huy động các Phòng liên quan tham gia theo vòng/nội dung phỏng vấn",
+              "id": "P1-9-2",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Tham gia phỏng vấn (online hoặc trực tiếp) theo lịch của CĐT",
+              "id": "P1-9-3",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Ghi nhận yêu cầu/ý kiến của CĐT sau phỏng vấn để hiệu chỉnh",
+              "id": "P1-9-4",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            }
+          ]
+        },
+        {
+          "no": 10,
+          "title": "Hiệu chỉnh hồ sơ thầu",
+          "dur": "01 ngày",
+          "doer": "CTDA + nhân sự liên quan",
+          "ctrl": "TP/PP ĐTXD xem xét",
+          "forms": [],
+          "items": [
+            {
+              "t": "CTDA phân công nhiệm vụ hiệu chỉnh hồ sơ cho các nhân sự liên quan",
+              "id": "P1-10-1",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Trình TP.ĐTXD/PP.ĐTXD kiểm tra, xem xét bản hiệu chỉnh",
+              "id": "P1-10-2",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            }
+          ]
+        },
+        {
+          "no": 11,
+          "title": "Trình GĐĐH ký",
+          "dur": "01 ngày",
+          "doer": "TP/PP ĐTXD · CTDA",
+          "ctrl": "GĐĐH phê duyệt",
+          "forms": [],
+          "items": [
+            {
+              "t": "Báo cáo nội dung hồ sơ đã hiệu chỉnh",
+              "id": "P1-11-1",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Trình GĐĐH ký hồ sơ hiệu chỉnh",
+              "id": "P1-11-2",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            }
+          ]
+        },
+        {
+          "no": 12,
+          "title": "Nộp hồ sơ thầu hiệu chỉnh cho Chủ Đầu tư",
+          "dur": "01 ngày",
+          "doer": "CTDA",
+          "ctrl": "TP ĐTXD kiểm soát",
+          "forms": [
+            "QT22BM29"
+          ],
+          "items": [
+            {
+              "t": "Nộp hồ sơ thầu hiệu chỉnh cho CĐT/BMT",
+              "id": "P1-12-1",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Lập giấy giao nhận tài liệu",
+              "f": "QT22BM29",
+              "id": "P1-12-2",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": ""
+            }
+          ]
+        },
+        {
+          "no": 13,
+          "title": "Nhận kết quả thầu",
+          "dur": "Theo kế hoạch",
+          "doer": "P.ĐTXD / P.ĐTCĐ",
+          "ctrl": "BGĐ phê duyệt",
+          "forms": [],
+          "items": [
+            {
+              "t": "Tiếp nhận thông báo kết quả đấu thầu từ CĐT/BMT",
+              "id": "P1-13-1",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "NẾU KHÔNG TRÚNG: lưu trữ hồ sơ theo quy định",
+              "id": "P1-13-2",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "NẾU KHÔNG TRÚNG: họp phân tích nguyên nhân, đúc kết bài học kinh nghiệm",
+              "id": "P1-13-3",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "NẾU TRÚNG THẦU: chuyển sang bước 14",
+              "id": "P1-13-4",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            }
+          ]
+        },
+        {
+          "no": 14,
+          "title": "Nhận thư chấp thuận giao thầu và tài liệu đính kèm",
+          "dur": "Theo kế hoạch",
+          "doer": "P.ĐTXD / P.ĐTCĐ",
+          "ctrl": "GĐDA · các Phòng phối hợp",
+          "forms": [],
+          "items": [
+            {
+              "t": "Nhận bản dự thảo thư chấp thuận giao thầu (LOA) từ CĐT",
+              "id": "P1-14-1",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Gửi các Phòng liên quan rà soát, cho ý kiến về dự thảo LOA",
+              "id": "P1-14-2",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Gửi email xác nhận thư chấp thuận giao thầu cho CĐT/BMT",
+              "id": "P1-14-3",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Giới thiệu GĐDA với CĐT để thực hiện các công việc tiếp theo",
+              "id": "P1-14-4",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            }
+          ]
+        },
+        {
+          "no": 15,
+          "title": "Bàn giao hồ sơ và kết thúc Đấu thầu",
+          "dur": "Tối đa 02 ngày sau thư trúng thầu",
+          "doer": "P.ĐTXD / P.ĐTCĐ",
+          "ctrl": "GĐDA · BCH/CHT tiếp nhận",
+          "forms": [
+            "QT-TC14-BM09"
+          ],
+          "items": [
+            {
+              "t": "Tổ chức cuộc họp bàn giao tài liệu cho GĐDA (tối đa 02 ngày sau thư trúng thầu)",
+              "id": "P1-15-1",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Cung cấp file mềm hồ sơ kỹ thuật đã thống nhất với CĐT/BMT",
+              "id": "P1-15-2",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Lập Danh mục hồ sơ bàn giao",
+              "f": "BM09",
+              "id": "P1-15-3",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": ""
+            },
+            {
+              "t": "BCH phối hợp P.ĐTXD trao đổi, làm rõ các thông tin dự án",
+              "id": "P1-15-4",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            },
+            {
+              "t": "Lưu trữ toàn bộ hồ sơ đấu thầu theo hệ thống ISO",
+              "id": "P1-15-5",
+              "status": "todo",
+              "assignee": "",
+              "start": "",
+              "due": "",
+              "note": "",
+              "f": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+};
+
+const STATUS = {
+  todo :{l:"Chưa làm", c:"st-todo", w:0},
+  doing:{l:"Đang làm", c:"st-doing",w:.5},
+  done :{l:"Hoàn thành",c:"st-done", w:1},
+  na   :{l:"Không áp dụng", c:"st-na", w:null}
+};
+const OWNERS = ["","BGĐ / TGĐ","GĐĐH","GĐDA","TP ĐTXD","PP ĐTXD","CTDA","NVKL","NVBG","P.ĐTXD","P.ĐTCĐ","P.CCM","P.PC&HT","P.KT&QLTKKC","BPTK","P.TB","P.TCKT","P.HCNS","BCH / CHT","NTP / NCC","Đơn vị thẩm tra"];
+
+let DATA = null;
+
+/* ---------- khởi tạo ---------- */
+function init(){
+  DATA = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  DATA.meta.createdAt = new Date().toISOString();
+  normalize();
+  renderProject(); renderPhases(); refresh();
+}
+function normalize(){
+  DATA.phases.forEach(ph=>ph.steps.forEach(st=>st.items.forEach((it,i)=>{
+    it.id   = it.id   || `${ph.id}-${st.no}-${i+1}`;
+    it.status = it.status || "todo";
+    it.assignee = it.assignee ?? "";
+    it.start = it.start ?? "";
+    it.due   = it.due   ?? "";
+    it.note  = it.note  ?? "";
+    it.f     = it.f     ?? "";
+  })));
+}
+
+/* ---------- thông tin dự án ---------- */
+function renderProject(){
+  document.getElementById("projGrid").innerHTML = PROJECT_FIELDS.map(f=>{
+    const v = (DATA.project[f.k]||"").replace(/"/g,"&quot;");
+    const inp = f.t==="textarea"
+      ? `<textarea rows="2" oninput="setProj('${f.k}',this.value)">${DATA.project[f.k]||""}</textarea>`
+      : `<input type="${f.t}" value="${v}" oninput="setProj('${f.k}',this.value)">`;
+    return `<div class="fld"${f.t==="textarea"?' style="grid-column:1/-1"':""}><label>${f.l}</label>${inp}</div>`;
+  }).join("");
+}
+function setProj(k,v){ DATA.project[k]=v; }
+
+/* ---------- checklist ---------- */
+function renderPhases(){
+  document.getElementById("phases").innerHTML = DATA.phases.map(ph=>`
+    <div class="card">
+      <div class="phase-h" onclick="togglePhase('${ph.id}')">
+        <span class="pill">${ph.code}</span>
+        <span>${ph.title}</span>
+        <span style="font-weight:400;font-size:11.5px;opacity:.85">${ph.ref}</span>
+        <span class="pct" id="pct-${ph.id}">0%</span>
+      </div>
+      <div class="filters">
+        <label style="font-size:12px;color:var(--muted);font-weight:700">Lọc:</label>
+        <select onchange="filterPhase('${ph.id}',this.value)">
+          <option value="all">Tất cả đầu việc</option>
+          <option value="todo">Chưa làm</option>
+          <option value="doing">Đang làm</option>
+          <option value="done">Hoàn thành</option>
+          <option value="open">Chưa xong (Chưa làm + Đang làm)</option>
+          <option value="late">Trễ hạn</option>
+        </select>
+        <button class="b-pri" style="background:#e6eefc" onclick="bulk('${ph.id}','done')">Đánh dấu xong cả giai đoạn</button>
+        <button class="b-pri" style="background:#f1f5f9" onclick="bulk('${ph.id}','todo')">Reset giai đoạn</button>
+      </div>
+      <div id="body-${ph.id}">
+        ${ph.steps.map(st=>stepHTML(ph,st)).join("")}
+      </div>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--todo)"></i>Chưa làm</span>
+        <span><i class="dot" style="background:var(--doing)"></i>Đang làm</span>
+        <span><i class="dot" style="background:var(--done)"></i>Hoàn thành</span>
+        <span><i class="dot" style="background:var(--na)"></i>Không áp dụng (loại khỏi %)</span>
+        <span><i class="dot" style="background:var(--late)"></i>Trễ hạn</span>
+      </div>
+    </div>`).join("");
+}
+
+function stepHTML(ph,st){
+  const sid = `${ph.id}-s${st.no}`;
+  return `<div class="step" id="${sid}">
+    <div class="step-h" onclick="toggleStep('${sid}')">
+      <span class="chev">▶</span>
+      <span class="step-no">${st.no}</span>
+      <span class="step-t">${st.title}</span>
+      <span class="step-meta">
+        <span class="tag">⏱ ${st.dur}</span>
+        <span class="tag">▶ ${st.doer}</span>
+        ${st.ctrl && st.ctrl!=="—" ? `<span class="tag">✓ ${st.ctrl}</span>`:""}
+        ${st.forms.map(f=>`<span class="tag f">${f}</span>`).join("")}
+      </span>
+      <span class="mini"><i id="mini-${sid}" style="width:0%"></i></span>
+      <span style="font-size:11px;color:var(--muted);width:52px;text-align:right" id="cnt-${sid}">0/0</span>
+    </div>
+    <div class="step-b">
+      <table>
+        <thead><tr>
+          <th style="width:34px">#</th><th>Nội dung công việc</th>
+          <th style="width:78px">Biểu mẫu</th><th style="width:132px">Trạng thái</th>
+          <th style="width:150px">Người phụ trách</th><th style="width:126px">Bắt đầu</th>
+          <th style="width:126px">Hạn hoàn thành</th><th style="width:200px">Ghi chú</th>
+        </tr></thead>
+        <tbody>
+        ${st.items.map((it,i)=>`
+          <tr id="row-${it.id}" data-status="${it.status}">
+            <td class="c" style="color:var(--muted);font-size:11px">${i+1}</td>
+            <td>${it.t}</td>
+            <td class="c">${it.f?`<span class="fcode">${it.f}</span>`:'<span style="color:#cbd5e1">—</span>'}</td>
+            <td><select class="st ${STATUS[it.status].c}" onchange="setItem('${it.id}','status',this.value)">
+              ${Object.keys(STATUS).map(k=>`<option value="${k}"${it.status===k?" selected":""}>${STATUS[k].l}</option>`).join("")}
+            </select></td>
+            <td><select onchange="setItem('${it.id}','assignee',this.value)">
+              ${OWNERS.map(o=>`<option value="${o}"${it.assignee===o?" selected":""}>${o||"— chọn —"}</option>`).join("")}
+            </select></td>
+            <td><input type="date" value="${it.start}" onchange="setItem('${it.id}','start',this.value)"></td>
+            <td><input type="date" value="${it.due}" onchange="setItem('${it.id}','due',this.value)"></td>
+            <td><input type="text" value="${(it.note||'').replace(/"/g,'&quot;')}" placeholder="ghi chú…" onchange="setItem('${it.id}','note',this.value)"></td>
+          </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function findItem(id){
+  for(const ph of DATA.phases) for(const st of ph.steps){
+    const it = st.items.find(x=>x.id===id); if(it) return it;
+  }
+  return null;
+}
+function setItem(id,key,val){
+  const it = findItem(id); if(!it) return;
+  it[key]=val;
+  if(key==="status"){
+    const sel = document.querySelector(`#row-${id} select.st`);
+    sel.className = "st "+STATUS[val].c;
+    document.getElementById(`row-${id}`).dataset.status = val;
+  }
+  refresh();
+}
+function bulk(phId,status){
+  const ph = DATA.phases.find(p=>p.id===phId);
+  ph.steps.forEach(st=>st.items.forEach(it=>{ if(it.status!=="na") it.status=status; }));
+  renderPhases(); refresh();
+  toast(status==="done"?"Đã đánh dấu hoàn thành toàn giai đoạn":"Đã reset giai đoạn");
+}
+
+/* ---------- tính toán tiến độ ---------- */
+function calc(items){
+  const act = items.filter(i=>i.status!=="na");
+  const done = act.filter(i=>i.status==="done").length;
+  const w = act.reduce((s,i)=>s+STATUS[i.status].w,0);
+  return {total:act.length, done, pct: act.length? Math.round(w/act.length*100):0};
+}
+function refresh(){
+  const today = new Date().toISOString().slice(0,10);
+  let all=[], sTodo=0,sDoing=0,sDone=0,sNa=0,sLate=0;
+
+  DATA.phases.forEach(ph=>{
+    let pItems=[];
+    ph.steps.forEach(st=>{
+      const c = calc(st.items);
+      const sid=`${ph.id}-s${st.no}`;
+      const mini=document.getElementById(`mini-${sid}`), cnt=document.getElementById(`cnt-${sid}`);
+      if(mini) mini.style.width = c.pct+"%";
+      if(cnt)  cnt.textContent  = `${c.done}/${c.total}`;
+      pItems = pItems.concat(st.items);
+      st.items.forEach(it=>{
+        const row=document.getElementById(`row-${it.id}`);
+        const late = it.due && it.due<today && it.status!=="done" && it.status!=="na";
+        if(row) row.classList.toggle("late", !!late);
+        if(row) row.classList.toggle("done-row", it.status==="done");
+        if(late) sLate++;
+        if(it.status==="todo")sTodo++; else if(it.status==="doing")sDoing++;
+        else if(it.status==="done")sDone++; else sNa++;
+      });
+    });
+    const pc=calc(pItems);
+    const el=document.getElementById(`pct-${ph.id}`);
+    if(el) el.textContent = `${pc.pct}% · ${pc.done}/${pc.total}`;
+    all = all.concat(pItems);
+  });
+
+  const a=calc(all);
+  document.getElementById("mainBar").style.width = a.pct+"%";
+  document.getElementById("stats").innerHTML = `
+    <div class="stat"><div class="n" style="color:var(--brand)">${a.pct}%</div><div class="l">Hoàn thành chung</div></div>
+    <div class="stat"><div class="n">${all.length}</div><div class="l">Tổng đầu việc</div></div>
+    <div class="stat"><div class="n" style="color:var(--done)">${sDone}</div><div class="l">Đã xong</div></div>
+    <div class="stat"><div class="n" style="color:var(--doing)">${sDoing}</div><div class="l">Đang làm</div></div>
+    <div class="stat"><div class="n" style="color:var(--todo)">${sTodo}</div><div class="l">Chưa làm</div></div>
+    <div class="stat"><div class="n" style="color:var(--na)">${sNa}</div><div class="l">Không áp dụng</div></div>
+    <div class="stat"><div class="n" style="color:var(--late)">${sLate}</div><div class="l">Trễ hạn</div></div>`;
+}
+
+/* ---------- UI ---------- */
+function toggleStep(id){ document.getElementById(id).classList.toggle("open"); }
+function togglePhase(id){
+  const b=document.getElementById("body-"+id);
+  b.style.display = b.style.display==="none" ? "" : "none";
+}
+function expandAll(open){
+  document.querySelectorAll(".step").forEach(s=>s.classList.toggle("open",open));
+}
+function filterPhase(phId,mode){
+  const today=new Date().toISOString().slice(0,10);
+  const ph=DATA.phases.find(p=>p.id===phId);
+  ph.steps.forEach(st=>st.items.forEach(it=>{
+    const row=document.getElementById(`row-${it.id}`); if(!row) return;
+    const late = it.due && it.due<today && it.status!=="done" && it.status!=="na";
+    let show=true;
+    if(mode==="open") show = it.status==="todo"||it.status==="doing";
+    else if(mode==="late") show = !!late;
+    else if(mode!=="all") show = it.status===mode;
+    row.classList.toggle("hide",!show);
+  }));
+  if(mode!=="all") expandAll(true);
+}
+function toast(msg){
+  const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),2600);
+}
+
+/* ---------- EXPORT / IMPORT JSON ---------- */
+function slug(s){
+  return (s||"DU-AN").normalize("NFD").replace(/[\u0300-\u036f]/g,"")  .replace(/đ/g,"d").replace(/Đ/g,"D")
+    .replace(/[^a-zA-Z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,70);
+}
+function stamp(d){
+  const p=n=>String(n).padStart(2,"0");
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}h${p(d.getMinutes())}`;
+}
+function exportJSON(){
+  const now=new Date();
+  DATA.meta.exportedAt = now.toISOString();
+  DATA.meta.editedAt   = stamp(now);
+  // Tên file = TÊN DỰ ÁN + NGÀY EDIT
+  const proc = (DATA.meta && DATA.meta.process) ? DATA.meta.process+"_" : "";
+  const fname = `${slug(DATA.project.name)}_${proc}${stamp(now)}.json`;
+  const blob=new Blob([JSON.stringify(DATA,null,2)],{type:"application/json;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download=fname; a.click();
+  URL.revokeObjectURL(a.href);
+  toast("Đã xuất: "+fname);
+}
+function importJSON(input){
+  const f=input.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      if(!d.phases||!d.project) throw new Error("Cấu trúc file không hợp lệ");
+      const want="QT-TC14";
+      const got=(d.meta&&d.meta.process)||"";
+      if(got && got!==want && !confirm(`File này thuộc quy trình ${got}, không phải ${want}. Vẫn nạp?`)) {input.value="";return;}
+      DATA=d; normalize(); renderProject(); renderPhases(); refresh();
+      toast("Đã nạp dữ liệu từ: "+f.name);
+    }catch(err){ alert("Không đọc được file JSON: "+err.message); }
+    input.value="";
+  };
+  r.readAsText(f,"utf-8");
+}
+
+init();
+</script>
+</body>
+</html>
