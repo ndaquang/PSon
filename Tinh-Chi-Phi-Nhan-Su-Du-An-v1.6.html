@@ -341,6 +341,12 @@ tbody tr:hover{background:#eef1f8!important}
       </div>
     </div>
 
+    <!-- OPTIMAL STAFFING SUGGESTION — tự động tính lại mỗi khi Thông tin DA thay đổi -->
+    <div class="section-box" style="border:1.5px solid #34d399;background:linear-gradient(135deg,#ecfdf5,#d1fae5)">
+      <div class="section-title" style="color:#065f46;border-bottom-color:#a7f3d0">🎯 Đề xuất Nhân lực Tối ưu (tự động cập nhật)</div>
+      <div id="optimalSuggestionBoxInput"></div>
+    </div>
+
     <div class="action-bar">
       <button class="btn btn-success" onclick="loadDefaultStaff()">🔄 Áp dụng Cơ cấu Nhân sự Đề xuất</button>
       <button class="btn btn-primary" onclick="switchTab('staff')">➡️ Tiếp tục: Nhập Cơ cấu Nhân sự</button>
@@ -509,6 +515,12 @@ tbody tr:hover{background:#eef1f8!important}
 
   <!-- ============== TAB: AUTO ALLOCATION ============== -->
   <div class="tab-panel" id="tab-auto">
+
+    <!-- OPTIMAL STAFFING SUGGESTION — đồng bộ với tab Thông tin DA, tự động cập nhật -->
+    <div class="section-box" style="border:1.5px solid #34d399;background:linear-gradient(135deg,#ecfdf5,#d1fae5)">
+      <div class="section-title" style="color:#065f46;border-bottom-color:#a7f3d0">🎯 Đề xuất Nhân lực Tối ưu (tự động cập nhật theo Thông tin DA)</div>
+      <div id="optimalSuggestionBoxAuto"></div>
+    </div>
 
     <div class="section-box" style="border:1.5px solid #93c5fd;background:linear-gradient(135deg,#eff6ff,#dbeafe)">
       <div class="section-title" style="color:#1e40af;border-bottom-color:#bfdbfe">🎯 Tự phân bổ Nhân sự theo Quy tắc Tỷ lệ</div>
@@ -801,6 +813,18 @@ function safeSetSel(id, val){
   if (el) el.value = val;
 }
 
+function refreshQuickDefaultsFromProjectInfo(){
+  const type = APP_STATE.projectType || 'CT';
+  const d = QC_DEFAULTS[type];
+  const ccmInfo = applyCCMDefaultsForType(type, APP_STATE.projectValue);
+  if (!d || !ccmInfo) return;
+
+  APP_STATE.qcL = d.L;
+  APP_STATE.qcR = ccmInfo.ccmRate;
+  safeSet('qcL', d.L);
+  safeSet('qcR', ccmInfo.ccmRate.toFixed(2));
+}
+
 // Đọc UI vào state — gọi trước khi dùng APP_STATE
 function uiToState(){
   APP_STATE.projectName    = document.getElementById('projectName')?.value || '';
@@ -830,11 +854,27 @@ function uiToState(){
 // 3 nhóm: NX (Nhà xưởng), CT (Cao tầng), TT (Thấp tầng)
 // 3 quy mô: small (<100 tỷ) / medium (100-250 tỷ) / large (>250 tỷ)
 // ============================================================
-const CCM_RATES = {
+const CCM_RATE_DEFAULTS = {
   NX: { small: 2.70, medium: 2.35, large: 1.75 }, // Nhà xưởng (factory)
   CT: { small: 3.80, medium: 3.00, large: 2.60 }, // Cao tầng (high-rise)
   TT: { small: 3.60, medium: 3.20, large: 2.70 }, // Thấp tầng (low-rise)
 };
+
+const CCM_RATES = {
+  NX: { ...CCM_RATE_DEFAULTS.NX },
+  CT: { ...CCM_RATE_DEFAULTS.CT },
+  TT: { ...CCM_RATE_DEFAULTS.TT },
+};
+
+function applyCCMDefaultsForType(type, valueBn){
+  const defaults = CCM_RATE_DEFAULTS[type];
+  if (!defaults) return null;
+  CCM_RATES[type] = { ...defaults };
+
+  const bucket = getSizeBucket(valueBn);
+  const ccmRate = CCM_RATES[type]?.[bucket] ?? defaults[bucket] ?? 0;
+  return { type, bucket, ccmRate, defaults };
+}
 
 const TYPE_LABELS = {
   NX: 'Nhà xưởng / Factory',
@@ -951,6 +991,10 @@ function syncFromInput(sourceId){
   }
   APP_STATE[stateKey] = val;
 
+  if (['projectType','qcType','projectValue','qcGTT','projectDuration','qcT','defaultRegion'].includes(sourceId)) {
+    refreshQuickDefaultsFromProjectInfo();
+  }
+
   // Sync mirrors (không sync ngược về input đang focus)
   syncMirrors(sourceId, stateKey, val);
 
@@ -986,13 +1030,13 @@ function onProjectTypeChange(){
   const val = document.getElementById('projectType').value;
   APP_STATE.projectType = val;
   document.getElementById('qcType').value = val;
-  // Load L, R chuẩn theo loại hình
   const d = QC_DEFAULTS[val];
-  if (d) {
+  const ccmInfo = applyCCMDefaultsForType(val, APP_STATE.projectValue);
+  if (d && ccmInfo) {
     APP_STATE.qcL = d.L;
-    APP_STATE.qcR = d.R;
+    APP_STATE.qcR = ccmInfo.ccmRate;
     safeSet('qcL', d.L);
-    safeSet('qcR', d.R.toFixed(2));
+    safeSet('qcR', ccmInfo.ccmRate.toFixed(2));
   }
   updateAll();
 }
@@ -1002,11 +1046,12 @@ function onQuickTypeChange(){
   APP_STATE.projectType = val;
   document.getElementById('projectType').value = val;
   const d = QC_DEFAULTS[val];
-  if (d) {
+  const ccmInfo = applyCCMDefaultsForType(val, APP_STATE.projectValue);
+  if (d && ccmInfo) {
     APP_STATE.qcL = d.L;
-    APP_STATE.qcR = d.R;
+    APP_STATE.qcR = ccmInfo.ccmRate;
     safeSet('qcL', d.L);
-    safeSet('qcR', d.R.toFixed(2));
+    safeSet('qcR', ccmInfo.ccmRate.toFixed(2));
   }
   updateAll();
 }
@@ -1014,12 +1059,13 @@ function onQuickTypeChange(){
 function reloadQuickDefaults(){
   const t = APP_STATE.projectType;
   const d = QC_DEFAULTS[t];
-  if (!d) return;
+  const ccmInfo = applyCCMDefaultsForType(t, APP_STATE.projectValue);
+  if (!d || !ccmInfo) return;
   APP_STATE.qcL = d.L;
-  APP_STATE.qcR = d.R;
+  APP_STATE.qcR = ccmInfo.ccmRate;
   APP_STATE.qcN = null;
   safeSet('qcL', d.L);
-  safeSet('qcR', d.R.toFixed(2));
+  safeSet('qcR', ccmInfo.ccmRate.toFixed(2));
   safeSet('qcN', '');
   updateAll();
 }
@@ -1041,9 +1087,75 @@ function updateAll(){
   renderCCMTable();
   renderAdjustmentPreview();
   refreshStaffTotals();
+  renderOptimalSuggestion();
   // Nếu quick panel visible → re-render
   if (document.getElementById('tab-quick')?.classList.contains('active')) updateQuickCalc();
   if (document.getElementById('tab-auto')?.classList.contains('active')) updateAutoAllocation();
+}
+
+// ============================================================
+// ===== OPTIMAL STAFFING SUGGESTION — tự động tính lại N tối ưu =====
+// mỗi khi Loại hình / Quy mô / Tiến độ / Scope-Overlap thay đổi.
+// N = QL(GTT × %CCM hiệu chỉnh) ÷ (L × T) — cùng công thức chuẩn với tab Tính Phổ Thông,
+// nhưng dùng %CCM đã hiệu chỉnh Scope/Overlap (nếu có) để phản ánh đúng thực tế dự án.
+// ============================================================
+function computeOptimalStaffing(){
+  const p = getProjectInputs();
+  const ccm = getCurrentCCM();
+  const L = APP_STATE.qcL;
+  const T = p.duration;
+  const GTT = p.value;
+
+  const QL_million = GTT * 1000 * ccm.rate / 100;
+  let N = (L * T) > 0 ? Math.round(QL_million / (L * T)) : 0;
+  if (N < 0) N = 0;
+
+  const rule = getCurrentRule();
+  const alloc = allocateByRule(N, rule);
+  const allocCost = computeAllocationCost(alloc, ccm.bucket, p.defaultRegion, T);
+
+  return { N, alloc, rule, ccmRate: ccm.rate, bucket: ccm.bucket, costTotal: allocCost.costTotal };
+}
+
+function renderOptimalSuggestion(){
+  const boxes = ['optimalSuggestionBoxInput','optimalSuggestionBoxAuto']
+    .map(id => document.getElementById(id)).filter(Boolean);
+  if (boxes.length === 0) return;
+
+  const p = getProjectInputs();
+  const opt = computeOptimalStaffing();
+  const ruleLabel = document.getElementById('spanRule')?.value === 'custom'
+    ? 'Tùy chỉnh' : (document.getElementById('spanRule')?.value || APP_STATE.spanRule);
+  const projectValueVND = p.value * 1e9;
+  const costPct = projectValueVND > 0 ? (opt.costTotal / projectValueVND * 100) : 0;
+
+  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;align-items:center">';
+  html += '<div><div style="font-size:10px;color:#065f46;text-transform:uppercase;letter-spacing:.5px;font-weight:700">N Tối ưu</div>'
+    + '<div style="font-size:24px;font-weight:800;color:#065f46">' + opt.N + ' người</div>'
+    + '<div style="font-size:10px;color:#059669">= QL(' + fmtPct(opt.ccmRate) + ') ÷ (' + APP_STATE.qcL + ' tr × ' + p.duration + ' th)</div></div>';
+  html += '<div><div style="font-size:10px;color:#065f46;text-transform:uppercase;letter-spacing:.5px;font-weight:700">Phân bổ (' + ruleLabel + ')</div>'
+    + '<div style="font-size:14px;font-weight:700"><span style="color:#92400e">' + opt.alloc.ql + ' QL</span> · <span style="color:#1e40af">' + opt.alloc.cv + ' CV</span> · <span style="color:#166534">' + opt.alloc.nv + ' NV</span></div></div>';
+  html += '<div><div style="font-size:10px;color:#065f46;text-transform:uppercase;letter-spacing:.5px;font-weight:700">Quỹ lương ước tính</div>'
+    + '<div style="font-size:16px;font-weight:800;color:#e94560">' + fmtBn(opt.costTotal) + '</div>'
+    + '<div style="font-size:10px;color:#059669">' + fmtPct(costPct) + ' / Doanh thu DA</div></div>';
+  html += '<div><button class="btn btn-success" style="width:100%" onclick="applyOptimalSuggestion()">✅ Áp dụng đề xuất này</button></div>';
+  html += '</div>';
+  html += '<div class="notice" style="margin-top:8px;color:#065f46">💡 Tự động tính lại mỗi khi Loại hình / Quy mô / Tiến độ / Scope-Overlap thay đổi (dùng %CCM đã hiệu chỉnh). Nút trên chỉ điền số liệu vào tab Phân bổ Tự động — không tự ghi đè Cơ cấu Nhân sự đã nhập.</div>';
+
+  boxes.forEach(el => { el.innerHTML = html; });
+}
+
+function applyOptimalSuggestion(){
+  const opt = computeOptimalStaffing();
+  if (opt.N <= 0) {
+    alert('⚠️ Không thể tính N tối ưu từ tham số hiện tại. Vui lòng kiểm tra Quy mô/Tiến độ dự án.');
+    return;
+  }
+  APP_STATE.totalStaff = opt.N;
+  safeSet('totalStaffCount', opt.N);
+  switchTab('auto');
+  updateAutoAllocation();
+  alert('✅ Đã điền N tối ưu = ' + opt.N + ' người (' + opt.alloc.ql + ' QL + ' + opt.alloc.cv + ' CV + ' + opt.alloc.nv + ' NV) vào tab Phân bổ Tự động.\n\nBấm "✨ Áp dụng vào Cơ cấu Nhân sự" để điền vào bảng 34 chức danh.');
 }
 
 function getSizeBucket(valueBn){
@@ -1611,13 +1723,15 @@ function updateAutoAllocation(){
   const region = p.defaultRegion;
   const dur = p.duration;
 
-  // Lương TB theo ngạch (lấy lương cấp tương ứng quy mô)
-  const avgByGroup = computeAvgSalaryByGroup(bucket, region);
+  // Quỹ lương thực tế theo ngạch — dùng ĐÚNG cách phân bổ share+mandatory+part-time
+  // (khớp 100% với số liệu sau khi applyAutoAllocation() ghi vào Cơ cấu Nhân sự)
+  const allocCost = computeAllocationCost(alloc, bucket, region, dur);
+  const avgByGroup = { QL: allocCost.avgQL, CV: allocCost.avgCV, NV: allocCost.avgNV };
 
-  const costQL = alloc.ql * avgByGroup.QL * dur;
-  const costCV = alloc.cv * avgByGroup.CV * dur;
-  const costNV = alloc.nv * avgByGroup.NV * dur;
-  const costTotal = costQL + costCV + costNV;
+  const costQL = allocCost.costQL;
+  const costCV = allocCost.costCV;
+  const costNV = allocCost.costNV;
+  const costTotal = allocCost.costTotal;
 
   const sum = rule.ql + rule.cv + rule.nv;
   const pctQL = sum>0 ? (rule.ql/sum*100) : 0;
@@ -1649,77 +1763,70 @@ function updateAutoAllocation(){
 
   renderNgachDetail(alloc, bucket, region);
   renderRuleCompare(total, bucket, region);
+  renderOptimalSuggestion();
 }
 
-function computeAvgSalaryByGroup(bucket, region){
-  // Lương TB theo ngạch dựa trên các vị trí thực tế trong nhóm (cùng phân loại với getStaffGroup)
-  const lvl = { small:'3', medium:'2', large:'1' }[bucket];
+// Cấu hình DUY NHẤT cho phân bổ chi tiết theo CHỨC DANH thực tế (không phải ngạch lương)
+// — dùng chung cho preview (renderNgachDetail/renderRuleCompare/computeOptimalStaffing) VÀ khi
+// áp dụng thật vào Cơ cấu Nhân sự (applyAutoAllocation), để % và quỹ lương preview khớp 100% với
+// số liệu sau khi áp dụng (bao gồm cả hệ số part-time của GDDA).
+// QL: Chỉ huy trưởng (R - PM), Giám đốc DA (Sponsor delegate, part-time)
+// CV: Chỉ huy phó (Team Lead - kỹ thuật), GSC, GS1, GSAT cấp 1 (QC chuyên trách)
+// NV: GS thi công cấp 2, Thư ký, Thủ kho, GSAT cấp 2
+const ALLOCATION_GROUPS = {
+  QL: [
+    { prefix:'CHT', name:'Chỉ huy trưởng', share: 0.70, mPct: 1.00, mandatory: true,  levels:['1','2','3'] },
+    { prefix:'GDDA',name:'Giám đốc DA',    share: 0.30, mPct: 0.30, mandatory: false, levels:['1','2','3'], partTime: true },
+  ],
+  CV: [
+    { prefix:'CHP', name:'Chỉ huy phó',     share: 0.35, mPct: 1.00, mandatory: false, levels:['1','2','3'] },
+    { prefix:'GSAT',name:'GS An toàn (c.1)',share: 0.15, mPct: 1.00, mandatory: true,  levels:['1'] },  // GSAT cấp 1 → CV
+    { prefix:'GSC', name:'Giám sát chính',  share: 0.20, mPct: 1.00, mandatory: false, levels:['1','2'] },
+    { prefix:'GS1', name:'Giám sát TC c.1', share: 0.30, mPct: 1.00, mandatory: false, levels:['1'] },
+  ],
+  NV: [
+    { prefix:'GS2', name:'Giám sát TC c.2', share: 0.50, mPct: 1.00, mandatory: false, levels:['2'] },
+    { prefix:'GSAT',name:'GS An toàn (c.2)',share: 0.15, mPct: 1.00, mandatory: false, levels:['2'] },  // GSAT cấp 2 → NV
+    { prefix:'TKY', name:'Thư ký',          share: 0.20, mPct: 1.00, mandatory: false, levels:[''] },
+    { prefix:'TKHO',name:'Thủ kho',         share: 0.15, mPct: 1.00, mandatory: false, levels:[''] },
+  ],
+};
 
-  const salaryOf = (code) => {
-    const s = STAFF_DATA.find(x => x.code === code);
-    return s ? (s.hard + s.welfare) : 0;
+// Quỹ lương thực tế của MỘT ngạch (QL/CV/NV), tính bằng đúng cách phân bổ (share + mandatory +
+// part-time) sẽ dùng khi applyAutoAllocation() ghi vào Cơ cấu Nhân sự — không phải trung bình cộng
+// giản đơn. avgPerMonth trả về để hiển thị "Lương TB/người/tháng" tham khảo.
+function computeGroupCost(total, items, bucket, region, dur){
+  if (total <= 0) return { cost: 0, avgPerMonth: 0 };
+  const alloced = distributeWithMandatory(total, items);
+  let cost = 0;
+  items.forEach((it, idx) => {
+    const n = alloced[idx];
+    if (n === 0) return;
+    const code = resolveCode(it, bucket, region);
+    const staff = STAFF_DATA.find(s => s.code === code);
+    if (!staff) return;
+    const salary = staff.hard + staff.welfare;
+    const months = Math.round(dur * it.mPct * 10) / 10;
+    cost += n * salary * months;
+  });
+  const avgPerMonth = (total > 0 && dur > 0) ? Math.round(cost / total / dur) : 0;
+  return { cost, avgPerMonth };
+}
+
+// Quỹ lương + lương TB cho cả 3 ngạch, dựa trên số lượng đã phân bổ theo quy tắc (alloc.ql/cv/nv)
+function computeAllocationCost(alloc, bucket, region, dur){
+  const ql = computeGroupCost(alloc.ql, ALLOCATION_GROUPS.QL, bucket, region, dur);
+  const cv = computeGroupCost(alloc.cv, ALLOCATION_GROUPS.CV, bucket, region, dur);
+  const nv = computeGroupCost(alloc.nv, ALLOCATION_GROUPS.NV, bucket, region, dur);
+  return {
+    costQL: ql.cost, costCV: cv.cost, costNV: nv.cost,
+    costTotal: ql.cost + cv.cost + nv.cost,
+    avgQL: ql.avgPerMonth, avgCV: cv.avgPerMonth, avgNV: nv.avgPerMonth,
   };
-
-  const findCode = (prefix, level) => {
-    // Tìm với region trước
-    const withReg = STAFF_DATA.find(s => s.code === prefix + level + region);
-    if (withReg) return prefix + level + region;
-    const noReg = STAFF_DATA.find(s => s.code === prefix + level);
-    if (noReg) return prefix + level;
-    // Fallback - bất kỳ cấp nào có prefix
-    const any = STAFF_DATA.find(s => s.code.startsWith(prefix));
-    return any ? any.code : null;
-  };
-
-  // QL = CHT (cấp tương ứng) + GDDA (cấp tương ứng)
-  const cht = salaryOf(findCode('CHT', lvl));
-  const gdda = salaryOf(findCode('GDDA', lvl));
-  const qlAvg = Math.round((cht + gdda) / 2);
-
-  // CV = CHP + GSAT1 + GSC + GS1 (cấp tương ứng, GSAT1 luôn cấp 1)
-  const chp = salaryOf(findCode('CHP', lvl));
-  const gsat1 = salaryOf(findCode('GSAT', '1'));
-  const gsc = salaryOf(findCode('GSC', lvl === '3' ? '2' : lvl));  // GSC chỉ có cấp 1,2
-  const gs1 = salaryOf(findCode('GS1', '1'));  // GS thi công cấp 1
-  const cvAvg = Math.round((chp + gsat1 + gsc + gs1) / 4);
-
-  // NV = GS2 + GSAT2 + TKY + TKHO
-  const gs2 = salaryOf(findCode('GS2', '2'));
-  const gsat2 = salaryOf(findCode('GSAT', '2'));
-  const tky = salaryOf(findCode('TKY', ''));
-  const tkho = salaryOf(findCode('TKHO', ''));
-  const nvAvg = Math.round((gs2 + gsat2 + tky + tkho) / 4);
-
-  return { QL: qlAvg, CV: cvAvg, NV: nvAvg };
 }
 
 function renderNgachDetail(alloc, bucket, region){
-  // Phân bổ chi tiết từ alloc.ql vào các chức danh QL cụ thể
-  const lvl = { small:'3', medium:'2', large:'1' }[bucket];
-
-  // Cấu hình groups — phân theo CHỨC DANH thực tế (không phải ngạch lương)
-  // QL: Chỉ huy trưởng (R - PM), Giám đốc DA (Sponsor delegate, part-time)
-  // CV: Chỉ huy phó (Team Lead - kỹ thuật), GSC, GS1, GSAT cấp 1 (QC chuyên trách)
-  // NV: GS thi công cấp 2, Thư ký, Thủ kho, GSAT cấp 2
-  const groups = {
-    QL: [
-      { prefix:'CHT', name:'Chỉ huy trưởng', share: 0.70, mandatory: true, levels:['1','2','3'] },
-      { prefix:'GDDA',name:'Giám đốc DA',    share: 0.30, mandatory: false, levels:['1','2','3'], partTime: true },
-    ],
-    CV: [
-      { prefix:'CHP', name:'Chỉ huy phó',     share: 0.35, mandatory: false, levels:['1','2','3'] },
-      { prefix:'GSAT',name:'GS An toàn (c.1)',share: 0.15, mandatory: true,  levels:['1'] },  // GSAT cấp 1 → CV
-      { prefix:'GSC', name:'Giám sát chính',  share: 0.20, mandatory: false, levels:['1','2'] },
-      { prefix:'GS1', name:'Giám sát TC c.1', share: 0.30, mandatory: false, levels:['1'] },
-    ],
-    NV: [
-      { prefix:'GS2', name:'Giám sát TC c.2', share: 0.50, mandatory: false, levels:['2'] },
-      { prefix:'GSAT',name:'GS An toàn (c.2)',share: 0.15, mandatory: false, levels:['2'] },  // GSAT cấp 2 → NV
-      { prefix:'TKY', name:'Thư ký',          share: 0.20, mandatory: false, levels:[''] },
-      { prefix:'TKHO',name:'Thủ kho',         share: 0.15, mandatory: false, levels:[''] },
-    ],
-  };
-
+  const groups = ALLOCATION_GROUPS;
   const counts = { QL: alloc.ql, CV: alloc.cv, NV: alloc.nv };
   let html = '<div class="tbl-wrap"><table><thead><tr>';
   ['Ngạch','Chức danh','Code đề xuất','Số lượng','% đầu người','Lương/tháng','Ghi chú'].forEach(h =>
@@ -1831,7 +1938,6 @@ function renderRuleCompare(total, bucket, region){
     { name:'1:2:7', desc:'Heavy-execution' },
     { name:'1:5:4', desc:'Quality-heavy' },
   ];
-  const avg = computeAvgSalaryByGroup(bucket, region);
   const p = getProjectInputs();
   const dur = p.duration;
   const projectVND = p.value * 1e9;
@@ -1844,10 +1950,11 @@ function renderRuleCompare(total, bucket, region){
   rules.forEach(r => {
     const ruleObj = parseRule(r.name);
     const a = allocateByRule(total, ruleObj);
-    const cQL = a.ql * avg.QL * dur;
-    const cCV = a.cv * avg.CV * dur;
-    const cNV = a.nv * avg.NV * dur;
-    const cTot = cQL + cCV + cNV;
+    const allocCost = computeAllocationCost(a, bucket, region, dur);
+    const cQL = allocCost.costQL;
+    const cCV = allocCost.costCV;
+    const cNV = allocCost.costNV;
+    const cTot = allocCost.costTotal;
     const pTot = projectVND>0 ? (cTot/projectVND*100) : 0;
     const isActive = (r.name === currentRule);
     html += '<tr'+(isActive?' class="active-rule"':'')+'>';
@@ -1882,25 +1989,8 @@ function applyAutoAllocation(){
   // Reset
   STAFF_DATA.forEach(s => { staffState[s.code] = { qty: 0, months: 0 }; });
 
-  // CÙNG cấu hình với renderNgachDetail
-  const groups = {
-    QL: [
-      { prefix:'CHT', share: 0.70, mPct: 1.00, mandatory:true,  levels:['1','2','3'] },
-      { prefix:'GDDA',share: 0.30, mPct: 0.30, mandatory:false, levels:['1','2','3'], partTime:true },
-    ],
-    CV: [
-      { prefix:'CHP', share: 0.35, mPct: 1.00, mandatory:false, levels:['1','2','3'] },
-      { prefix:'GSAT',share: 0.15, mPct: 1.00, mandatory:true,  levels:['1'] },
-      { prefix:'GSC', share: 0.20, mPct: 1.00, mandatory:false, levels:['1','2'] },
-      { prefix:'GS1', share: 0.30, mPct: 1.00, mandatory:false, levels:['1'] },
-    ],
-    NV: [
-      { prefix:'GS2', share: 0.50, mPct: 1.00, mandatory:false, levels:['2'] },
-      { prefix:'GSAT',share: 0.15, mPct: 1.00, mandatory:false, levels:['2'] },
-      { prefix:'TKY', share: 0.20, mPct: 1.00, mandatory:false, levels:[''] },
-      { prefix:'TKHO',share: 0.15, mPct: 1.00, mandatory:false, levels:[''] },
-    ],
-  };
+  // CÙNG cấu hình với renderNgachDetail/renderRuleCompare (nguồn sự thật duy nhất)
+  const groups = ALLOCATION_GROUPS;
   const counts = { QL: alloc.ql, CV: alloc.cv, NV: alloc.nv };
 
   let appliedSummary = [];
@@ -2139,8 +2229,9 @@ const TIME_SCENARIOS = {
 function reloadQuickDefaults(){
   const t = document.getElementById('qcType').value;
   const d = QC_DEFAULTS[t];
-  if (!d) return;
-  document.getElementById('qcR').value = d.R.toFixed(2);
+  const ccmInfo = applyCCMDefaultsForType(t, parseFloat(document.getElementById('qcGTT')?.value) || APP_STATE.projectValue);
+  if (!d || !ccmInfo) return;
+  document.getElementById('qcR').value = ccmInfo.ccmRate.toFixed(2);
   document.getElementById('qcL').value = d.L.toFixed(1);
   document.getElementById('qcN').value = '';
   updateQuickCalc();
@@ -2660,9 +2751,12 @@ function exportToCSV(){
 
 // ===== INIT =====
 window.addEventListener('DOMContentLoaded', () => {
-  // Load L, R mặc định theo loại hình khởi tạo
   const d = QC_DEFAULTS[APP_STATE.projectType];
-  if (d) { APP_STATE.qcL = d.L; APP_STATE.qcR = d.R; }
+  const ccmInfo = applyCCMDefaultsForType(APP_STATE.projectType, APP_STATE.projectValue);
+  if (d && ccmInfo) {
+    APP_STATE.qcL = d.L;
+    APP_STATE.qcR = ccmInfo.ccmRate;
+  }
   stateToUI();
   renderFlowBar('input');
   updateAll();
