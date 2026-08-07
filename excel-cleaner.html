@@ -193,6 +193,7 @@
   .badge-green { background: rgba(200,240,90,0.12); color: var(--accent); border: 1px solid rgba(200,240,90,0.25); }
   .badge-amber { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(240,160,64,0.25); }
   .badge-blue  { background: var(--blue-dim);  color: var(--blue);  border: 1px solid rgba(95,168,255,0.25); }
+  .badge-red   { background: var(--red-dim);   color: var(--red);   border: 1px solid rgba(255,95,95,0.25); }
 
   /* FILE PREVIEW */
   #file-preview {
@@ -391,6 +392,27 @@
   #log-body .l-warn  { color: var(--amber); }
   #log-body .l-err   { color: var(--red); }
 
+  /* HINT BOX */
+  .hint-box {
+    margin-top: 16px;
+    padding: 13px 16px;
+    background: var(--red-dim);
+    border: 1px solid rgba(255,95,95,0.22);
+    border-radius: 10px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--text);
+    line-height: 1.65;
+  }
+  .hint-box b { color: var(--red); }
+  .hint-box code {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 11px;
+  }
+
   /* FOOTER */
   footer {
     margin-top: 48px;
@@ -415,7 +437,7 @@
       </div>
       <h1>Excel Cleaner</h1>
     </div>
-    <p class="tagline">// xóa named ranges lỗi · hỗ trợ xlsx · xlsm · xlsb · xls · xlam</p>
+    <p class="tagline">// sửa lỗi invalid XML · xóa named ranges lỗi · hỗ trợ xlsx · xlsm · xlsb · xls · xlam</p>
   </header>
 
   <!-- DROP ZONE -->
@@ -448,9 +470,31 @@
     <div id="scan-info">Đang quét file...</div>
   </div>
 
+  <!-- HINT: invalid XML error -->
+  <div class="hint-box">
+    <b>Gặp lỗi "Unable to read workbook... invalid XML" / "could not read stylesheet"?</b><br>
+    Lỗi này thường do <code>xl/styles.xml</code> bị sai thứ tự phần tử, lệch số lượng (thuộc tính <code>count</code>), hoặc chứa ký tự XML không hợp lệ. 2 tùy chọn đầu tiên bên dưới (đã chọn sẵn) tự động dò và sửa các lỗi này.
+  </div>
+
   <!-- OPTIONS -->
   <div class="options" style="margin-top:16px;">
     <div class="opt-header">Tùy chọn làm sạch</div>
+    <label class="opt-row">
+      <input type="checkbox" id="opt-illegalchars" checked>
+      <div class="opt-text">
+        <div class="opt-label">Sửa lỗi ký tự XML không hợp lệ (toàn bộ file)</div>
+        <div class="opt-desc">Xóa ký tự điều khiển không hợp lệ và sửa dấu "&" chưa escape trong mọi phần XML của workbook — nguyên nhân phổ biến gây lỗi "invalid XML" khi Excel/Office mở file</div>
+      </div>
+      <span class="opt-badge badge-red">Quan trọng</span>
+    </label>
+    <label class="opt-row">
+      <input type="checkbox" id="opt-styles" checked>
+      <div class="opt-text">
+        <div class="opt-label">Sửa cấu trúc &amp; nén styles.xml (stylesheet)</div>
+        <div class="opt-desc">Sắp xếp lại thứ tự phần tử theo đúng chuẩn OOXML, sửa lệch số lượng (count) trong fonts/fills/borders/cellXfs..., và nén khoảng trắng thừa — khắc phục lỗi "could not read stylesheet"</div>
+      </div>
+      <span class="opt-badge badge-red">Quan trọng</span>
+    </label>
     <label class="opt-row">
       <input type="checkbox" id="opt-names" checked>
       <div class="opt-text">
@@ -474,14 +518,6 @@
         <div class="opt-desc">File lưu thứ tự tính toán — Excel tự tạo lại khi mở. Thường chiếm 200KB–2MB trong file nặng</div>
       </div>
       <span class="opt-badge badge-amber">Trung bình</span>
-    </label>
-    <label class="opt-row">
-      <input type="checkbox" id="opt-styles" >
-      <div class="opt-text">
-        <div class="opt-label">Nén lại styles.xml</div>
-        <div class="opt-desc">Xóa các style entry trùng lặp trong styles.xml. An toàn nhưng tiết kiệm ít hơn</div>
-      </div>
-      <span class="opt-badge badge-blue">Nhỏ</span>
     </label>
   </div>
 
@@ -592,6 +628,113 @@ function setProgress(pct, label) {
   $('progress-label').textContent = label;
 }
 
+// ---- XML REPAIR HELPERS (invalid XML / could not read stylesheet) ----
+
+// Illegal XML 1.0 control characters (tab \x09, LF \x0A, CR \x0D are allowed)
+const ILLEGAL_XML_CHARS_RE = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g;
+const BAD_AMP_RE = /&(?!amp;|lt;|gt;|quot;|apos;|#\d+;|#x[0-9a-fA-F]+;)/g;
+
+function stripIllegalChars(xmlTxt) {
+  return xmlTxt.replace(ILLEGAL_XML_CHARS_RE, '');
+}
+function fixBareAmpersands(xmlTxt) {
+  return xmlTxt.replace(BAD_AMP_RE, '&amp;');
+}
+function hasIllegalChars(xmlTxt) {
+  return !!xmlTxt.match(ILLEGAL_XML_CHARS_RE);
+}
+function hasBareAmpersands(xmlTxt) {
+  return !!xmlTxt.match(BAD_AMP_RE);
+}
+function isWellFormed(xmlTxt) {
+  try {
+    const doc = new DOMParser().parseFromString(xmlTxt, 'application/xml');
+    return doc.getElementsByTagName('parsererror').length === 0;
+  } catch (e) {
+    return false;
+  }
+}
+
+// Correct OOXML schema order for direct children of <styleSheet>
+const STYLE_SECTIONS = [
+  { tag: 'numFmts',      child: 'numFmt',    hasCount: true },
+  { tag: 'fonts',        child: 'font',      hasCount: true },
+  { tag: 'fills',        child: 'fill',      hasCount: true },
+  { tag: 'borders',      child: 'border',    hasCount: true },
+  { tag: 'cellStyleXfs', child: 'xf',        hasCount: true },
+  { tag: 'cellXfs',      child: 'xf',        hasCount: true },
+  { tag: 'cellStyles',   child: 'cellStyle', hasCount: true },
+  { tag: 'dxfs',         child: 'dxf',       hasCount: true },
+  { tag: 'tableStyles',  child: 'tableStyle',hasCount: false },
+  { tag: 'colors',       child: null,        hasCount: false },
+  { tag: 'extLst',       child: null,        hasCount: false },
+];
+
+// Repairs xl/styles.xml: strips illegal chars, fixes bare "&", reorders top-level
+// sections to the schema-required order, and fixes mismatched count="" attributes.
+// This targets exactly the "could not read stylesheet ... invalid XML" failure.
+function repairStylesXml(xmlTxt) {
+  let txt = xmlTxt;
+  let changed = false;
+
+  const stripped = stripIllegalChars(txt);
+  if (stripped !== txt) { changed = true; txt = stripped; }
+
+  const ampFixed = fixBareAmpersands(txt);
+  if (ampFixed !== txt) { changed = true; txt = ampFixed; }
+
+  const rootMatch = txt.match(/<styleSheet\b([^>]*)>([\s\S]*)<\/styleSheet>/);
+  if (!rootMatch) return { txt, changed, countFixes: 0, reordered: false };
+
+  const rootAttrs = rootMatch[1];
+  const body = rootMatch[2];
+
+  const blocks = {};
+  STYLE_SECTIONS.forEach(sec => {
+    const openClose = new RegExp(`<${sec.tag}\\b[^>]*>[\\s\\S]*?<\\/${sec.tag}>`);
+    const selfClose  = new RegExp(`<${sec.tag}\\b[^>]*/>`);
+    let m = body.match(openClose);
+    if (!m) m = body.match(selfClose);
+    if (m) blocks[sec.tag] = m[0];
+  });
+  // Order tags by where they actually appear in the source (not scan order)
+  const originalOrder = Object.keys(blocks).sort((a, b) => body.indexOf(blocks[a]) - body.indexOf(blocks[b]));
+
+  // Anything left over (unrecognized/extension elements) is preserved and appended
+  let leftover = body;
+  originalOrder.forEach(tag => { leftover = leftover.replace(blocks[tag], ''); });
+  leftover = leftover.trim();
+
+  // Fix count="" mismatches
+  let countFixes = 0;
+  STYLE_SECTIONS.forEach(sec => {
+    if (!sec.hasCount || !blocks[sec.tag]) return;
+    const block = blocks[sec.tag];
+    const inner = block.replace(/^<[^>]*>/, '').replace(/<\/[^>]*>$/, '');
+    const childRe = new RegExp(`<${sec.child}(?=[\\s/>])`, 'g');
+    const actual = (inner.match(childRe) || []).length;
+    const countMatch = block.match(/\scount="(\d+)"/);
+    const declared = countMatch ? parseInt(countMatch[1], 10) : null;
+    if (declared !== null && declared !== actual) {
+      blocks[sec.tag] = block.replace(/\scount="\d+"/, ` count="${actual}"`);
+      countFixes++;
+    } else if (declared === null && actual > 0) {
+      blocks[sec.tag] = block.replace(new RegExp(`^<${sec.tag}\\b`), `<${sec.tag} count="${actual}"`);
+      countFixes++;
+    }
+  });
+
+  const canonicalTags = STYLE_SECTIONS.map(s => s.tag).filter(t => blocks[t]);
+  const reordered = JSON.stringify(canonicalTags) !== JSON.stringify(originalOrder);
+
+  const newBody = canonicalTags.map(t => blocks[t]).join('') + leftover;
+  const newTxt = `<styleSheet${rootAttrs}>${newBody}</styleSheet>`;
+  const finalTxt = txt.replace(rootMatch[0], () => newTxt);
+
+  if (countFixes > 0 || reordered) changed = true;
+  return { txt: finalTxt, changed, countFixes, reordered };
+}
+
 async function loadFile(file) {
   currentFile = file;
   $('file-preview').style.display = 'block';
@@ -643,6 +786,22 @@ async function loadFile(file) {
       scanData.calcChainSize = cc.length;
     }
 
+    // Stylesheet health — detects the "could not read stylesheet / invalid XML" cause
+    scanData.stylesHealth = null;
+    if (zip.files['xl/styles.xml']) {
+      const stylesTxt = await zip.files['xl/styles.xml'].async('string');
+      const illegal = hasIllegalChars(stylesTxt);
+      const badAmp = hasBareAmpersands(stylesTxt);
+      const malformed = !isWellFormed(stylesTxt);
+      const preview = repairStylesXml(stylesTxt);
+      scanData.stylesHealth = {
+        illegal, badAmp, malformed,
+        countMismatch: preview.countFixes,
+        reordered: preview.reordered,
+        healthy: !illegal && !badAmp && !malformed && preview.countFixes === 0 && !preview.reordered
+      };
+    }
+
     // Sheets count
     scanData.sheets = Object.keys(zip.files).filter(k => k.startsWith('xl/worksheets/sheet') && !k.includes('Rels')).length;
 
@@ -671,6 +830,21 @@ async function loadFile(file) {
       html += `<span>calcChain.xml: <span class="warn">${fmtSize(scanData.calcChainSize)}</span> — có thể xóa</span><br>`;
     } else {
       html += `<span>calcChain.xml: <span class="ok">không có</span></span><br>`;
+    }
+    if (scanData.stylesHealth) {
+      const sh = scanData.stylesHealth;
+      if (sh.healthy) {
+        html += `<span>Stylesheet (styles.xml): <span class="ok">OK — không phát hiện lỗi cấu trúc</span></span><br>`;
+      } else {
+        const issues = [];
+        if (sh.malformed) issues.push('XML không hợp lệ');
+        if (sh.illegal) issues.push('ký tự điều khiển lỗi');
+        if (sh.badAmp) issues.push('dấu "&" chưa escape');
+        if (sh.reordered) issues.push('sai thứ tự phần tử');
+        if (sh.countMismatch > 0) issues.push(`${sh.countMismatch} mục lệch count`);
+        html += `<span>Stylesheet (styles.xml): <span class="danger">⚠ ${issues.join(', ')}</span></span><br>`;
+        html += `<span>→ Rất có thể đây là nguyên nhân gây lỗi "invalid XML" khi mở file — 2 tùy chọn đầu tiên bên dưới sẽ sửa</span><br>`;
+      }
     }
     html += `<span>Dung lượng file: <span class="stat">${fmtSize(file.size)}</span></span>`;
     $('scan-info').innerHTML = html;
@@ -751,6 +925,7 @@ async function processFile() {
   $('log-wrap').style.display = 'none';
   cleanedBlob = null;
 
+  const optIllegalChars = $('opt-illegalchars').checked;
   const optNames      = $('opt-names').checked;
   const optNA         = $('opt-na').checked;
   const optCalcChain  = $('opt-calcchain').checked;
@@ -764,6 +939,44 @@ async function processFile() {
     setProgress(15, 'Giải nén ZIP...');
     const zip = await JSZip.loadAsync(buf);
     let actions = [];
+
+    // 0. Fix illegal XML characters & unescaped "&" across every XML/rels part.
+    // This is the direct fix for "Unable to read workbook... invalid XML".
+    if (optIllegalChars) {
+      setProgress(18, 'Quét lỗi ký tự XML...');
+      const xmlFiles = Object.keys(zip.files).filter(name =>
+        !zip.files[name].dir && (name.endsWith('.xml') || name.endsWith('.rels'))
+      );
+      let filesFixed = 0, charsRemoved = 0, ampsFixed = 0, done = 0;
+      for (const name of xmlFiles) {
+        const original = await zip.files[name].async('string');
+        const ampMatches = original.match(BAD_AMP_RE);
+        let fixed = stripIllegalChars(original);
+        const charsRemovedHere = original.length - fixed.length;
+        fixed = fixBareAmpersands(fixed);
+        if (fixed !== original) {
+          zip.file(name, fixed);
+          filesFixed++;
+          charsRemoved += charsRemovedHere;
+          if (ampMatches) ampsFixed += ampMatches.length;
+        }
+        done++;
+        if (done % 15 === 0) {
+          setProgress(18 + Math.round((done / xmlFiles.length) * 10), `Đang quét ${done}/${xmlFiles.length} file XML...`);
+          await yieldToUI();
+        }
+      }
+      if (filesFixed > 0) {
+        const parts = [];
+        if (charsRemoved > 0) parts.push(`xóa ${charsRemoved.toLocaleString()} ký tự lỗi`);
+        if (ampsFixed > 0) parts.push(`sửa ${ampsFixed.toLocaleString()} dấu "&" chưa escape`);
+        actions.push({ label: 'Sửa lỗi XML', detail: `${filesFixed} file · ${parts.join(', ')}`, ok: true });
+        log(`Sửa lỗi XML trong ${filesFixed} file (${parts.join(', ')})`, 'ok');
+      } else {
+        actions.push({ label: 'Sửa lỗi XML', detail: 'Không phát hiện ký tự lỗi — không thay đổi', ok: false });
+        log('Không phát hiện lỗi ký tự XML nào', 'ok');
+      }
+    }
 
     // 1. Remove broken/invalid definedNames
     if ((optNames || optNA) && zip.files['xl/workbook.xml']) {
@@ -825,18 +1038,34 @@ async function processFile() {
       log(`Xóa calcChain.xml (${fmtSize(ccSize)})`, 'ok');
     }
 
-    // 3. Styles dedup (basic)
+    // 3. Repair styles.xml structure (element order, count mismatches) + compress
     if (optStyles && zip.files['xl/styles.xml']) {
-      setProgress(70, 'Nén styles.xml...');
+      setProgress(70, 'Sửa cấu trúc styles.xml...');
       let stylesTxt = await zip.files['xl/styles.xml'].async('string');
       const before = stylesTxt.length;
-      // Remove excessive whitespace/newlines
+      const repaired = repairStylesXml(stylesTxt);
+      stylesTxt = repaired.txt;
+      // Compress excess whitespace
       stylesTxt = stylesTxt.replace(/\s{2,}/g, ' ').replace(/> </g, '><');
+      const stillWellFormed = isWellFormed(stylesTxt);
       zip.file('xl/styles.xml', stylesTxt);
       const saved = before - stylesTxt.length;
-      if (saved > 0) {
+
+      const parts = [];
+      if (repaired.reordered) parts.push('sắp xếp lại thứ tự phần tử theo chuẩn OOXML');
+      if (repaired.countFixes > 0) parts.push(`sửa ${repaired.countFixes} mục lệch count`);
+      if (parts.length > 0) {
+        actions.push({ label: 'styles.xml', detail: `${parts.join(', ')} · tiết kiệm ${fmtSize(saved)}`, ok: true });
+        log(`Sửa cấu trúc styles.xml: ${parts.join(', ')} (tiết kiệm ${fmtSize(saved)})`, 'ok');
+      } else if (saved > 0) {
         actions.push({ label: 'styles.xml', detail: `Nén whitespace · tiết kiệm ${fmtSize(saved)}`, ok: true });
         log(`Nén styles.xml (${fmtSize(saved)})`, 'ok');
+      } else {
+        actions.push({ label: 'styles.xml', detail: 'Không phát hiện lỗi cấu trúc — không thay đổi', ok: false });
+        log('styles.xml không có lỗi cấu trúc', 'ok');
+      }
+      if (!stillWellFormed) {
+        log('⚠ Cảnh báo: styles.xml vẫn còn lỗi XML sau khi sửa tự động — có thể cần mở file gốc kiểm tra thủ công', 'warn');
       }
     }
 
