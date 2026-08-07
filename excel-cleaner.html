@@ -473,7 +473,7 @@
   <!-- HINT: invalid XML error -->
   <div class="hint-box">
     <b>Gặp lỗi "Unable to read workbook... invalid XML" / "could not read stylesheet"?</b><br>
-    Lỗi này thường do <code>xl/styles.xml</code> bị sai thứ tự phần tử, lệch số lượng (thuộc tính <code>count</code>), hoặc chứa ký tự XML không hợp lệ. 2 tùy chọn đầu tiên bên dưới (đã chọn sẵn) tự động dò và sửa các lỗi này.
+    Lỗi này thường do <code>xl/styles.xml</code> bị sai thứ tự phần tử, lệch số lượng (<code>count</code>), chứa ký tự XML không hợp lệ, <b>hoặc</b> có giá trị thuộc tính vượt phạm vi cho phép (ví dụ font family ngoài 0–14) — dù cú pháp XML vẫn đúng. 2 tùy chọn đầu tiên bên dưới (đã chọn sẵn) tự động dò và sửa tất cả các trường hợp này.
   </div>
 
   <!-- OPTIONS -->
@@ -491,7 +491,7 @@
       <input type="checkbox" id="opt-styles" checked>
       <div class="opt-text">
         <div class="opt-label">Sửa cấu trúc &amp; nén styles.xml (stylesheet)</div>
-        <div class="opt-desc">Sắp xếp lại thứ tự phần tử theo đúng chuẩn OOXML, sửa lệch số lượng (count) trong fonts/fills/borders/cellXfs..., và nén khoảng trắng thừa — khắc phục lỗi "could not read stylesheet"</div>
+        <div class="opt-desc">Sắp xếp lại thứ tự phần tử theo chuẩn OOXML, sửa lệch số lượng (count), và sửa các giá trị thuộc tính vượt phạm vi cho phép (font family, color tint, alignment indent/textRotation...) — khắc phục lỗi "could not read stylesheet" kể cả khi XML vẫn đúng cú pháp</div>
       </div>
       <span class="opt-badge badge-red">Quan trọng</span>
     </label>
@@ -735,6 +735,77 @@ function repairStylesXml(xmlTxt) {
   return { txt: finalTxt, changed, countFixes, reordered };
 }
 
+// ---- OUT-OF-RANGE VALUE REPAIR (schema constraint violations) ----
+// Some readers (openpyxl-based tools included) show the SAME generic
+// "invalid XML" message for files that are syntactically valid XML but
+// violate an OOXML value constraint — e.g. a font family code outside 0-14.
+// These are attribute-level fixes, distinct from the structural repair above.
+
+const SERIF_FONTS = ['times new roman','times','georgia','cambria','book antiqua','garamond',
+  'palatino','constantia','bookman old style','century schoolbook','goudy old style',
+  'baskerville','minion','sabon','ms serif','.vntime','vni-times','utm times'];
+const SANS_FONTS = ['arial','calibri','verdana','tahoma','segoe ui','helvetica','trebuchet ms',
+  'century gothic','franklin gothic','ms sans serif','open sans','roboto','noto sans',
+  '.vnarial','vni-helve','utm avo'];
+const MONO_FONTS = ['courier new','consolas','lucida console','courier','ms gothic'];
+
+function guessFontFamily(fontName) {
+  if (!fontName) return 0;
+  const n = fontName.toLowerCase();
+  if (SERIF_FONTS.some(f => n.includes(f))) return 1;
+  if (SANS_FONTS.some(f => n.includes(f))) return 2;
+  if (MONO_FONTS.some(f => n.includes(f))) return 3;
+  return 0; // "not applicable" — always a valid, safe fallback
+}
+
+// Fixes attribute values in xl/styles.xml that fall outside what the OOXML
+// schema (and readers like openpyxl) allow: Font family (0-14), Color tint
+// (-1..1), Alignment indent (0-255), Alignment textRotation (0-180 or 255).
+function fixOutOfRangeStyleValues(xmlTxt) {
+  let txt = xmlTxt;
+  const fixes = { family: 0, tint: 0, indent: 0, textRotation: 0 };
+
+  // Font family — read the sibling <name val="..."/> to guess a sane value
+  txt = txt.replace(/<font>([\s\S]*?)<\/font>/g, (whole, inner) => {
+    const famMatch = inner.match(/<family val="(-?\d+)"\s*\/>/);
+    if (!famMatch) return whole;
+    const val = parseInt(famMatch[1], 10);
+    if (val >= 0 && val <= 14) return whole;
+    const nameMatch = inner.match(/<name val="([^"]*)"/);
+    const guessed = guessFontFamily(nameMatch ? nameMatch[1] : '');
+    fixes.family++;
+    const newInner = inner.replace(/<family val="-?\d+"\s*\/>/, `<family val="${guessed}"/>`);
+    return `<font>${newInner}</font>`;
+  });
+
+  // Color tint (-1..1), wherever it appears in styles.xml
+  txt = txt.replace(/(<color\b[^>]*\btint=")(-?[\d.eE+-]+)(")/g, (whole, pre, val, post) => {
+    const n = parseFloat(val);
+    if (isNaN(n) || (n >= -1 && n <= 1)) return whole;
+    fixes.tint++;
+    return pre + Math.max(-1, Math.min(1, n)) + post;
+  });
+
+  // Alignment indent (0..255)
+  txt = txt.replace(/(<alignment\b[^>]*\bindent=")(-?\d+)(")/g, (whole, pre, val, post) => {
+    const n = parseInt(val, 10);
+    if (n >= 0 && n <= 255) return whole;
+    fixes.indent++;
+    return pre + Math.max(0, Math.min(255, n)) + post;
+  });
+
+  // Alignment textRotation (0..180, or 255 = "stacked" text — both valid)
+  txt = txt.replace(/(<alignment\b[^>]*\btextRotation=")(-?\d+)(")/g, (whole, pre, val, post) => {
+    const n = parseInt(val, 10);
+    if ((n >= 0 && n <= 180) || n === 255) return whole;
+    fixes.textRotation++;
+    return pre + (n < 0 ? 0 : 180) + post;
+  });
+
+  const total = fixes.family + fixes.tint + fixes.indent + fixes.textRotation;
+  return { txt, fixes, total };
+}
+
 async function loadFile(file) {
   currentFile = file;
   $('file-preview').style.display = 'block';
@@ -794,11 +865,14 @@ async function loadFile(file) {
       const badAmp = hasBareAmpersands(stylesTxt);
       const malformed = !isWellFormed(stylesTxt);
       const preview = repairStylesXml(stylesTxt);
+      const valuePreview = fixOutOfRangeStyleValues(stylesTxt);
       scanData.stylesHealth = {
         illegal, badAmp, malformed,
         countMismatch: preview.countFixes,
         reordered: preview.reordered,
-        healthy: !illegal && !badAmp && !malformed && preview.countFixes === 0 && !preview.reordered
+        outOfRange: valuePreview.total,
+        outOfRangeDetail: valuePreview.fixes,
+        healthy: !illegal && !badAmp && !malformed && preview.countFixes === 0 && !preview.reordered && valuePreview.total === 0
       };
     }
 
@@ -842,6 +916,15 @@ async function loadFile(file) {
         if (sh.badAmp) issues.push('dấu "&" chưa escape');
         if (sh.reordered) issues.push('sai thứ tự phần tử');
         if (sh.countMismatch > 0) issues.push(`${sh.countMismatch} mục lệch count`);
+        if (sh.outOfRange > 0) {
+          const d = sh.outOfRangeDetail;
+          const dp = [];
+          if (d.family) dp.push(`family×${d.family}`);
+          if (d.tint) dp.push(`tint×${d.tint}`);
+          if (d.indent) dp.push(`indent×${d.indent}`);
+          if (d.textRotation) dp.push(`textRotation×${d.textRotation}`);
+          issues.push(`${sh.outOfRange} giá trị vượt phạm vi cho phép (${dp.join(', ')})`);
+        }
         html += `<span>Stylesheet (styles.xml): <span class="danger">⚠ ${issues.join(', ')}</span></span><br>`;
         html += `<span>→ Rất có thể đây là nguyên nhân gây lỗi "invalid XML" khi mở file — 2 tùy chọn đầu tiên bên dưới sẽ sửa</span><br>`;
       }
@@ -1045,6 +1128,8 @@ async function processFile() {
       const before = stylesTxt.length;
       const repaired = repairStylesXml(stylesTxt);
       stylesTxt = repaired.txt;
+      const valueFix = fixOutOfRangeStyleValues(stylesTxt);
+      stylesTxt = valueFix.txt;
       // Compress excess whitespace
       stylesTxt = stylesTxt.replace(/\s{2,}/g, ' ').replace(/> </g, '><');
       const stillWellFormed = isWellFormed(stylesTxt);
@@ -1054,6 +1139,15 @@ async function processFile() {
       const parts = [];
       if (repaired.reordered) parts.push('sắp xếp lại thứ tự phần tử theo chuẩn OOXML');
       if (repaired.countFixes > 0) parts.push(`sửa ${repaired.countFixes} mục lệch count`);
+      if (valueFix.total > 0) {
+        const d = valueFix.fixes;
+        const dp = [];
+        if (d.family) dp.push(`${d.family} font family`);
+        if (d.tint) dp.push(`${d.tint} color tint`);
+        if (d.indent) dp.push(`${d.indent} alignment indent`);
+        if (d.textRotation) dp.push(`${d.textRotation} textRotation`);
+        parts.push(`sửa ${valueFix.total} giá trị vượt phạm vi (${dp.join(', ')})`);
+      }
       if (parts.length > 0) {
         actions.push({ label: 'styles.xml', detail: `${parts.join(', ')} · tiết kiệm ${fmtSize(saved)}`, ok: true });
         log(`Sửa cấu trúc styles.xml: ${parts.join(', ')} (tiết kiệm ${fmtSize(saved)})`, 'ok');
