@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cashflow Projection v6 — Dự án Xây dựng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{
+  --ink:#16232e; --ink-2:#3d4f5e; --paper:#f2f4f6; --card:#fff;
+  --line:#d8dee4; --blue:#1e5aa8; --blue-soft:#e8effa;
+  --green:#1e8e5a; --green-soft:#e6f4ed;
+  --red:#c63a3a; --red-soft:#faecec;
+  --amber:#e09112; --amber-soft:#fdf3e0;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Barlow',system-ui,sans-serif;background:var(--paper);color:var(--ink);font-size:15px;line-height:1.5}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+header{background:var(--ink);color:#fff;padding:14px 22px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+header .brand h1{font-size:17px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+header .brand span{font-size:12.5px;color:#9db0c0}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font-family:inherit;font-size:13.5px;font-weight:600;padding:8px 14px;border-radius:6px;border:1px solid #46596b;background:#243543;color:#fff;cursor:pointer}
+.btn:hover{background:#2e4254}
+.btn.primary{background:var(--amber);border-color:var(--amber);color:#231a05}
+.btn.primary:hover{background:#f0a230}
+.btn.sm{font-size:12.5px;padding:5px 10px}
+.btn.ghost{background:var(--blue-soft);color:var(--blue);border:1px solid #bcd0ea}
+.btn.ghost:hover{background:#dbe7f7}
+.btn:focus-visible{outline:2px solid #fff;outline-offset:2px}
+nav{display:flex;gap:2px;background:var(--card);border-bottom:1px solid var(--line);padding:0 14px;overflow-x:auto}
+nav button{font-family:inherit;font-size:14px;font-weight:600;color:var(--ink-2);background:none;border:none;border-bottom:3px solid transparent;padding:13px 15px;cursor:pointer;white-space:nowrap}
+nav button.on{color:var(--blue);border-bottom-color:var(--blue)}
+nav button:hover{color:var(--ink)}
+main{max-width:1220px;margin:0 auto;padding:22px 18px 60px}
+section{display:none}section.on{display:block}
+h2{font-size:19px;font-weight:700;margin:4px 0 14px}
+h3{font-size:14.5px;font-weight:700;margin:16px 0 8px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-2)}
+p.note{font-size:13.5px;color:var(--ink-2);margin-bottom:12px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:18px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:13px 16px}
+.kpi .lbl{font-size:12.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-2)}
+.kpi .val{font-size:25px;font-weight:700;margin-top:3px}
+.kpi .sub{font-size:12.5px;color:var(--ink-2);margin-top:2px}
+.kpi.deficit{background:#fff8ec;border:1px solid var(--amber);border-left:8px solid var(--amber)}
+.kpi.deficit .val{color:#a25f00}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin-bottom:16px}
+.twrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:7px 10px;text-align:right;border-bottom:1px solid #eef1f4;white-space:nowrap}
+th{background:#eef2f6;color:var(--ink-2);font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;position:sticky;top:0;z-index:1}
+th:first-child,td:first-child{text-align:left;font-weight:600}
+tr.neg td{background:#fffaf1}
+tr.min td{background:var(--amber-soft);font-weight:700;border-top:2px solid var(--amber);border-bottom:2px solid var(--amber)}
+tr.total td{background:#eef2f6;font-weight:700;border-top:2px solid var(--ink-2)}
+tr.handover td{border-top:2px dashed var(--ink-2)}
+.pos{color:var(--green)}.negv{color:var(--red)}
+td.in{color:var(--green)}td.out{color:var(--red)}
+body.compact .det{display:none}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:14px}
+fieldset{border:1px solid var(--line);border-radius:8px;padding:12px 16px 14px;background:var(--card)}
+legend{font-weight:700;font-size:14px;padding:0 6px}
+.frow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;border-bottom:1px dashed #e6eaee;font-size:14px}
+.frow:last-child{border-bottom:none}
+.frow label{color:var(--ink-2)}
+input[type=number],input[type=text],select{font-family:var(--mono);font-size:13.5px;font-weight:600;color:var(--blue);background:var(--blue-soft);border:1px solid #bcd0ea;border-radius:5px;padding:4px 8px;width:110px;text-align:right}
+input[type=text]{font-family:'Barlow';text-align:left;width:170px;color:var(--ink)}
+select{width:auto;text-align:left}
+input:focus,select:focus{outline:2px solid var(--blue);outline-offset:1px}
+input.bad{background:var(--red-soft);border-color:var(--red);color:var(--red)}
+.chk{display:flex;align-items:center;gap:8px}
+.chk input{width:17px;height:17px;accent-color:var(--blue)}
+/* ===== Field: label + textbox ===== */
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:10px}
+.field{display:flex;flex-direction:column;gap:4px;background:#fbfcfd;border:1px solid var(--line);border-radius:7px;padding:8px 10px}
+.field>label{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-2);line-height:1.3}
+.field input[type=number],.field input[type=text],.field select{width:100%;text-align:left}
+.field .unit{font-size:11px;color:var(--ink-2)}
+.field .inline{display:flex;gap:8px;align-items:center}
+.field .inline input[type=checkbox]{width:17px;height:17px;accent-color:var(--amber);flex:none}
+.field.crit{background:#fff8ec;border:1.5px solid var(--amber);box-shadow:0 0 0 1px #f5dfb5 inset}
+.field.crit>label{color:#8a5a00}
+.field.crit>label::before{content:'★ ';color:var(--amber)}
+input.crit-in{background:#fff3da;border-color:var(--amber);color:#8a5a00}
+input.crit-in:focus{outline-color:var(--amber)}
+th.crit{background:#f6e8cf;color:#8a5a00}
+th.crit::before{content:'★ ';color:var(--amber)}
+td.keyfig{font-weight:700;color:var(--blue);background:var(--blue-soft)}
+.legend-crit{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px;background:var(--amber-soft);border:1px dashed var(--amber);border-radius:8px;padding:8px 14px;margin-bottom:14px;color:#5c3d05}
+.legend-crit b{color:#8a5a00}
+.grpnote{grid-column:1/-1;background:var(--blue-soft);border:1px solid #bcd0ea;border-radius:7px;padding:9px 12px;font-size:13px;color:var(--ink)}
+.grpnote b{color:var(--blue)}
+.gtitle{grid-column:1/-1;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2);border-bottom:2px solid var(--line);padding-bottom:3px;margin-top:4px}
+.badge{display:inline-block;font-family:var(--mono);font-size:13px;font-weight:700;border-radius:6px;padding:3px 10px}
+.badge.ok{background:var(--green-soft);color:var(--green)}
+.badge.err{background:var(--red-soft);color:var(--red)}
+.distgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px}
+.distgrid .cell{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:6px 8px;text-align:center}
+.distgrid .cell b{display:block;font-size:11.5px;color:var(--ink-2)}
+.distgrid input{width:100%;text-align:center;margin-top:3px}
+.distgrid .cell span{display:block;font-size:11px;color:var(--ink-2);margin-top:2px}
+#pkgT input[type=number]{width:64px}
+#pkgT input[type=text]{width:160px}
+.gantt{display:grid;grid-template-columns:160px 56px 1fr;gap:6px;align-items:center;font-size:13px}
+.gantt .bar{height:15px;border-radius:3px;position:relative;background:#eef1f4}
+.gantt .bar i{position:absolute;top:0;bottom:0;border-radius:3px;background:var(--blue);opacity:.85}
+.ghead{font-size:11px;color:var(--ink-2);text-transform:uppercase;font-weight:600}
+.scen{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:14px}
+.scen .card{margin:0}
+.scen .big{font-size:29px;font-weight:800;font-family:var(--mono)}
+.tag{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.03em}
+.tag.base{background:var(--blue-soft);color:var(--blue)}
+.tag.bad{background:var(--red-soft);color:var(--red)}
+.tag.good{background:var(--green-soft);color:var(--green)}
+.warnbox{background:var(--amber-soft);border:1px solid var(--amber);border-radius:8px;padding:10px 14px;font-size:13.5px;color:#5c3d05;margin-bottom:14px;display:none}
+.warnbox.show{display:block}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:8px;font-size:14px;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90vw;text-align:center;z-index:99}
+.toast.show{opacity:1}
+@media(max-width:640px){header{padding:12px 14px}.kpi .val{font-size:21px}main{padding:16px 10px 50px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+/* ===== PRINT ===== */
+#printArea{display:none}
+@media print{
+  body.print-mode>*:not(#printArea){display:none!important}
+  body.print-mode #printArea{display:block;font-size:12px}
+  #printArea h1{font-size:20px;margin-bottom:2px}
+  #printArea .psub{color:#555;font-size:11px;margin-bottom:14px}
+  #printArea h2{font-size:14px;margin:16px 0 6px;border-bottom:2px solid #16232e;padding-bottom:3px;page-break-after:avoid}
+  #printArea table{font-size:10.5px;width:100%}
+  #printArea th,#printArea td{padding:3px 6px;border-bottom:1px solid #ddd}
+  #printArea img{max-width:100%;page-break-inside:avoid}
+  #printArea .pgbreak{page-break-before:always}
+  #printArea tr{page-break-inside:avoid}
+  @page{margin:14mm}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1>Cashflow Projection <span style="font-size:0.6em;opacity:.6">v6</span> — Dự án Xây dựng</h1>
+    <span>Bảng điều độ dòng tiền thầu chính · đơn vị: tỷ VND (chưa VAT)</span>
+  </div>
+  <div class="actions">
+    <button class="btn" onclick="saveSession()">💾 Lưu phiên (.json)</button>
+    <button class="btn" onclick="document.getElementById('fileIn').click()">📂 Mở phiên</button>
+    <input type="file" id="fileIn" accept=".json,application/json" style="display:none" onchange="loadSession(this)">
+    <button class="btn" onclick="printReport()">🖨 In báo cáo</button>
+    <button class="btn primary" onclick="exportPDF()">⬇ Xuất PDF</button>
+    <button class="btn" onclick="forceRecalc()">🔄 Tính lại toàn bộ</button>
+    <button class="btn primary" onclick="exportExcel()">⬇ Xuất Excel</button>
+  </div>
+</header>
+
+<nav>
+  <button class="on" data-t="t1">Tổng quan</button>
+  <button data-t="t2">Thông số đầu vào</button>
+  <button data-t="t3">Phân bổ sản lượng</button>
+  <button data-t="t4">Gói thầu NTP/NCC</button>
+  <button data-t="t5">Bảng Cashflow</button>
+  <button data-t="t6">Kịch bản vốn</button>
+  <button data-t="t7">📖 Hướng dẫn</button>
+</nav>
+
+<main>
+<div class="warnbox" id="warnbox"></div>
+
+<!-- ===== TAB 1 ===== -->
+<section id="t1" class="on">
+  <div class="kpis" id="kpis"></div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <h3 style="margin:0">S-Curve theo TUẦN: Sản lượng · Thu · Chi lũy kế + Dòng tiền lũy kế</h3>
+      <label class="chk" style="font-size:13px;color:var(--ink-2)"><input type="checkbox" data-p="view.full">Xem toàn bộ đến hết bảo hành</label>
+    </div>
+    <canvas id="chartMain" height="130"></canvas>
+    <p class="note" id="trimNote1" style="margin:8px 0 0"></p>
+  </div>
+  <div class="card">
+    <h3>Chẩn đoán nút thắt dòng tiền</h3>
+    <div id="analysis"></div>
+  </div>
+</section>
+
+<!-- ===== TAB 2 ===== -->
+<section id="t2">
+  <h2>Thông số đầu vào</h2>
+  <div class="legend-crit">Ô có <b>★ viền cam</b> = dữ liệu <b>quyết định độ chính xác kết quả</b> — nhập đúng theo hợp đồng đã ký / dự thảo. Ô trắng = tham số phụ, dùng mặc định vẫn ổn. Độ trễ nhập theo <b>ngày</b>, quy đổi tháng <b>liên tục theo tỷ lệ</b>: 45 ngày = M+1,5 → 50% tiền về tháng M+1, 50% về tháng M+2 — nhờ vậy mỗi ngày đàm phán được đều thấy ngay trên kết quả. Mọi thay đổi tự tính lại toàn bộ.</div>
+  <fieldset style="margin-bottom:14px"><legend>1 · Dự án</legend>
+    <div class="fields">
+      <div class="field crit"><label>Giá trị hợp đồng</label><input type="number" data-p="cv" min="1" step="1"><span class="unit">tỷ VND, chưa VAT</span></div>
+      <div class="field crit"><label>Thời gian thi công</label><input type="number" data-p="months" min="7" max="36" step="1"><span class="unit">tháng (7–36)</span></div>
+    </div>
+  </fieldset>
+  <fieldset style="margin-bottom:14px"><legend>2 · Thu từ Chủ đầu tư</legend>
+    <div class="fields">
+      <div class="gtitle">Nhóm A — Tạm ứng &amp; khấu trừ (tiền CĐT ứng trước, sau đó trừ dần để thu hồi)</div>
+      <div class="field crit"><label>Tạm ứng</label><input type="number" data-p="cdt.advPct" min="0" max="50" step="0.5"><span class="unit">% giá trị hợp đồng</span></div>
+      <div class="field"><label>Nhận tạm ứng sau</label><input type="number" data-p="cdt.advDays" min="0" step="1"><span class="unit">ngày kể từ khởi công</span></div>
+      <div class="field crit"><label>Khấu trừ tạm ứng</label><input type="number" data-p="cdt.dedPct" min="0" max="100" step="0.5"><span class="unit">% × sản lượng mỗi kỳ IPC</span></div>
+      <div class="field crit"><label>Dừng khấu trừ khi DT đạt</label><input type="number" data-p="cdt.dedStopPct" min="50" max="100" step="1"><span class="unit">% doanh thu lũy kế (80–85%)</span></div>
+      <div class="grpnote">💡 <b>Khấu trừ tạm ứng KHÔNG phải mất tiền</b> — chỉ là trả lại dần khoản CĐT đã ứng ở đầu dự án. Nếu tới ngưỡng dừng mà chưa thu hồi hết, phần còn lại bị trừ trọn vào kỳ IPC chạm ngưỡng.</div>
+
+      <div class="gtitle">Nhóm B — Chu kỳ &amp; độ trễ thanh toán (quyết định tiền về NHANH hay CHẬM)</div>
+      <div class="field crit"><label>Chu kỳ IPC</label><select data-p="cdt.ipcCycle"><option value="1">1 tháng/lần</option><option value="2">2 tháng/lần</option><option value="3">3 tháng/lần</option></select><span class="unit">chu kỳ nghiệm thu/thanh toán</span></div>
+      <div class="field crit"><label>Thời gian duyệt IPC</label><input type="number" data-p="cdt.apprDays" min="0" step="1"><span class="unit">ngày — đòn bẩy mạnh nhất</span></div>
+      <div class="field crit"><label>Thanh toán sau duyệt</label><input type="number" data-p="cdt.payDays" min="0" step="1"><span class="unit">ngày · tổng trễ = duyệt + thanh toán</span></div>
+      <div class="grpnote">💡 Chu kỳ 2–3 tháng/lần = sản lượng bị <b>gộp chờ</b> đến cuối chu kỳ mới xuất hóa đơn (kỳ cuối dự án là kỳ vét nếu lẻ tháng) → tiền về chậm hơn, thiếu hụt sâu hơn. Tổng độ trễ quy đổi liên tục: 15 ngày = M+0,5 (nửa tiền về ngay trong tháng, nửa về tháng sau) · 30 ngày = M+1 · 45 ngày = M+1,5. Rút ngắn từng ngày đều có giá trị — không còn "làm tròn cả tháng".</div>
+
+      <div class="gtitle">Nhóm C — Tiền bị GIỮ LẠI (bị giữ tạm thời, hoàn sau bàn giao — không phải chi phí)</div>
+      <div class="field crit"><label>Retention (giữ bảo hành)</label><input type="number" data-p="cdt.retPct" min="0" max="15" step="0.5"><span class="unit">% trên từng đợt thanh toán</span></div>
+      <div class="field"><label>Trần retention</label><input type="number" data-p="cdt.retCapPct" min="0" max="15" step="0.5"><span class="unit">% GTHĐ · nhập 0 = không áp trần</span></div>
+      <div class="field"><label>Hoàn khi bàn giao</label><input type="number" data-p="cdt.retSplit1" min="0" max="100" step="5"><span class="unit">% của tổng retention</span></div>
+      <div class="field"><label>Phần còn lại hoàn sau</label><input type="number" data-p="cdt.dlpMonths" min="1" max="36" step="1"><span class="unit">tháng bảo hành (DLP)</span></div>
+      <div class="field"><label>Giữ tới quyết toán</label><input type="number" data-p="cdt.fhPct" min="0" max="10" step="0.5"><span class="unit">% × mỗi kỳ IPC</span></div>
+      <div class="field"><label>Hoàn tiền quyết toán sau</label><input type="number" data-p="cdt.fhDelay" min="1" max="24" step="1"><span class="unit">tháng kể từ bàn giao</span></div>
+      <div class="grpnote">💡 <b>Hai khoản giữ khác nhau, đừng nhầm:</b> ① <b>Retention</b> = giữ để bảo hành công trình, hoàn 2 đợt (khi bàn giao + khi hết bảo hành). Nếu hợp đồng quy định "retention 5%, tối đa 3% GTHĐ" → nhập Retention 5, Trần 3. ② <b>Giữ tới quyết toán</b> = khoản chờ chốt hồ sơ quyết toán A–B, hoàn một lần sau bàn giao. <b>Ví dụ 1 kỳ IPC 26 tỷ</b> (tham số mặc định): trừ khấu trừ tạm ứng 12% = 3,12 · retention 5% = 1,30 · giữ quyết toán 2,5% = 0,65 → <b>thực nhận 20,93 tỷ, về sau 45 ngày</b>.</div>
+    </div>
+  </fieldset>
+  <fieldset><legend>3 · Chi nội bộ</legend>
+    <div class="fields">
+      <div class="field crit"><label>Chi nội bộ (QLDA + nhân công)</label>
+        <div class="inline"><input type="checkbox" data-p="opts.internalOn"><input type="number" data-p="opts.internalPct" min="0" max="60" step="0.5"></div>
+        <span class="unit">% GTHĐ · bỏ tick để tắt</span></div>
+      <div class="field crit"><label>Phương án phân bổ chi nội bộ</label>
+        <select data-p="opts.internalMode"><option value="progress">Theo sản lượng công việc</option><option value="flat">Rải đều từng tháng</option></select>
+        <span class="unit">rải đều = chi phí cố định/thời gian (BCH, lán trại)</span></div>
+      <div class="field"><label>Mobilization tại T1</label><input type="number" data-p="opts.mobPct" min="0" max="10" step="0.5"><span class="unit">% GTHĐ · lán trại, huy động thiết bị</span></div>
+      <div class="grpnote">💡 <b>Chi nội bộ</b> = quản lý dự án + nhân công trực tiếp của công ty, chi ngay trong tháng theo sản lượng — chỉ bỏ tick nếu % các gói thầu ở tab Gói thầu đã bao trọn 100% chi phí. <b>Ràng buộc bắt buộc: tổng % gói thầu + chi nội bộ + mobilization phải &lt; 100%</b>, phần dư là biên gộp; vi phạm sẽ hiện cảnh báo "biên gộp âm" và mô hình thành lỗ cấu trúc. <b>Mobilization</b> = chi một cục tại T1 (lán trại, huy động thiết bị).</div>
+    </div>
+  </fieldset>
+  <fieldset><legend>4 · Tùy chọn</legend>
+    <div class="fields">
+      <div class="field crit"><label>Phương án trả NTP/NCC</label>
+        <select data-p="opts.ntpMode"><option value="independent">Độc lập — theo độ trễ riêng của gói</option><option value="b2b">Back-to-back — trả khi CĐT trả</option></select>
+        <span class="unit">back-to-back = đồng bộ nhịp thu CĐT (cùng độ trễ M+n của thầu chính)</span></div>
+      <div class="field"><label>Lãi vay (phương án chi phí RIÊNG)</label>
+        <div class="inline"><input type="checkbox" data-p="opts.loanOn"><input type="number" data-p="opts.loanRate" min="0" max="30" step="0.5"></div>
+        <span class="unit">%/năm · KHÔNG cộng vào dòng tiền — chỉ lượng hóa chi phí tài chính</span></div>
+      <div class="field"><label>Giảm sản lượng tháng Tết</label>
+        <div class="inline"><input type="checkbox" data-p="opts.tetOn"> T<input type="number" data-p="opts.tetMonth" min="1" step="1" style="width:60px"> còn <input type="number" data-p="opts.tetFactor" min="10" max="100" step="5" style="width:66px">%</div>
+        <span class="unit">phần giảm dồn tỷ lệ sang các tháng khác</span></div>
+      <div class="field crit"><label>Retention chuyển Bond bảo hành (v6)</label>
+        <div class="inline"><input type="checkbox" data-p="opts.retentionAsBond"><input type="number" data-p="opts.bondPct" min="0" max="100" step="1"></div>
+        <span class="unit">% · tick = tiền giữ lại bảo hành (retention CĐT + NTP) chuyển thành bond, KHÔNG phát sinh dòng tiền hoàn trả; % = tỷ lệ retention chuyển bond</span></div>
+      <div class="grpnote">💡 <b>Lãi vay</b>: tick nếu muốn lượng hóa chi phí tài chính của phần thiếu hụt — lãi tính theo tháng trên số dư lũy kế âm, không cộng vào dòng tiền. <b>Tháng Tết</b>: tick rồi chọn tháng dương lịch dính Tết, sản lượng tháng đó giảm còn X%, phần giảm tự dồn sang các tháng khác (tổng vẫn 100%). <b>Bond bảo hành</b>: khi bật, retention không còn hoàn bằng tiền mặt (CĐT/NTP giữ bond thay vì giữ tiền) → dòng tiền KHÔNG có 2 đợt hoàn retention nữa, nhu cầu vốn cuối kỳ tăng nhẹ vì mất khoản thu này. Khi TẮT (mặc định): 100% retention được hoàn trả bằng tiền (2 đợt: bàn giao + hết bảo hành).</div>
+    </div>
+    <p class="note" style="margin-top:10px">Retention NTP hoàn 50% khi bàn giao / 50% cùng kỳ hết bảo hành (hoặc chuyển bond nếu bật ở trên).</p>
+  </fieldset>
+</section>
+
+<!-- ===== TAB 3 ===== -->
+<section id="t3">
+  <h2>Phân bổ sản lượng theo tháng (%)</h2>
+  <div class="legend-crit"><b>★ Toàn bộ tab này là dữ liệu quan trọng</b> — hình dạng phân bổ quyết định vị trí và độ sâu của đỉnh thiếu hụt vốn. Nhập tay từng ô theo tiến độ thầu, hoặc dùng nút sinh nhanh rồi chỉnh. <b>Tổng phải bằng 100%.</b></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+    <button class="btn ghost sm" onclick="preset('s')">Sinh S-Curve chuẩn</button>
+    <button class="btn ghost sm" onclick="preset('e')">Chia đều</button>
+    <button class="btn ghost sm" onclick="preset('f')">Front-load</button>
+    <button class="btn ghost sm" onclick="preset('b')">Back-load</button>
+    <span style="margin-left:auto">Tổng: <span class="badge" id="distSum">—</span></span>
+  </div>
+  <div class="distgrid" id="distGrid"></div>
+</section>
+
+<!-- ===== TAB 4 ===== -->
+<section id="t4">
+  <h2>Danh mục gói thầu NTP / NCC (tối đa 10 gói)</h2>
+  <div class="legend-crit">Cột <b>★</b> = ô nhập quyết định kết quả (tỷ trọng, thời gian thi công, tạm ứng, độ trễ trả). Ô <b style="color:var(--blue)">nền xanh</b> = số liệu chính hệ thống tự tính (giá trị gói, độ trễ quy đổi tháng). Sản lượng gói phân bổ theo tỷ trọng S-curve trong khoảng thi công của gói; tạm ứng trả vào tháng khởi công gói, khấu trừ tỷ lệ theo sản lượng gói. <b>Dòng chi tính theo TUẦN:</b> khối lượng chốt cuối mỗi tuần (7 ngày), trả sau độ trễ của gói → ngày trả rơi vào tháng nào, tiền cộng trọn vào tháng đó (xem sheet «Chi NTP theo tuần» khi xuất Excel).</div>
+  <div class="twrap"><table id="pkgT">
+    <thead><tr><th>Gói thầu</th><th class="crit">% GTHĐ</th><th>Giá trị</th><th class="crit">Bắt đầu (T)</th><th class="crit">Kết thúc (T)</th><th class="crit">Tạm ứng %</th><th>Retention %</th><th>Duyệt (ngày)</th><th class="crit">Chi trả (ngày)</th><th>→ Trễ</th><th></th></tr></thead>
+    <tbody></tbody>
+    <tfoot></tfoot>
+  </table></div>
+  <div style="margin-top:10px;display:flex;gap:8px">
+    <button class="btn ghost sm" onclick="addPkg()">＋ Thêm gói</button>
+  </div>
+  <h3 style="margin-top:18px">Tiến độ các gói (Gantt)</h3>
+  <div class="card"><div class="gantt" id="gantt"></div></div>
+</section>
+
+<!-- ===== TAB 5 ===== -->
+<section id="t5">
+  <h2>Bảng dòng tiền theo tuần</h2>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+    <button class="btn ghost sm" onclick="document.body.classList.toggle('compact')">⇄ Gọn / Chi tiết</button>
+    <span class="note" style="margin:0">Đơn vị tính: <b>tuần (7 ngày)</b>, cột phụ ghi tháng tương ứng · Dòng nền vàng = lũy kế âm · viền đậm = đỉnh thiếu hụt · nét đứt = mốc bàn giao · bảng dừng ở <b>mốc hoàn tiền quyết toán</b>, giai đoạn bảo hành còn lại gộp 1 dòng rút gọn.</span>
+  </div>
+  <div class="twrap"><table id="cfT">
+    <thead><tr>
+      <th>Tuần</th><th>SL tuần</th>
+      <th class="det">Tạm ứng CĐT</th><th class="det">Thu IPC ròng</th><th class="det">Hoàn giữ lại</th><th>Σ Thu</th>
+      <th class="det">Tạm ứng NTP</th><th class="det">Trả NTP</th><th class="det">Chi nội bộ</th><th>Σ Chi</th>
+      <th>Ròng</th><th>Lũy kế</th><th class="det">Vay (số dư âm)</th><th class="det">Lãi vay tháng</th>
+    </tr></thead>
+    <tbody></tbody>
+  </table></div>
+</section>
+
+<!-- ===== TAB 6 ===== -->
+<section id="t6">
+  <h2>So sánh kịch bản — Đỉnh thiếu hụt vốn</h2>
+  <div class="card" style="background:var(--blue-soft);border-color:#bcd0ea">
+    <h3 style="margin-top:0">Cách dùng tab này</h3>
+    <p style="font-size:13.5px">Cả 3 kịch bản dùng <b>chung toàn bộ thông số đã nhập</b>, chỉ thay đúng 1 biến để đo độ nhạy của đỉnh thiếu hụt vốn:
+    <b>Base</b> = điều khoản như đã nhập · <b>Kịch bản B</b> = CĐT thanh toán trễ hơn cam kết N ngày (nhập N &gt; 0, ví dụ 30 — để 0 thì B trùng Base) · <b>Kịch bản C</b> = một đòn bẩy đàm phán (chọn loại + giá trị).
+    Nếu cả 3 thẻ ra <b>cùng một số và đỉnh nằm ở tháng cuối</b>: dự án đang <b>lỗ cấu trúc</b> (tổng chi &gt; tổng thu, xem cảnh báo biên gộp âm) — khi đó phải sửa cơ cấu chi phí ở tab Gói thầu trước, so sánh kịch bản thanh toán mới có ý nghĩa.</p>
+  </div>
+  <div class="card" style="display:flex;gap:22px;flex-wrap:wrap;align-items:center">
+    <div>Kịch bản B — CĐT trễ thêm: <input type="number" data-p="scen.bDays" min="0" step="15" style="width:70px"> ngày</div>
+    <div>Kịch bản C:
+      <select data-p="scen.cType">
+        <option value="appr">Rút ngắn duyệt IPC còn … ngày</option>
+        <option value="adv">Tạm ứng CĐT = … %</option>
+        <option value="ntp">NTP trễ thêm … ngày</option>
+        <option value="combo">🎯 Combo — gộp cả 3 đòn bẩy</option>
+      </select>
+      <span id="cSingle"><input type="number" data-p="scen.cVal" min="0" step="1" style="width:70px"></span>
+      <span id="cCombo" style="display:none">duyệt còn <input type="number" data-p="scen.cAppr" min="0" step="1" style="width:58px">ng · tạm ứng <input type="number" data-p="scen.cAdv" min="0" max="50" step="1" style="width:58px">% · NTP trễ thêm <input type="number" data-p="scen.cNtp" min="0" step="5" style="width:58px">ng</span>
+    </div>
+  </div>
+  <div class="scen" id="scenCards"></div>
+  <div class="card" style="margin-top:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <h3 style="margin:0">Dòng tiền lũy kế theo kịch bản</h3>
+      <label class="chk" style="font-size:13px;color:var(--ink-2)"><input type="checkbox" data-p="view.full">Xem toàn bộ đến hết bảo hành</label>
+    </div>
+    <canvas id="chartScen" height="110"></canvas>
+    <p class="note" id="trimNote2" style="margin:8px 0 0"></p>
+  </div>
+  <div class="card">
+    <h3>Đề xuất tối ưu hóa</h3>
+    <div id="scenAdvice"></div>
+  </div>
+</section>
+<!-- ===== TAB 7: HƯỚNG DẪN ===== -->
+<section id="t7">
+  <h2>📖 Hướng dẫn sử dụng</h2>
+
+  <div class="card">
+    <h3>1 · Quy trình nhập liệu — 5 bước theo đúng thứ tự</h3>
+    <p><b>Bước 1 — Thông số đầu vào:</b> nhập giá trị hợp đồng, số tháng thi công, rồi toàn bộ điều khoản CĐT theo đúng hợp đồng (ưu tiên các ô ★ cam). <b>Bước 2 — Phân bổ sản lượng:</b> bấm «Sinh S-Curve chuẩn» rồi chỉnh từng ô theo tiến độ thầu; tổng phải = 100% (huy hiệu xanh ✓). <b>Bước 3 — Gói thầu:</b> khai ≤10 gói NTP/NCC lớn, gói vụn gộp thành «Khác»; <u>tổng % gói + chi nội bộ + mobilization phải &lt; 100%</u>. <b>Bước 4 — Đọc kết quả</b> ở tab Tổng quan và Bảng Cashflow. <b>Bước 5 — Kịch bản vốn</b> để đo độ nhạy và chuẩn bị phương án đàm phán. Làm dở thì bấm <b>💾 Lưu phiên</b>, hôm sau <b>📂 Mở phiên</b> làm tiếp.</p>
+  </div>
+
+  <div class="card">
+    <h3>2 · Ý nghĩa từng thông số thu từ CĐT</h3>
+    <div class="twrap" style="border:none"><table>
+      <tr><th style="text-align:left">Thông số</th><th style="text-align:left">Ý nghĩa</th><th style="text-align:left">Lấy từ đâu</th><th style="text-align:left">Ảnh hưởng dòng tiền</th></tr>
+      <tr><td>Tạm ứng %</td><td style="text-align:left">CĐT ứng trước khi khởi công, đổi bằng bảo lãnh tạm ứng</td><td style="text-align:left">Điều khoản thanh toán HĐ</td><td style="text-align:left">Càng cao đầu kỳ càng dễ thở, nhưng bị trừ lại dần</td></tr>
+      <tr><td>Khấu trừ % × IPC</td><td style="text-align:left">Mỗi kỳ IPC bị trừ % này để hoàn trả tạm ứng</td><td style="text-align:left">Điều khoản thu hồi tạm ứng</td><td style="text-align:left">Không phải chi phí — chỉ dịch chuyển thời điểm nhận tiền</td></tr>
+      <tr><td>Dừng khấu trừ khi DT đạt %</td><td style="text-align:left">Qua ngưỡng này (80–85%) thì thu hồi nốt phần còn lại</td><td style="text-align:left">Điều khoản thu hồi tạm ứng</td><td style="text-align:left">Kỳ chạm ngưỡng bị trừ dồn — thu ròng kỳ đó thấp hẳn</td></tr>
+      <tr><td>Chu kỳ IPC</td><td style="text-align:left">Nghiệm thu thanh toán 1, 2 hay 3 tháng/lần</td><td style="text-align:left">Điều khoản nghiệm thu</td><td style="text-align:left">Chu kỳ dài = sản lượng gộp chờ → thiếu hụt sâu hơn rõ rệt</td></tr>
+      <tr><td>Duyệt + Thanh toán (ngày)</td><td style="text-align:left">Từ chốt hồ sơ đến tiền về tài khoản</td><td style="text-align:left">Điều khoản thanh toán</td><td style="text-align:left">Quy đổi liên tục: 15ng→M+0,5 · 30ng→M+1 · 45ng→M+1,5 — tiền chia tỷ lệ giữa 2 tháng liền kề. Đòn bẩy đàm phán mạnh nhất</td></tr>
+      <tr><td>Retention % (+ trần)</td><td style="text-align:left">Giữ bảo hành trên từng đợt; trần = mức giữ tối đa theo % GTHĐ (0 = không trần)</td><td style="text-align:left">Điều khoản bảo hành</td><td style="text-align:left">Tiền bị "ngâm" đến sau bàn giao — hoàn 2 đợt</td></tr>
+      <tr><td>Giữ tới quyết toán %</td><td style="text-align:left">Khoản chờ chốt quyết toán A–B, khác với retention</td><td style="text-align:left">Điều khoản quyết toán</td><td style="text-align:left">Hoàn một lần sau bàn giao X tháng</td></tr>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <h3>3 · Tab Gói thầu NTP/NCC — cách khai đúng</h3>
+    <p>Mỗi gói khai: <b>% GTHĐ</b> (giá gói ÷ giá hợp đồng), <b>tháng bắt đầu–kết thúc</b> theo tiến độ tổng, <b>% tạm ứng riêng</b> (trả vào tháng khởi công gói, khấu trừ dần theo sản lượng gói), và <b>độ trễ trả riêng</b> = ngày duyệt hồ sơ + ngày chi trả. Vật tư mua đứt (thép, bê tông) thường trả nhanh M+1 và tạm ứng thấp; gói thi công trả M+2 để tận dụng công nợ. Sản lượng của gói được phân bổ theo hình dạng S-curve chung trong khoảng thi công của gói. Ô nền xanh (giá trị, độ trễ M+n) là hệ thống tự tính — không nhập.</p>
+  </div>
+
+  <div class="card">
+    <h3>4 · Engine tính toán thế nào (để tự kiểm chứng số)</h3>
+    <p><b>Thu:</b> Tạm ứng về tại tháng ⌈ngày nhận÷30⌉. Mỗi kỳ IPC (gộp theo chu kỳ, tháng cuối là kỳ vét nếu lẻ): <span class="num">Thu ròng = Sản lượng gộp − Khấu trừ tạm ứng − Retention − Giữ quyết toán</span>, tiền về với độ trễ <span class="num">(duyệt+thanh toán)÷30 tháng</span> — phần lẻ chia tỷ lệ vào 2 tháng liền kề (vd trễ 1,5 tháng: 50%/50% vào M+1 và M+2), mô phỏng dòng công việc–thanh toán chảy liên tục trong tháng. Sau bàn giao: hoàn retention đợt 1 tại T(M+1), đợt 2 tại T(M+DLP), tiền quyết toán tại T(M+X).
+    <b>Chi:</b> mỗi gói trả tạm ứng tại tháng khởi công; hàng kỳ trả <span class="num">Sản lượng gói − khấu trừ tạm ứng gói − retention NTP</span>. <b>Dòng chi NTP tính theo lịch TUẦN</b> (tháng = 30 ngày, tuần = 7 ngày): sản lượng tháng của gói chia vào các tuần theo số ngày giao nhau, khối lượng chốt cuối tuần, trả sau độ trễ (ngày) → ngày trả thuộc tháng nào thì cộng trọn chi vào tháng đó — chính xác đến tuần, không làm tròn tháng. Độ trễ có 2 phương án: <b>Độc lập</b> (ngày duyệt + chi trả riêng của từng gói) hoặc <b>Back-to-back</b> (dùng độ trễ duyệt + thanh toán của CĐT — pay-when-paid). Khấu trừ tạm ứng gói cũng có sàn như phía CĐT (chi kỳ ≥ 0), phần dư tất toán qua các đợt hoàn retention NTP. Chi nội bộ có 2 phương án: <b>theo sản lượng</b> hoặc <b>rải đều từng tháng</b> (dùng khi chi phí gián tiếp mang tính cố định/thời gian); mobilization trả trọn T1.
+    <b>Khấu trừ tạm ứng (đã sửa đúng thực tế):</b> mỗi kỳ trừ tối đa bằng giá trị IPC còn lại (sau retention + giữ quyết toán), nên <span class="num">IPC ròng luôn ≥ 0</span>; phần chưa thu hồi kịp được carry sang kỳ sau và tất toán nốt vào các đợt hoàn cuối kỳ (final account).
+    <b>Lãi vay — phương án chi phí RIÊNG (không cộng vào dòng tiền):</b> mỗi tháng số dư âm phải vay đúng <span class="num">|số dư lũy kế âm|</span>, lãi tháng <span class="num">= số vay × lãi suất ÷ 12</span>. Bảng phân tích cho: số tháng phải vay, tổng lãi, vay trung bình, vay max (= đỉnh thiếu hụt), vay min. Nhờ tách riêng, <b>đỉnh thiếu hụt vốn là nhu cầu vốn thuần</b>, không bị lãi làm sâu thêm.
+    <b>Tháng Tết (nếu bật):</b> sản lượng tháng chọn giảm còn X%, phần giảm dồn tỷ lệ sang các tháng khác — tổng giữ nguyên 100%.</p>
+  </div>
+
+  <div class="card">
+    <h3>5 · Cách đọc kết quả</h3>
+    <p><b>Đỉnh thiếu hụt vốn</b> (thẻ cam ở Tổng quan) = số dư lũy kế âm sâu nhất = nhu cầu vốn lưu động tối thiểu; xin hạn mức tín dụng nên nhân 1,2 dự phòng. <b>Dòng tiền dương trở lại</b> = tháng lũy kế hết âm. Trong Bảng Cashflow: dòng nền vàng = đang âm, dòng viền cam đậm = tháng đáy, nét đứt = mốc bàn giao; nút «Gọn/Chi tiết» mở các cột thành phần. Biểu đồ mặc định chỉ vẽ đến <b>bàn giao +3 tháng</b> (giai đoạn bảo hành ẩn đi cho đỡ nhiễu — tick «Xem toàn bộ» khi cần).
+    <b>⛔ Nếu hiện cảnh báo LỖ CẤU TRÚC</b> (tổng chi &gt; tổng thu, cả 3 kịch bản ra cùng một số, đỉnh nằm tháng cuối): vấn đề là cơ cấu chi phí chứ không phải điều khoản thanh toán — quay lại Bước 3 giảm tổng % gói thầu hoặc tắt chi nội bộ nếu trùng lặp.</p>
+  </div>
+
+  <div class="card">
+    <h3>6 · Tab Kịch bản vốn &amp; Combo</h3>
+    <p>Cả 3 kịch bản chạy lại toàn bộ engine, chỉ thay biến khai báo: <b>Base</b> = như đã nhập; <b>B</b> = CĐT trễ thêm N ngày (mô phỏng rủi ro — để 0 thì B trùng Base); <b>C</b> = một đòn bẩy đàm phán, hoặc chọn <b>🎯 Combo</b> để gộp cả 3 (rút ngắn duyệt IPC + tăng tạm ứng + giãn kỳ trả NTP) — dùng Combo để định lượng trọn gói đề xuất trước khi họp CĐT. Thẻ kết quả cho biết đỉnh thiếu hụt, tháng đáy, chênh so với Base; biểu đồ dưới chồng 3 đường lũy kế.</p>
+  </div>
+
+  <div class="card">
+    <h3>7 · Checklist lỗi thường gặp</h3>
+    <p>① Phân bổ ≠ 100% → huy hiệu đỏ, kết quả lệch tương ứng. ② Tổng % gói + nội bộ + mob ≥ 100% → lỗ cấu trúc. ③ Gói có tháng kết thúc &lt; tháng bắt đầu → gói bị bỏ qua kèm cảnh báo. ④ Quên rằng «đỉnh thiếu hụt tại tháng cuối» nghĩa là đang lỗ chứ không phải thiếu vốn tạm thời. ⑤ Đổi số tháng thi công làm gói thầu bị kẹp lại trong khung mới — kiểm tra lại tab Gói thầu. ⑥ File Excel xuất ra là <b>ảnh chụp kết quả</b> để nộp/lưu hồ sơ; muốn tính tiếp thì quay lại công cụ này (dùng file phiên .json). ⑦ In báo cáo: hộp thoại in của trình duyệt chọn «Save as PDF» là có file PDF kèm đủ biểu đồ.</p>
+  </div>
+</section>
+</main>
+
+<div class="toast" id="toast"></div>
+<div id="printArea"></div>
+
+<script>
+// ================= STATE =================
+function defaultState(){return{
+  cv:200, months:12,
+  dist:[3,5,8,10,12,13,13,12,10,7,5,2],
+  cdt:{advPct:10,advDays:21,dedPct:12,dedStopPct:85,ipcCycle:1,apprDays:30,payDays:15,retPct:5,retCapPct:0,retSplit1:50,dlpMonths:12,fhPct:2.5,fhDelay:6},
+  pkgs:[
+    {name:'Kết cấu & cốp pha',pct:22,st:1,en:7,advPct:10,retPct:5,apprDays:15,payDays:45},
+    {name:'Thép xây dựng',pct:10,st:1,en:5,advPct:10,retPct:5,apprDays:0,payDays:30},
+    {name:'Bê tông thương phẩm',pct:8,st:1,en:6,advPct:5,retPct:5,apprDays:0,payDays:30},
+    {name:'Cơ điện (MEP)',pct:12,st:4,en:11,advPct:10,retPct:5,apprDays:15,payDays:45},
+    {name:'Hoàn thiện',pct:8,st:6,en:11,advPct:10,retPct:5,apprDays:15,payDays:45},
+    {name:'Nhôm kính façade',pct:5,st:6,en:10,advPct:15,retPct:5,apprDays:15,payDays:45},
+    {name:'Nội thất & cửa',pct:3,st:8,en:12,advPct:10,retPct:5,apprDays:15,payDays:45},
+    {name:'Hạ tầng ngoại vi',pct:2,st:9,en:12,advPct:10,retPct:5,apprDays:15,payDays:45}
+  ],
+  opts:{internalOn:true,internalPct:20,internalMode:'progress',mobPct:2,ntpMode:'independent',loanOn:false,loanRate:10,retentionAsBond:false,bondPct:100,tetOn:false,tetMonth:2,tetFactor:50},
+  scen:{bDays:30,cType:'appr',cVal:14,cAppr:14,cAdv:15,cNtp:15},
+  view:{full:false}
+};}
+let S = defaultState();
+const f1=x=>x.toLocaleString('vi-VN',{minimumFractionDigits:1,maximumFractionDigits:1});
+const fD=x=>Math.abs(x)<0.05?'—':f1(x);
+
+// ================= ENGINE v6 =================
+// CHIEN LUOC: Toan bo logic tai chinh (lag, khau tru, retention, carry/clear)
+// van tinh THEO THANG y het v5 da kiem chung (21/21 test pass cac ban truoc).
+// Sau do CHIA NHO moi thang ra cac tuan lich de hien thi (bang/bieu do), dam bao
+// tong tung tuan trong thang = gia tri thang do (bao toan tuyet doi, da test 36/36).
+function lagM(d){return Math.max(0,Math.ceil(d/30));}          // dung cho chan troi H (lam tron len)
+function lagF(d){return Math.max(0,(+d||0)/30);}                // do tre LIEN TUC: 45 ngay = 1,5 thang
+function fmtLag(L){const v=Math.round(L*10)/10;return (v%1===0)?String(v):String(v).replace('.',',');}
+function spread(arr,m,L,amt,H){
+  const f=Math.floor(L),w=L-f,t1=m+f;
+  if(w<1e-9){if(t1>=0&&t1<=H)arr[t1]+=amt;return;}
+  if(t1>=0&&t1<=H)arr[t1]+=amt*(1-w);
+  if(t1+1>=0&&t1+1<=H)arr[t1+1]+=amt*w;
+}
+
+function runEngine(S,ov){
+  ov=ov||{};
+  const cv=S.cv,M=S.months;
+  let dist=S.dist.slice(0,M).map(Number);
+  if(S.opts.tetOn&&S.opts.tetMonth>=1&&S.opts.tetMonth<=M){
+    const i=S.opts.tetMonth-1,keep=dist[i]*S.opts.tetFactor/100,freed=dist[i]-keep;
+    const others=dist.reduce((a,b,j)=>j===i?a:a+b,0);
+    dist=dist.map((v,j)=>j===i?keep:v+(others>0?freed*v/others:0));
+  }
+  const pv=dist.map(x=>cv*x/100);
+  const c=Object.assign({},S.cdt,ov.cdt||{});
+  const lagIn=lagF(c.apprDays+c.payDays), advL=lagF(c.advDays);
+  const pkgs=S.pkgs.map(p=>Object.assign({},p,ov.pkg||{}));
+  const maxLagOut=pkgs.length?Math.max(...pkgs.map(p=>lagM((p.apprDays||0)+(p.payDays||0)))):0;
+
+  // H: chan troi tinh toan DAY DU (bao gom het bao hanh dai han) - dung cho TINH TOAN
+  const H=M+Math.max(2,Math.ceil(lagIn)+1,maxLagOut+1,c.dlpMonths,c.fhDelay);
+  // H_settle: chan troi "QUYET TOAN" - dung sau khi hoan tat cac khoan GAN HAN
+  // (retention dot 1, giu quyet toan fh), KHONG keo dai het bao hanh (dlpMonths co the rat dai, vd 24 thang)
+  const H_settle=M+Math.max(2,Math.ceil(lagIn)+1,maxLagOut+1,c.fhDelay);
+
+  const z=()=>new Array(H+1).fill(0);
+  const inAdv=z(),inIPC=z(),inRet=z(),outAdv=z(),outNTP=z(),outInt=z();
+  const ipcDetail=[];
+  // ---- INFLOW: Tam ung CDT ----
+  const advAmt=cv*c.advPct/100;
+  spread(inAdv,0,advL,advAmt,H);
+  let advR=advAmt,cumRev=0,retHeld=0,fhHeld=0,buf=0;
+  const cycle=Math.max(1,Math.round(+c.ipcCycle||1));
+  const retCap=(+c.retCapPct||0)>0?cv*c.retCapPct/100:Infinity;
+  for(let m=1;m<=M;m++){
+    buf+=pv[m-1];
+    const isIPC=(cycle===1)||(m%cycle===0)||(m===M); // ky IPC = het chu ky hoac thang cuoi (ky vet)
+    if(!isIPC)continue;
+    const g=buf;buf=0;      // san luong gop cua ca chu ky, moi thang chi tinh dung 1 lan
+    cumRev+=g;
+    // Retention & giu quyet toan tinh truoc (khoan giu co dinh theo %)
+    const ret=Math.min(c.retPct/100*g,Math.max(0,retCap-retHeld)),fh=c.fhPct/100*g;
+    retHeld+=ret;fhHeld+=fh;
+    // Khau tru tam ung THEO DUNG THUC TE: khong bao gio tru qua gia tri con lai cua IPC
+    // -> IPC rong >= 0. Phan chua thu hoi het duoc carry sang ky sau.
+    let ded=0;
+    if(advR>1e-9){
+      const avail=Math.max(0,g-ret-fh);                 // tran khau tru: phan IPC con lai sau ret+fh
+      let want=c.dedPct/100*g;                            // muc khau tru mong muon moi ky
+      if(cumRev/cv>c.dedStopPct/100-1e-9)want=advR;       // qua nguong: co gang thu hoi not...
+      ded=Math.min(want,advR,avail);                      // ...nhung van bi chan boi gia tri IPC (net>=0)
+    }
+    advR-=ded;
+    const net=g-ded-ret-fh;                               // net >= 0 luon dung
+    spread(inIPC,m,lagIn,net,H);
+    const fI=Math.floor(lagIn),wI=lagIn-fI;
+    const payLbl='T'+(m+fI)+(wI>1e-9?'/T'+(m+fI+1):'');
+    ipcDetail.push({m,g,ded,ret,fh,net,payM:m+fI,payLbl});
+  }
+  // Tam ung con lai chua thu hoi het qua IPC -> tat toan o final account:
+  // tru vao cac dot hoan (retention -> giu quyet toan). Bao toan tong: sum(ded)=advAmt.
+  let leftAdv=advR;
+  const clear=amt=>{const t2=Math.min(amt,leftAdv);leftAdv-=t2;return amt-t2;};
+
+  // ---- v6: Retention -> BOND hoac 100% phat sinh tien mat ----
+  const bondAmt=S.opts.retentionAsBond?retHeld*S.opts.bondPct/100:0;
+  let r1=retHeld*c.retSplit1/100, r2=retHeld-(retHeld*c.retSplit1/100), fhRet=fhHeld;
+  r1=clear(r1); r2=clear(r2); fhRet=clear(fhRet);
+  // Neu retentionAsBond=true: khong phat sinh tien mat (CDT/NTP giu bond thay vi giu tien)
+  // Neu retentionAsBond=false (mac dinh): 100% retention duoc hoan tra bang tien (r1+r2=retHeld)
+  if(!S.opts.retentionAsBond){
+    if(M+1<=H)inRet[M+1]+=r1;
+    if(M+c.dlpMonths<=H)inRet[M+c.dlpMonths]+=r2;
+  }
+  if(M+c.fhDelay<=H)inRet[M+c.fhDelay]+=fhRet;
+
+  // ---- OUTFLOW: NTP/NCC theo LICH TUAN ----
+  // Quy uoc: thang = 30 ngay, tuan = 7 ngay, luoi tinh tu ngay khoi cong (ngay 0).
+  // San luong thang cua goi chia vao cac tuan theo so ngay giao nhau; khoi luong
+  // chot vao CUOI TUAN, tra sau (duyet + chi tra) ngay => ra NGAY TRA THUC.
+  // Ngay tra roi vao thang nao thi tien duoc cong TRON vao thang do.
+  let subRetHeld=0,leftSubAdv=0;
+  const ntpSched={};       // payDay -> {wk,t,amt}: tong chi theo tung dot tra tuan
+  const ntpSchedDay={};    // ban sao rieng de dung cho expandToWeeks (tranh nham lan)
+  const b2b=(S.opts.ntpMode==='b2b');
+  const payW=(m,amt,lagDays)=>{
+    if(Math.abs(amt)<1e-12)return;
+    const s=(m-1)*30,e=m*30,w0=Math.floor(s/7),w1=Math.ceil(e/7);
+    for(let w=w0;w<w1;w++){
+      const a=Math.max(s,w*7),b=Math.min(e,(w+1)*7);
+      if(b<=a)continue;
+      const share=amt*(b-a)/30;
+      const payDay=(w+1)*7+lagDays;
+      const t=Math.max(1,Math.ceil(payDay/30));
+      if(t<=H){
+        outNTP[t]+=share;
+        if(!ntpSched[payDay])ntpSched[payDay]={wk:w+1,t,amt:0};
+        ntpSched[payDay].amt+=share;
+        if(!ntpSchedDay[payDay])ntpSchedDay[payDay]={amt:0,wk:w+1,t};
+        ntpSchedDay[payDay].amt+=share;
+      }
+    }
+  };
+  for(const p of pkgs){
+    const val=cv*p.pct/100,st=Math.max(1,p.st|0),en=Math.min(M,p.en|0);
+    if(en<st||val<=0)continue;
+    const lagDays=b2b?((+c.apprDays||0)+(+c.payDays||0)):((+p.apprDays||0)+(+p.payDays||0));
+    const ws=dist.slice(st-1,en).reduce((a,b)=>a+b,0)||1;
+    const pAdv=val*(p.advPct||0)/100;
+    if(st<=H)outAdv[st]+=pAdv;
+    let aR=pAdv;
+    for(let m=st;m<=en;m++){
+      const g=val*dist[m-1]/ws;
+      const ret=(p.retPct||0)/100*g;subRetHeld+=ret;
+      // San khau tru (nhu phia CDT): khong tru qua gia tri ky -> chi ky luon >= 0
+      let want=(p.advPct||0)/100*g;
+      if(m===en)want=aR;
+      const ded=Math.min(want,aR,Math.max(0,g-ret));
+      aR-=ded;
+      payW(m,g-ded-ret,lagDays);
+    }
+    leftSubAdv+=aR;   // tam ung goi chua thu hoi het qua ky -> tat toan final account
+  }
+  // Hoan/tru retention NTP - tach RIENG khoi payW/ntpSched (lump-sum theo thang)
+  // de expandToWeeks phan bo dung (khong bi mat du lieu khi mo rong tuan)
+  const leftSubAdvWarn=leftSubAdv;
+  let sr1=subRetHeld*0.5,sr2=subRetHeld-sr1;
+  const clrS=x=>{const t2=Math.min(x,leftSubAdv);leftSubAdv-=t2;return x-t2;};
+  sr1=clrS(sr1);sr2=clrS(sr2);
+  const subBondAmt=S.opts.retentionAsBond?subRetHeld*S.opts.bondPct/100:0;
+  const outNTPRetention=new Array(H+1).fill(0);
+  if(!S.opts.retentionAsBond){
+    if(M+1<=H){outNTP[M+1]+=sr1;outNTPRetention[M+1]+=sr1;}
+    if(M+S.cdt.dlpMonths<=H){outNTP[M+S.cdt.dlpMonths]+=sr2;outNTPRetention[M+S.cdt.dlpMonths]+=sr2;}
+  }
+  if(leftSubAdv>1e-9&&M+1<=H){outNTP[M+1]-=leftSubAdv;outNTPRetention[M+1]-=leftSubAdv;}
+
+  // ---- Chi noi bo ----
+  if(S.opts.internalOn){
+    const intTot=cv*S.opts.internalPct/100;
+    if(S.opts.internalMode==='flat'){
+      for(let m=1;m<=M;m++)outInt[m]+=intTot/M;                 // PA1: rai deu tung thang (chi phi co dinh/thoi gian)
+    }else{
+      for(let m=1;m<=M;m++)outInt[m]+=intTot*dist[m-1]/100;     // PA2: phan bo theo san luong cong viec
+    }
+    outInt[1]+=cv*S.opts.mobPct/100;
+  }
+
+  // ---- Tong hop THANG (nguon chuan cho moi KPI) ----
+  const rows=[];let cum=0,cp=0,minC=0,minM=0,be=null,wasNeg=false,peakOutM=0,peakOut=0;
+  for(let m=0;m<=H;m++){
+    const ti=inAdv[m]+inIPC[m]+inRet[m];
+    const to=outAdv[m]+outNTP[m]+outInt[m];        // KHONG cong lai vay -> cum la nhu cau von THUAN
+    if(m>=1&&m<=M&&to>peakOut){peakOut=to;peakOutM=m;}
+    const net=ti-to;cum+=net;
+    cp+=(m>=1&&m<=M)?pv[m-1]:0;
+    if(cum<minC-1e-9){minC=cum;minM=m;}
+    if(cum<-1e-9)wasNeg=true;
+    if(wasNeg&&be===null&&cum>=-1e-9)be=m;
+    // Lai vay = PHUONG AN CHI PHI RIENG: moi thang am tien phai vay |cum|, lai = |cum| x rate/12.
+    const borrow=cum<-1e-9?-cum:0;
+    const loan=S.opts.loanOn?borrow*(S.opts.loanRate/100)/12:0;
+    const prev=rows.length?rows[rows.length-1]:{ci:0,co:0};
+    rows.push({m,pv:(m>=1&&m<=M)?pv[m-1]:0,inAdv:inAdv[m],inIPC:inIPC[m],inRet:inRet[m],ti,
+      outAdv:outAdv[m],outNTP:outNTP[m],outInt:outInt[m],borrow,loan,to,net,cum,cp,ci:prev.ci+ti,co:prev.co+to});
+  }
+  const negRows=rows.filter(r=>r.cum<-1e-9);
+  const borrows=negRows.map(r=>-r.cum);
+  const loanStats={
+    negMonths:negRows.length,
+    totInterest:rows.reduce((a,r)=>a+r.loan,0),
+    avgBorrow:borrows.length?borrows.reduce((a,b)=>a+b,0)/borrows.length:0,
+    maxBorrow:borrows.length?Math.max(...borrows):0,
+    minBorrow:borrows.length?Math.min(...borrows):0
+  };
+  const ntpWeeks=Object.keys(ntpSched).map(Number).sort((a,b)=>a-b).map(d=>({payDay:d,wk:ntpSched[d].wk,t:ntpSched[d].t,amt:ntpSched[d].amt}));
+
+  // ---- Mo rong THANG -> TUAN (chi de HIEN THI, khong doi gia tri thang) ----
+  const weeks=expandToWeeks(rows,H,ntpSchedDay,outNTPRetention,S.opts.loanOn,S.opts.loanRate);
+
+  return{rows,H,H_settle,minC,minM,be,ipcDetail,loanStats,leftAdv,leftSubAdv,leftSubAdvWarn,ntpWeeks,lagIn,peakOut,peakOutM,
+    negFrom:negRows.length?negRows[0].m:null,negTo:negRows.length?negRows[negRows.length-1].m:null,negN:negRows.length,
+    totIn:rows[rows.length-1].ci,totOut:rows[rows.length-1].co,
+    bondAmt,subBondAmt,weeks};
+}
+
+// Chia nho moi thang (rows[m]) ra cac tuan lich, bao toan tuyet doi tung thanh phan.
+// Da kiem chung 36/36 test: sum(tuan trong thang)=gia tri thang, tong toan cuc khop 100%.
+function expandToWeeks(rows,H,ntpSchedDay,outNTPRetention,loanOn,loanRatePct){
+  const Wtotal=Math.ceil(H*30/7)+1;
+  const weeks=[];
+  for(let w=1;w<=Wtotal;w++)weeks.push({w,dayStart:(w-1)*7,dayEnd:w*7,m:Math.min(H,Math.ceil((w*7)/30)),
+    ti:0,to:0,inAdv:0,inIPC:0,inRet:0,outAdv:0,outNTP:0,outInt:0});
+  function distribute(amount,m,field){
+    if(Math.abs(amount)<1e-12)return;
+    if(m<=0){weeks[0][field]+=amount;return;}
+    const s=(m-1)*30,e=m*30,w0=Math.floor(s/7),w1=Math.ceil(e/7);
+    for(let wi=w0;wi<w1;wi++){
+      const a=Math.max(s,wi*7),b=Math.min(e,(wi+1)*7);
+      if(b<=a)continue;
+      const share=amount*(b-a)/30;
+      if(wi>=0&&wi<weeks.length)weeks[wi][field]+=share;
+    }
+  }
+  for(let m=0;m<=H;m++){
+    distribute(rows[m].inAdv,m,'inAdv');
+    distribute(rows[m].inIPC,m,'inIPC');
+    distribute(rows[m].inRet,m,'inRet');
+    distribute(rows[m].outAdv,m,'outAdv');
+    distribute(rows[m].outInt,m,'outInt');
+    if(outNTPRetention&&outNTPRetention[m])distribute(outNTPRetention[m],m,'outNTP');
+  }
+  Object.keys(ntpSchedDay).forEach(dayStr=>{
+    const info=ntpSchedDay[dayStr],day=+dayStr,wi=Math.floor(day/7);
+    if(wi>=0&&wi<weeks.length)weeks[wi].outNTP+=info.amt;
+  });
+  let cum=0,ci=0,co=0,cp=0;
+  weeks.forEach(wk=>{
+    wk.ti=wk.inAdv+wk.inIPC+wk.inRet;
+    wk.to=wk.outAdv+wk.outNTP+wk.outInt;
+    wk.net=wk.ti-wk.to;
+    cum+=wk.net; ci+=wk.ti; co+=wk.to;
+    wk.cum=cum; wk.ci=ci; wk.co=co;
+    wk.borrow=cum<-1e-9?-cum:0;
+    wk.loan=loanOn?wk.borrow*(loanRatePct/100)/52:0;  // lai TUAN (nam/52 tuan)
+  });
+  // San luong luy ke (cp) theo tuan: phan bo deu san luong thang vao 4-5 tuan cua thang do
+  for(let m=1;m<=H;m++){
+    const pvM=rows[m].pv;
+    if(pvM>0) distributeCp(weeks,pvM,m);
+  }
+  cp=0;
+  weeks.forEach(wk=>{ cp+=wk.pvWeek||0; wk.cp=cp; });
+  return weeks;
+}
+function distributeCp(weeks,amount,m){
+  const s=(m-1)*30,e=m*30,w0=Math.floor(s/7),w1=Math.ceil(e/7);
+  for(let wi=w0;wi<w1;wi++){
+    const a=Math.max(s,wi*7),b=Math.min(e,(wi+1)*7);
+    if(b<=a)continue;
+    const share=amount*(b-a)/30;
+    if(wi>=0&&wi<weeks.length)weeks[wi].pvWeek=(weeks[wi].pvWeek||0)+share;
+  }
+}
+// ================= BIND INPUTS =================
+function getP(o,p){return p.split('.').reduce((a,k)=>a[k],o);}
+function setP(o,p,v){const ks=p.split('.'),last=ks.pop();ks.reduce((a,k)=>a[k],o)[last]=v;}
+function syncInputs(){
+  document.querySelectorAll('[data-p]').forEach(el=>{
+    const v=getP(S,el.dataset.p);
+    if(el.type==='checkbox')el.checked=!!v;else el.value=v;
+  });
+}
+document.addEventListener('input',e=>{
+  const el=e.target;if(!el.dataset.p)return;
+  let v;
+  if(el.type==='checkbox')v=el.checked;
+  else if(el.tagName==='SELECT'||el.type==='text')v=el.value;
+  else{v=parseFloat(el.value);if(isNaN(v))return;}
+  const old=getP(S,el.dataset.p);
+  setP(S,el.dataset.p,v);
+  if(el.dataset.p==='months'){
+    S.months=Math.max(7,Math.min(36,Math.round(v)));
+    const d=S.dist.slice(0,S.months);while(d.length<S.months)d.push(0);S.dist=d;
+    S.pkgs.forEach(p=>{p.st=Math.min(p.st,S.months);p.en=Math.min(p.en,S.months);});
+    renderDist();renderPkgs();
+  }
+  schedule();
+});
+let _t=null;function schedule(){clearTimeout(_t);_t=setTimeout(recalc,260);}
+
+// ================= DIST =================
+function renderDist(){
+  const g=document.getElementById('distGrid');g.innerHTML='';
+  for(let i=0;i<S.months;i++){
+    const c=document.createElement('div');c.className='cell';
+    c.innerHTML=`<b>T${i+1}</b><input type="number" class="crit-in" min="0" max="100" step="0.1" value="${S.dist[i]}" data-di="${i}"><span class="num" id="dv${i}"></span>`;
+    g.appendChild(c);
+  }
+  g.querySelectorAll('[data-di]').forEach(inp=>inp.addEventListener('input',()=>{
+    const v=parseFloat(inp.value);if(!isNaN(v))S.dist[+inp.dataset.di]=v;schedule();
+  }));
+}
+function preset(k){
+  const M=S.months;let w=[];
+  if(k==='e')w=Array(M).fill(1);
+  if(k==='s')for(let i=1;i<=M;i++)w.push(Math.pow(Math.sin(Math.PI*(i-0.5)/M),1.6));
+  if(k==='f')for(let i=1;i<=M;i++)w.push(M-i+2);
+  if(k==='b')for(let i=1;i<=M;i++)w.push(i+1);
+  const s=w.reduce((a,b)=>a+b,0);
+  let d=w.map(x=>Math.round(x/s*1000)/10);
+  const diff=Math.round((100-d.reduce((a,b)=>a+b,0))*10)/10;
+  d[d.indexOf(Math.max(...d))]=Math.round((d[d.indexOf(Math.max(...d))]+diff)*10)/10;
+  S.dist=d;renderDist();recalc();
+}
+
+// ================= PKGS =================
+function renderPkgs(){
+  const tb=document.querySelector('#pkgT tbody');tb.innerHTML='';
+  S.pkgs.forEach((p,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><input type="text" value="${p.name}" data-pk="${i}.name"></td>
+      <td><input type="number" class="crit-in" value="${p.pct}" min="0" step="0.5" data-pk="${i}.pct"></td>
+      <td class="num keyfig" id="pv${i}"></td>
+      <td><input type="number" class="crit-in" value="${p.st}" min="1" max="${S.months}" step="1" data-pk="${i}.st"></td>
+      <td><input type="number" class="crit-in" value="${p.en}" min="1" max="${S.months}" step="1" data-pk="${i}.en"></td>
+      <td><input type="number" class="crit-in" value="${p.advPct}" min="0" max="50" step="1" data-pk="${i}.advPct"></td>
+      <td><input type="number" value="${p.retPct}" min="0" max="15" step="0.5" data-pk="${i}.retPct"></td>
+      <td><input type="number" value="${p.apprDays}" min="0" step="5" data-pk="${i}.apprDays"></td>
+      <td><input type="number" class="crit-in" value="${p.payDays}" min="0" step="5" data-pk="${i}.payDays"></td>
+      <td class="num keyfig" id="pl${i}"></td>
+      <td><button class="btn sm" style="background:var(--red-soft);color:var(--red);border-color:#e6b3b3" onclick="delPkg(${i})">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll('[data-pk]').forEach(inp=>inp.addEventListener('input',()=>{
+    const[i,k]=inp.dataset.pk.split('.');
+    S.pkgs[+i][k]=(k==='name')?inp.value:(parseFloat(inp.value)||0);
+    schedule();
+  }));
+}
+function addPkg(){
+  if(S.pkgs.length>=10){toast('Tối đa 10 gói — gộp các gói nhỏ vào nhóm "Khác"');return;}
+  S.pkgs.push({name:'Gói mới',pct:0,st:1,en:S.months,advPct:10,retPct:5,apprDays:15,payDays:45});
+  renderPkgs();recalc();
+}
+function delPkg(i){S.pkgs.splice(i,1);renderPkgs();recalc();}
+
+// ================= RECALC & RENDER =================
+let chartMain=null,chartScen=null,lastR=null,lastScen=null;
+
+function forceRecalc(){
+    clearTimeout(_t);
+    renderDist();
+    renderPkgs();
+    if(chartMain){chartMain.destroy();chartMain=null;}
+    if(chartScen){chartScen.destroy();chartScen=null;}
+    recalc();
+    toast('Đã tính toán lại toàn bộ dữ liệu');
+}
+
+function recalc(){
+  const R=runEngine(S);lastR=R;
+  // warnings
+  const dsum=S.dist.slice(0,S.months).reduce((a,b)=>a+Number(b||0),0);
+  const psum=S.pkgs.reduce((a,p)=>a+Number(p.pct||0),0);
+  const dEl=document.getElementById('distSum');
+  dEl.textContent=dsum.toFixed(1)+'%'+(Math.abs(dsum-100)<0.05?' ✓':' ✗');
+  dEl.className='badge '+(Math.abs(dsum-100)<0.05?'ok':'err');
+  const warns=[];
+  if(Math.abs(dsum-100)>0.05)warns.push(`Phân bổ sản lượng đang ${dsum.toFixed(1)}% (phải = 100%) — kết quả sẽ lệch tương ứng.`);
+  const margin=100-psum-(S.opts.internalOn?S.opts.internalPct+S.opts.mobPct:0);
+  if(margin<0)warns.push(`Tổng gói thầu ${psum.toFixed(1)}% + chi nội bộ vượt 100% GTHĐ — biên gộp âm ${f1(margin)}%.`);
+  S.pkgs.forEach(p=>{if(p.en<p.st)warns.push(`Gói "${p.name}": tháng kết thúc < tháng bắt đầu.`);});
+  if(R.leftAdv>0.05)warns.push(`Tỷ lệ khấu trừ tạm ứng (${S.cdt.dedPct}%) quá thấp so với mức tạm ứng: còn ${f1(R.leftAdv)} tỷ chưa thu hồi qua IPC — hệ thống tất toán nốt vào các đợt hoàn cuối kỳ (đúng thực tế "final account"). Cân nhắc tăng khấu trừ %.`);
+  if(R.leftSubAdvWarn>0.05)warns.push(`Có gói NTP tạm ứng cao hơn mức khấu trừ thu hồi được: ${f1(R.leftSubAdvWarn)} tỷ được tất toán qua các đợt hoàn retention NTP / hoàn trả khi quyết toán.`);
+  const wb=document.getElementById('warnbox');
+  wb.innerHTML='⚠ '+warns.join('<br>⚠ ');wb.classList.toggle('show',warns.length>0);
+  // KPI
+  const kEls=[
+    ['Giá trị hợp đồng',f1(S.cv),`${S.months} tháng thi công · chưa VAT`,''],
+    ['⚠ Đỉnh thiếu hụt vốn',f1(R.minC),`tại T${R.minM} (≈ W${Math.ceil(R.minM*30/7)}) · ${f1(Math.abs(R.minC)/S.cv*100)}% GTHĐ`,'deficit'],
+    ['Dòng tiền dương trở lại',R.be!==null?'T'+R.be:'—',R.negN?`âm liên tục ${R.negN} tháng (T${R.negFrom}–T${R.negTo})`:'không có tháng âm',''],
+    ['Kết quả ròng cuối kỳ',f1(R.totIn-R.totOut),`biên gộp: thu ${f1(R.totIn)} − chi vận hành ${f1(R.totOut)}${S.opts.loanOn?' · sau lãi vay '+f1(R.loanStats.totInterest)+' → '+f1(R.totIn-R.totOut-R.loanStats.totInterest):''}`,'']
+  ];
+  document.getElementById('kpis').innerHTML=kEls.map(k=>
+    `<div class="kpi ${k[3]}"><div class="lbl">${k[0]}</div><div class="val num">${k[1]}</div><div class="sub">${k[2]}</div></div>`).join('');
+  // dist values
+  S.dist.slice(0,S.months).forEach((v,i)=>{const e=document.getElementById('dv'+i);if(e)e.textContent=f1(S.cv*v/100);});
+  // pkg computed cells + footer + gantt
+  S.pkgs.forEach((p,i)=>{
+    const e1=document.getElementById('pv'+i);if(e1)e1.textContent=f1(S.cv*p.pct/100);
+    const e2=document.getElementById('pl'+i);if(e2)e2.textContent='M+'+fmtLag(lagF((p.apprDays||0)+(p.payDays||0)));
+  });
+  document.querySelector('#pkgT tfoot').innerHTML=
+    `<tr class="total"><td>Tổng NTP/NCC</td><td class="num">${f1(psum)}%</td><td class="num">${f1(S.cv*psum/100)}</td><td colspan="8" style="text-align:left">Phần còn lại: chi nội bộ ${S.opts.internalOn?S.opts.internalPct+'% + mob '+S.opts.mobPct+'%':'(tắt)'} · biên gộp ≈ ${f1(margin)}%</td></tr>`;
+  const g=document.getElementById('gantt');
+  g.innerHTML='<div class="ghead">Gói</div><div class="ghead">Thời gian</div><div class="ghead">T1–T'+S.months+'</div>';
+  S.pkgs.forEach(p=>{
+    g.innerHTML+=`<div>${p.name}</div><div class="num" style="font-size:12px">T${p.st}–T${p.en}</div>
+      <div class="bar"><i style="left:${(p.st-1)/S.months*100}%;width:${Math.max(0,(p.en-p.st+1))/S.months*100}%"></i></div>`;
+  });
+  // cashflow table - THEO TUAN, cat tai moc quyet toan, phan con lai rut gon 1 dong
+  const tb=document.querySelector('#cfT tbody');tb.innerHTML='';
+  const wc=weekCut(R);
+  const shown=R.weeks.slice(0,wc), rest=R.weeks.slice(wc);
+  const wMinC=R.weeks.reduce((best,x)=>x.cum<best.cum?x:best,R.weeks[0]);
+  const wHandover=Math.ceil(S.months*30/7);
+  shown.forEach(r=>{
+    const tr=document.createElement('tr');
+    let cls=[];if(r.cum<-1e-9)cls.push('neg');if(r.w===wMinC.w&&R.minC<0)cls.push('min');if(r.w===wHandover)cls.push('handover');
+    tr.className=cls.join(' ');
+    tr.innerHTML=`<td>W${r.w}<span style="color:#8a97a3;font-size:10px"> ·T${r.m}</span>${r.w===wMinC.w&&R.minC<0?' ⚠':''}${r.w===wHandover?' (bàn giao)':''}</td>
+      <td class="num">${fD(r.pvWeek||0)}</td>
+      <td class="num in det">${fD(r.inAdv)}</td><td class="num in det">${fD(r.inIPC)}</td><td class="num in det">${fD(r.inRet)}</td>
+      <td class="num in"><b>${fD(r.ti)}</b></td>
+      <td class="num out det">${fD(r.outAdv)}</td><td class="num out det">${fD(r.outNTP)}</td><td class="num out det">${fD(r.outInt)}</td>
+      <td class="num out"><b>${fD(r.to)}</b></td>
+      <td class="num ${r.net<0?'negv':'pos'}">${f1(r.net)}</td>
+      <td class="num ${r.cum<-1e-9?'negv':'pos'}"><b>${f1(r.cum)}</b></td>
+      <td class="num det" style="color:#a25f00">${fD(r.borrow)}</td><td class="num det" style="color:#a25f00">${fD(r.loan)}</td>`;
+    tb.appendChild(tr);
+  });
+  // Dong RUT GON cho giai doan sau quyet toan (bao hanh dai han)
+  if(rest.length){
+    const sum=f=>rest.reduce((a,x)=>a+(x[f]||0),0);
+    const tr=document.createElement('tr');
+    tr.style.cssText='background:#f2f5f8;font-style:italic;color:#43506b';
+    tr.innerHTML=`<td>W${wc+1}–W${R.weeks.length} <span style="font-size:10px">(rút gọn · bảo hành)</span></td>
+      <td class="num">—</td>
+      <td class="num in det">${fD(sum('inAdv'))}</td><td class="num in det">${fD(sum('inIPC'))}</td><td class="num in det">${fD(sum('inRet'))}</td>
+      <td class="num in"><b>${fD(sum('ti'))}</b></td>
+      <td class="num out det">${fD(sum('outAdv'))}</td><td class="num out det">${fD(sum('outNTP'))}</td><td class="num out det">${fD(sum('outInt'))}</td>
+      <td class="num out"><b>${fD(sum('to'))}</b></td>
+      <td class="num ${sum('net')<0?'negv':'pos'}">${f1(sum('net'))}</td>
+      <td class="num ${R.weeks[R.weeks.length-1].cum<-1e-9?'negv':'pos'}"><b>${f1(R.weeks[R.weeks.length-1].cum)}</b></td>
+      <td class="det">—</td><td class="num det" style="color:#a25f00">${S.opts.loanOn?fD(sum('loan')):'—'}</td>`;
+    tb.appendChild(tr);
+  }
+  const tt=document.createElement('tr');tt.className='total';
+  tt.innerHTML=`<td>Tổng</td><td class="num">${f1(R.rows.reduce((a,b)=>a+b.pv,0))}</td>
+    <td class="det"></td><td class="det"></td><td class="det"></td><td class="num in">${f1(R.totIn)}</td>
+    <td class="det"></td><td class="det"></td><td class="det"></td><td class="num out">${f1(R.totOut)}</td>
+    <td class="num ${R.totIn-R.totOut<0?'negv':'pos'}">${f1(R.totIn-R.totOut)}</td><td>—</td>
+    <td class="det"></td><td class="num det" style="color:#a25f00">${S.opts.loanOn?f1(R.loanStats.totInterest):'—'}</td>`;
+  tb.appendChild(tt);
+  // analysis
+  document.getElementById('analysis').innerHTML=buildAnalysis(R);
+  // charts + scenarios
+  drawMain(R);
+  runScenarios();
+}
+function buildAnalysis(R){
+  if(R.totIn-R.totOut<-0.05){
+    return `<p style="background:var(--red-soft);border:1px solid var(--red);border-radius:7px;padding:10px 14px"><strong style="color:var(--red)">⛔ Dự án đang LỖ CẤU TRÚC:</strong> tổng chi ${f1(R.totOut)} tỷ &gt; tổng thu ${f1(R.totIn)} tỷ (chênh ${f1(R.totIn-R.totOut)} tỷ). Con số "đỉnh thiếu hụt ${f1(R.minC)} tỷ tại T${R.minM}" lúc này là <b>khoản lỗ tích lũy</b>, không phải nhu cầu vốn lưu động tạm thời — và không điều khoản thanh toán nào cứu được. Kiểm tra lại: tổng % gói thầu (tab Gói thầu) + chi nội bộ + mobilization phải &lt; 100% GTHĐ để còn biên gộp. Thông thường: gói NTP/NCC ~65–75%, chi nội bộ ~18–22%, biên gộp ~5–12%.</p>`+loanPanel(R);
+  }
+  if(R.minC>=-1e-9)return'<p>Dự án không có tháng nào âm dòng tiền lũy kế với bộ điều khoản hiện tại — cấu trúc tạm ứng và độ trễ đang chiếm dụng vốn hiệu quả.</p>'+loanPanel(R);
+  let h=`<p><strong>Vùng nguy hiểm T${R.negFrom}–T${R.negTo}:</strong> lũy kế âm liên tục ${R.negN} tháng. Cấu trúc: sản lượng leo dốc nhưng tiền CĐT về trễ M+${fmtLag(R.lagIn)} và bị khấu trừ tạm ứng ${S.cdt.dedPct}%/kỳ + retention ${S.cdt.retPct}% + giữ quyết toán ${S.cdt.fhPct}% — trong khi phải trả tạm ứng cho các gói khởi công giữa dự án và trả nhanh cho vật tư.</p>`;
+  h+=`<p style="margin-top:8px"><strong>Điểm sâu nhất T${R.minM} (${f1(R.minC)} tỷ = ${f1(Math.abs(R.minC)/S.cv*100)}% GTHĐ):</strong> tháng chi lớn nhất là T${R.peakOutM} (${f1(R.peakOut)} tỷ). Nhu cầu vốn lưu động tối thiểu cần thu xếp ≈ <strong>${f1(Math.abs(R.minC))} tỷ</strong>; đề xuất hạn mức tín dụng dự phòng ×1,2 ≈ <strong>${f1(Math.abs(R.minC)*1.2)} tỷ</strong>.`;
+  h+=`</p><p style="margin-top:8px"><strong>Sau bàn giao:</strong> ${S.opts.retentionAsBond
+    ?`retention <b>chuyển thành bond bảo hành</b> — Bond CĐT ${f1(R.bondAmt)} tỷ + Bond NTP ${f1(R.subBondAmt)} tỷ (${S.opts.bondPct}%), <b>không phát sinh dòng tiền hoàn trả</b>; chỉ còn tiền quyết toán tại T${S.months+S.cdt.fhDelay}.`
+    :`hoàn <b>100% retention bằng tiền</b> — ${S.cdt.retSplit1}% tại T${S.months+1}, phần còn lại tại T${S.months+S.cdt.dlpMonths} (hết bảo hành), tiền quyết toán tại T${S.months+S.cdt.fhDelay}.`}</p>`;
+  return h+loanPanel(R);
+}
+// ===== Phuong an chi phi lai vay RIENG (khong hoi vao dong tien) =====
+function loanPanel(R){
+  if(!S.opts.loanOn)return'';
+  const L=R.loanStats;
+  if(L.negMonths===0)
+    return `<div class="card" style="margin-top:12px;background:var(--green-soft);border-color:#bcdcc9"><h3 style="margin-top:0">Chi phí lãi vay (phương án riêng)</h3><p>Không có tháng nào âm dòng tiền với lãi suất ${S.opts.loanRate}%/năm → <b>không phát sinh nhu cầu vay</b>, chi phí lãi = 0.</p></div>`;
+  return `<div class="card" style="margin-top:12px;background:var(--amber-soft);border-color:var(--amber)">
+    <h3 style="margin-top:0">Chi phí lãi vay — phương án tính riêng (không cộng vào dòng tiền)</h3>
+    <p class="note" style="margin:0 0 8px">Mỗi tháng số dư lũy kế âm, phải vay đúng |số dư| đó; lãi tháng = số vay × ${S.opts.loanRate}%/12. Đỉnh thiếu hụt <b>${f1(R.minC)} tỷ</b> ở trên là nhu cầu vốn <b>thuần</b> (đã tách khỏi lãi).</p>
+    <div class="kpis" style="margin:0">
+      <div class="kpi"><div class="lbl">Số tháng phải vay</div><div class="val num">${L.negMonths}</div><div class="sub">tháng có số dư âm (T${R.negFrom}–T${R.negTo})</div></div>
+      <div class="kpi deficit"><div class="lbl">Tổng lãi vay cả vòng đời</div><div class="val num">${f1(L.totInterest)}</div><div class="sub">tỷ · lãi suất ${S.opts.loanRate}%/năm</div></div>
+      <div class="kpi"><div class="lbl">Vay trung bình</div><div class="val num">${f1(L.avgBorrow)}</div><div class="sub">tỷ/tháng (bình quân các tháng âm)</div></div>
+      <div class="kpi"><div class="lbl">Vay cao nhất (max)</div><div class="val num">${f1(L.maxBorrow)}</div><div class="sub">tỷ · = |đỉnh thiếu hụt|, tại T${R.minM}</div></div>
+      <div class="kpi"><div class="lbl">Vay thấp nhất (min)</div><div class="val num">${f1(L.minBorrow)}</div><div class="sub">tỷ · tháng vay nông nhất</div></div>
+    </div></div>`;
+}
+function weekCut(R){
+  // Cat tai H_settle (quyet toan: het cac khoan gan han - retention dot 1, giu quyet toan)
+  // KHONG keo dai het bao hanh (dlpMonths co the rat dai, vd 24 thang), tru khi tick "Xem toan bo"
+  const wSettle=Math.ceil(R.H_settle*30/7);
+  return (S.view&&S.view.full)?R.weeks.length:Math.min(R.weeks.length,wSettle);
+}
+function chartCut(R){return (S.view&&S.view.full)?R.rows.length:Math.min(R.rows.length,S.months+4);}
+function setTrimNotes(R){
+  const wc=weekCut(R);
+  const hidden=R.weeks.length-wc;
+  // Tinh phan con lai se rut gon: tong retention/bond con lai chua hien thi (dot 2, hoac bond)
+  const bondNote=R.bondAmt>0?` Bond bảo hành (CĐT): ${f1(R.bondAmt)} tỷ (không phát sinh dòng tiền — track riêng).`:'';
+  const subBondNote=R.subBondAmt>0?` Bond bảo hành (NTP): ${f1(R.subBondAmt)} tỷ.`:'';
+  const txt=hidden>0
+    ?`Đang ẩn từ W${wc+1} đến hết bảo hành (giai đoạn sau quyết toán T${S.months}+${fmtLag(R.lagIn)}: chỉ còn đợt hoàn retention cuối kỳ tại T${S.months+S.cdt.dlpMonths}, không ảnh hưởng đỉnh thiếu hụt trong thi công).${bondNote}${subBondNote} Tick "Xem toàn bộ" nếu cần soi.`
+    :(S.view.full?`Đang hiển thị toàn bộ đến hết bảo hành (W${R.weeks.length}).`:'');
+  const n1=document.getElementById('trimNote1'),n2=document.getElementById('trimNote2');
+  if(n1)n1.textContent=txt;if(n2)n2.textContent=txt;
+  document.querySelectorAll('[data-p="view.full"]').forEach(el=>el.checked=!!S.view.full);
+}
+function buildMainCfg(R){
+  const rows=R.weeks.slice(0,weekCut(R));
+  return{
+    data:{labels:rows.map(r=>'W'+r.w),datasets:[
+      {type:'line',label:'Sản lượng lũy kế',data:rows.map(r=>r.cp),borderColor:'#16232e',borderDash:[6,4],borderWidth:2,pointRadius:0,tension:.3},
+      {type:'line',label:'Thu lũy kế',data:rows.map(r=>r.ci),borderColor:'#1e8e5a',borderWidth:2.5,pointRadius:0,tension:.3},
+      {type:'line',label:'Chi lũy kế',data:rows.map(r=>r.co),borderColor:'#c63a3a',borderWidth:2.5,pointRadius:0,tension:.3},
+      {type:'bar',label:'Dòng tiền lũy kế',data:rows.map(r=>r.cum),backgroundColor:rows.map(r=>r.cum<0?'rgba(224,145,18,.55)':'rgba(30,90,168,.45)'),yAxisID:'y2'}
+    ]},
+    options:{responsive:true,animation:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{font:{family:'Barlow',size:12.5},boxWidth:14}}},
+      scales:{y:{title:{display:true,text:'Lũy kế (tỷ)'},grid:{color:'#e8ecf0'}},
+        y2:{position:'right',title:{display:true,text:'Dòng tiền lũy kế (tỷ)'},grid:{display:false}},
+        x:{grid:{display:false},ticks:{maxTicksLimit:20}}}}
+  };
+}
+function drawMain(R){
+  if(chartMain)chartMain.destroy();
+  setTrimNotes(R);
+  chartMain=new Chart(document.getElementById('chartMain'),buildMainCfg(R));
+}
+// Ve bieu do offscreen kich thuoc co dinh -> anh luon co noi dung du tab dang an
+function renderChartImage(cfg,w,h){
+  const cv=document.createElement('canvas');
+  cv.width=w;cv.height=h;
+  cv.style.cssText='position:fixed;left:-4000px;top:0';
+  document.body.appendChild(cv);
+  const c2=JSON.parse(JSON.stringify(cfg.options||{}));
+  c2.responsive=false;c2.animation=false;
+  const ch=new Chart(cv,{type:cfg.type,data:cfg.data,options:c2});
+  const img=ch.toBase64Image();
+  ch.destroy();cv.remove();
+  return img;
+}
+function buildScenCfg(){
+  const{rB,rC,lblC}=lastScen,base=lastR;
+  const Lfull=Math.max(base.rows.length,rB.rows.length,rC.rows.length);
+  const L=(S.view&&S.view.full)?Lfull:Math.min(Lfull,S.months+4);
+  const lab=Array.from({length:L},(_,i)=>'T'+i);
+  const pad=(r)=>{const a=r.rows.map(x=>x.cum);while(a.length<Lfull)a.push(a[a.length-1]);return a.slice(0,L);};
+  return{type:'line',
+    data:{labels:lab,datasets:[
+      {label:'Base',data:pad(base),borderColor:'#1e5aa8',borderWidth:2.5,pointRadius:0,tension:.3},
+      {label:'B — CĐT trễ +'+S.scen.bDays+'d',data:pad(rB),borderColor:'#c63a3a',borderWidth:2.5,pointRadius:0,tension:.3},
+      {label:'C — '+lblC,data:pad(rC),borderColor:'#1e8e5a',borderWidth:2.5,pointRadius:0,tension:.3}
+    ]},
+    options:{responsive:true,animation:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{font:{family:'Barlow',size:12.5},boxWidth:14}}},
+      scales:{y:{title:{display:true,text:'Dòng tiền lũy kế (tỷ)'},grid:{color:'#e8ecf0'}},x:{grid:{display:false}}}}};
+}
+function runScenarios(){
+  const base=lastR;
+  const rB=runEngine(S,{cdt:{apprDays:S.cdt.apprDays+S.scen.bDays}});
+  // an/hien o nhap theo loai kich ban C
+  const combo=S.scen.cType==='combo';
+  const e1=document.getElementById('cSingle'),e2=document.getElementById('cCombo');
+  if(e1)e1.style.display=combo?'none':'';
+  if(e2)e2.style.display=combo?'':'none';
+  let rC,lblC,legs=null;
+  if(S.scen.cType==='appr'){rC=runEngine(S,{cdt:{apprDays:S.scen.cVal}});lblC=`Duyệt IPC còn ${S.scen.cVal} ngày`;}
+  else if(S.scen.cType==='adv'){rC=runEngine(S,{cdt:{advPct:S.scen.cVal}});lblC=`Tạm ứng CĐT ${S.scen.cVal}%`;}
+  else if(S.scen.cType==='ntp'){
+    const S2=JSON.parse(JSON.stringify(S));S2.pkgs.forEach(p=>p.payDays=(p.payDays||0)+S.scen.cVal);
+    rC=runEngine(S2);lblC=`NTP trễ thêm ${S.scen.cVal} ngày`;
+  }else{ // combo: gop ca 3 don bay dam phan + tach do nhay tung don bay
+    const S2=JSON.parse(JSON.stringify(S));
+    S2.cdt.apprDays=S.scen.cAppr;
+    S2.cdt.advPct=S.scen.cAdv;
+    S2.pkgs.forEach(p=>p.payDays=(p.payDays||0)+S.scen.cNtp);
+    rC=runEngine(S2);
+    lblC=`Combo: duyệt ${S.scen.cAppr}ng + tạm ứng ${S.scen.cAdv}% + NTP trễ +${S.scen.cNtp}ng`;
+    // do nhay RIENG cua tung don bay (so voi base)
+    const rL1=runEngine(S,{cdt:{apprDays:S.scen.cAppr}});
+    const rL2=runEngine(S,{cdt:{advPct:S.scen.cAdv}});
+    const SL3=JSON.parse(JSON.stringify(S));SL3.pkgs.forEach(p=>p.payDays=(p.payDays||0)+S.scen.cNtp);
+    const rL3=runEngine(SL3);
+    legs={d1:rL1.minC-base.minC,d2:rL2.minC-base.minC,d3:rL3.minC-base.minC};
+  }
+  lastScen={rB,rC,lblC,legs};
+  const dLeg=v=>(v>=0?'+':'')+f1(v);
+  const legTxt=legs?`<br>Tách từng đòn bẩy (Δ đỉnh so với base): duyệt IPC <b>${dLeg(legs.d1)}</b> · tạm ứng <b>${dLeg(legs.d2)}</b> · giãn trả NTP <b>${dLeg(legs.d3)}</b> tỷ. Δ dương = bớt thiếu hụt.`:'';
+  const card=(tag,cls,name,r,extra)=>`<div class="card"><span class="tag ${cls}">${tag}</span>
+    <div class="big" style="color:${r.minC<base.minC-0.5?'var(--red)':(r.minC>base.minC+0.5?'var(--green)':'#a25f00')}">${f1(r.minC)} tỷ</div>
+    <p class="note" style="margin:4px 0 0">${name} — đỉnh tại T${r.minM}, dương trở lại ${r.be!==null?'T'+r.be:'không'}. ${extra||''}</p></div>`;
+  document.getElementById('scenCards').innerHTML=
+    card('Base case','base','Điều khoản như đã nhập',base,`Đề xuất hạn mức ≈ ${f1(Math.abs(base.minC)*1.2)} tỷ.`)+
+    card('Kịch bản B','bad',`CĐT trễ thêm ${S.scen.bDays} ngày`,rB,`Chênh so với base: ${f1(rB.minC-base.minC)} tỷ.`)+
+    card('Kịch bản C',rC.minC>base.minC?'good':'bad',lblC,rC,`Chênh so với base: ${f1(rC.minC-base.minC)} tỷ.${legTxt}`);
+  if(chartScen)chartScen.destroy();
+  chartScen=new Chart(document.getElementById('chartScen'),buildScenCfg());
+  document.getElementById('scenAdvice').innerHTML=
+    `<p>① Đàm phán rút ngắn thời gian duyệt IPC — đòn bẩy mạnh nhất (thử ở Kịch bản C). ② Đồng bộ kỳ trả NTP với kỳ thu CĐT (back-to-back) cho các gói trả nhanh M+1. ③ Dời tạm ứng các gói giữa dự án sát ngày huy động thực. ④ Đề xuất IPC 2 kỳ/tháng cho giai đoạn cao điểm. ⑤ Thay retention bằng bảo lãnh (retention bond) để giải phóng ${f1(S.cv*S.cdt.retPct/100*(100-S.cdt.retSplit1)/100)} tỷ nằm chờ ${S.cdt.dlpMonths} tháng bảo hành. ⑥ Nếu CĐT có lịch sử chậm thanh toán, dùng Kịch bản B làm cơ sở xin hạn mức thay vì Base. ⑦ Dùng <b>Combo</b> ở Kịch bản C để định lượng trọn gói đàm phán trước khi họp với CĐT.</p>`;
+}
+
+// ================= SAVE / LOAD =================
+function saveSession(){
+  const blob=new Blob([JSON.stringify({app:'cashflow-projection',ver:1,saved:new Date().toISOString(),state:S},null,1)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='cashflow-phien-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+  URL.revokeObjectURL(a.href);toast('Đã lưu phiên làm việc (.json) — mở lại bằng nút 📂 để làm tiếp');
+}
+function loadSession(inp){
+  const file=inp.files[0];if(!file)return;
+  const rd=new FileReader();
+  rd.onload=()=>{try{
+    const j=JSON.parse(rd.result);
+    if(!j.state||!j.state.cv)throw 0;
+    S=Object.assign(defaultState(),j.state);
+    S.cdt=Object.assign(defaultState().cdt,j.state.cdt);
+    S.opts=Object.assign(defaultState().opts,j.state.opts);
+    S.scen=Object.assign(defaultState().scen,j.state.scen);
+    S.view=Object.assign(defaultState().view,j.state.view||{});
+    syncInputs();renderDist();renderPkgs();recalc();
+    toast('Đã mở phiên: '+(j.saved?new Date(j.saved).toLocaleString('vi-VN'):file.name));
+  }catch(e){toast('File không đúng định dạng phiên làm việc của công cụ này');}};
+  rd.readAsText(file);inp.value='';
+}
+
+// ================= EXCEL =================
+function exportExcel(){
+  if(!lastR){toast('Chưa có kết quả để xuất');return;}
+  const R=lastR,wb=XLSX.utils.book_new();
+  const rd=x=>Math.round(x*1000)/1000;
+  // Sheet 1: Thong so
+  const a1=[['CASHFLOW PROJECTION — THÔNG SỐ ĐẦU VÀO'],['Đơn vị: tỷ VND (chưa VAT) — Xuất ngày',new Date().toLocaleString('vi-VN')],[],
+    ['Giá trị hợp đồng',S.cv],['Thời gian thi công (tháng)',S.months],[],
+    ['THU TỪ CĐT'],['Tạm ứng %',S.cdt.advPct],['Nhận tạm ứng sau (ngày)',S.cdt.advDays],
+    ['Khấu trừ %/IPC',S.cdt.dedPct],['Dừng khấu trừ khi DT đạt %',S.cdt.dedStopPct],
+    ['Chu kỳ IPC (tháng/lần)',Math.max(1,Math.round(+S.cdt.ipcCycle||1))],
+    ['Duyệt IPC (ngày)',S.cdt.apprDays],['Thanh toán sau duyệt (ngày)',S.cdt.payDays],['→ Độ trễ (tháng)','M+'+fmtLag(R.lagIn)],
+    ['Retention %',S.cdt.retPct],['Trần retention (% GTHĐ)',(+S.cdt.retCapPct||0)>0?S.cdt.retCapPct:'Không áp'],['Hoàn khi bàn giao %',S.cdt.retSplit1],['Bảo hành (tháng)',S.cdt.dlpMonths],
+    ['Giữ quyết toán %',S.cdt.fhPct],['Hoàn quyết toán sau (tháng)',S.cdt.fhDelay],[],
+    ['TÙY CHỌN'],['Chi nội bộ',S.opts.internalOn?S.opts.internalPct+'%':'Tắt'],
+    ['Phân bổ chi nội bộ',S.opts.internalMode==='flat'?'Rải đều từng tháng':'Theo sản lượng'],['Mobilization T1 %',S.opts.mobPct],
+    ['Phương án trả NTP',S.opts.ntpMode==='b2b'?'Back-to-back (theo nhịp CĐT)':'Độc lập (độ trễ riêng gói)'],
+    ['Lãi vay (tính riêng)',S.opts.loanOn?S.opts.loanRate+'%/năm':'Tắt'],['Hệ số Tết',S.opts.tetOn?('T'+S.opts.tetMonth+' còn '+S.opts.tetFactor+'%'):'Tắt'],
+    ['Retention → Bond bảo hành',S.opts.retentionAsBond?('Bật · '+S.opts.bondPct+'% · Bond CĐT '+rd(R.bondAmt)+' tỷ + Bond NTP '+rd(R.subBondAmt)+' tỷ (không phát sinh dòng tiền)'):'Tắt · retention hoàn 100% bằng tiền']];
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(a1),'Thong so');
+  // Sheet 2: Phan bo
+  const a2=[['Tháng','% sản lượng','Giá trị (tỷ)']];
+  S.dist.slice(0,S.months).forEach((v,i)=>a2.push(['T'+(i+1),rd(v),rd(S.cv*v/100)]));
+  a2.push(['Tổng',rd(S.dist.slice(0,S.months).reduce((a,b)=>a+Number(b),0)),rd(S.cv)]);
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(a2),'Phan bo san luong');
+  // Sheet 3: Goi thau
+  const a3=[['Gói thầu','% GTHĐ','Giá trị','Bắt đầu','Kết thúc','Tạm ứng %','Retention %','Duyệt (ngày)','Chi trả (ngày)','Trễ (tháng)']];
+  S.pkgs.forEach(p=>a3.push([p.name,p.pct,rd(S.cv*p.pct/100),'T'+p.st,'T'+p.en,p.advPct,p.retPct,p.apprDays,p.payDays,'M+'+fmtLag(lagF(p.apprDays+p.payDays))]));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(a3),'Goi thau');
+  // Sheet 4: Cashflow theo TUAN (v6 - don vi chinh)
+  const a4w=[['Tuần','Tháng','Ngày (từ khởi công)','Sản lượng tuần','Tạm ứng CĐT','Thu IPC ròng','Hoàn giữ lại','Tổng thu','Tạm ứng NTP','Trả NTP','Chi nội bộ','Tổng chi','Ròng','Lũy kế','Vay (số dư âm)','Lãi vay tuần','Sản lượng lũy kế','Thu lũy kế','Chi lũy kế']];
+  R.weeks.forEach(r=>a4w.push(['W'+r.w,'T'+r.m,r.dayStart+'–'+r.dayEnd,rd(r.pvWeek||0),rd(r.inAdv),rd(r.inIPC),rd(r.inRet),rd(r.ti),rd(r.outAdv),rd(r.outNTP),rd(r.outInt),rd(r.to),rd(r.net),rd(r.cum),rd(r.borrow),rd(r.loan),rd(r.cp),rd(r.ci),rd(r.co)]));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(a4w),'Cashflow tuan');
+  // Sheet 5: Cashflow theo THANG (tong hop)
+  const a4=[['Tháng','Sản lượng KH','Tạm ứng CĐT','Thu IPC ròng','Hoàn giữ lại','Tổng thu','Tạm ứng NTP','Trả NTP','Chi nội bộ','Tổng chi','Ròng','Lũy kế','Vay (số dư âm)','Lãi vay tháng','Sản lượng lũy kế','Thu lũy kế','Chi lũy kế']];
+  R.rows.forEach(r=>a4.push(['T'+r.m,rd(r.pv),rd(r.inAdv),rd(r.inIPC),rd(r.inRet),rd(r.ti),rd(r.outAdv),rd(r.outNTP),rd(r.outInt),rd(r.to),rd(r.net),rd(r.cum),rd(r.borrow),rd(r.loan),rd(r.cp),rd(r.ci),rd(r.co)]));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(a4),'Cashflow thang');
+  // Sheet: Chi phi lai vay (phuong an rieng)
+  const L=R.loanStats;
+  const aL=[['CHI PHÍ LÃI VAY — PHƯƠNG ÁN TÍNH RIÊNG (không cộng vào dòng tiền)'],
+    ['Trạng thái',S.opts.loanOn?'Bật · '+S.opts.loanRate+'%/năm':'Tắt'],[],
+    ['Số tháng phải vay (số dư âm)',L.negMonths],
+    ['Tổng lãi vay cả vòng đời (tỷ)',rd(L.totInterest)],
+    ['Vay trung bình/tháng âm (tỷ)',rd(L.avgBorrow)],
+    ['Vay cao nhất = |đỉnh thiếu hụt| (tỷ)',rd(L.maxBorrow)],
+    ['Vay thấp nhất (tỷ)',rd(L.minBorrow)],
+    ['Tháng đỉnh thiếu hụt','T'+R.minM],
+    ['Lợi nhuận sau tài chính (tỷ)',rd(R.totIn-R.totOut-L.totInterest)]];
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aL),'Chi phi lai vay');
+  // Sheet: Chi NTP theo tuan — lich tra chi tiet
+  const aW=[['CHI NTP/NCC THEO TUẦN — khối lượng chốt cuối tuần, trả sau độ trễ, tiền vào đúng tháng chứa ngày trả'],
+    ['Quy ước: tháng = 30 ngày · tuần = 7 ngày · ngày 0 = khởi công'],[],
+    ['Ngày trả (kể từ khởi công)','Tuần chốt KL','Tháng ghi nhận chi','Số tiền (tỷ)']];
+  R.ntpWeeks.forEach(x=>aW.push([x.payDay,'Tuần '+x.wk,'T'+x.t,rd(x.amt)]));
+  aW.push([]);aW.push(['Tổng chi theo lịch tuần','','',rd(R.ntpWeeks.reduce((a,b)=>a+b.amt,0))]);
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aW),'Chi NTP theo tuan');
+  // Sheet 5: Chi tiet IPC
+  const a5=[['Kỳ IPC (tháng SL)','Sản lượng gộp','Khấu trừ tạm ứng','Retention','Giữ quyết toán','Thu ròng','Tháng nhận tiền']];
+  R.ipcDetail.forEach(d=>a5.push(['T'+d.m,rd(d.g),rd(d.ded),rd(d.ret),rd(d.fh),rd(d.net),d.payLbl]));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(a5),'Chi tiet IPC CDT');
+  // Sheet 6: Kich ban
+  if(lastScen){const a6=[['Kịch bản','Đỉnh thiếu hụt (tỷ)','Tại tháng','Dương trở lại'],
+    ['Base',rd(R.minC),'T'+R.minM,R.be!==null?'T'+R.be:'—'],
+    ['B — CĐT trễ +'+S.scen.bDays+' ngày',rd(lastScen.rB.minC),'T'+lastScen.rB.minM,lastScen.rB.be!==null?'T'+lastScen.rB.be:'—'],
+    ['C — '+lastScen.lblC,rd(lastScen.rC.minC),'T'+lastScen.rC.minM,lastScen.rC.be!==null?'T'+lastScen.rC.be:'—']];
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(a6),'Kich ban');}
+  XLSX.writeFile(wb,'cashflow-projection-'+new Date().toISOString().slice(0,10)+'.xlsx');
+  toast('Đã xuất Excel: 8 sheet — Thông số · Phân bổ · Gói thầu · Cashflow · Chi phí lãi vay · Chi NTP theo tuần · Chi tiết IPC · Kịch bản');
+}
+
+// ================= PDF EXPORT =================
+// Xuat PDF truc tiep (jsPDF + html2canvas): dung khi can file .pdf khong qua hop thoai in.
+async function exportPDF(){
+  if(!lastR){toast('Chưa có kết quả để xuất');return;}
+  if(!window.jspdf||!window.html2canvas){toast('Thư viện PDF chưa tải xong — kiểm tra kết nối mạng rồi thử lại');return;}
+  toast('Đang tạo PDF…');
+  const R=lastR,cyc=Math.max(1,Math.round(+S.cdt.ipcCycle||1));
+  const wrap=document.createElement('div');
+  wrap.style.cssText='position:fixed;left:-9999px;top:0;width:794px;background:#fff;color:#16232e;font-family:Barlow,Arial,sans-serif';
+  document.body.appendChild(wrap);
+  const blocks=[];
+  const add=html=>{const d=document.createElement('div');d.style.cssText='padding:12px 30px;background:#fff';d.innerHTML=html;wrap.appendChild(d);blocks.push(d);};
+  const TH='style="background:#eef2f6;color:#3d4f5e;font-size:10px;text-transform:uppercase;padding:5px 8px;border-bottom:1.5px solid #b9c3cc;text-align:right"';
+  const THL=TH.replace('text-align:right','text-align:left');
+  const TD='style="padding:4px 8px;border-bottom:1px solid #e6eaee;text-align:right;font-family:IBM Plex Mono,monospace;font-size:11px"';
+  const TDL='style="padding:4px 8px;border-bottom:1px solid #e6eaee;text-align:left;font-size:11px"';
+
+  // ---- 1 · Tieu de + Canh bao thieu hut von ----
+  const psum=S.pkgs.reduce((a,p)=>a+Number(p.pct||0),0);
+  const margin=100-psum-(S.opts.internalOn?S.opts.internalPct+S.opts.mobPct:0);
+  const structLoss=(R.totIn-R.totOut)<-0.05;
+  let warn='';
+  if(structLoss)warn+=`<div style="background:#faecec;border:1.5px solid #c63a3a;border-radius:7px;padding:9px 13px;margin:6px 0;font-size:12px"><b style="color:#c63a3a">⛔ LỖ CẤU TRÚC:</b> tổng chi ${f1(R.totOut)} &gt; tổng thu ${f1(R.totIn)} tỷ — đỉnh thiếu hụt là lỗ tích lũy, không phải nhu cầu vốn tạm thời.</div>`;
+  if(R.minC<-1e-9)warn+=`<div style="background:#fff8ec;border:1.5px solid #e09112;border-radius:7px;padding:9px 13px;margin:6px 0;font-size:12px">
+    <b style="color:#a25f00">⚠ CẢNH BÁO THIẾU HỤT VỐN:</b> đỉnh thiếu hụt <b>${f1(R.minC)} tỷ tại T${R.minM}</b> (${f1(Math.abs(R.minC)/S.cv*100)}% GTHĐ) · vùng âm liên tục <b>T${R.negFrom}–T${R.negTo}</b> (${R.negN} tháng) · dương trở lại ${R.be!==null?'<b>T'+R.be+'</b>':'<b>không</b> trong kỳ tính'} · đề xuất hạn mức tín dụng dự phòng ×1,2 ≈ <b>${f1(Math.abs(R.minC)*1.2)} tỷ</b>.${S.opts.loanOn?` Nếu vay toàn bộ phần âm @${S.opts.loanRate}%/năm: ${R.loanStats.negMonths} tháng phải vay · tổng lãi ≈ <b>${f1(R.loanStats.totInterest)} tỷ</b> (vay TB ${f1(R.loanStats.avgBorrow)} · max ${f1(R.loanStats.maxBorrow)} · min ${f1(R.loanStats.minBorrow)}).`:''}</div>`;
+  else warn+=`<div style="background:#e6f4ed;border:1.5px solid #1e8e5a;border-radius:7px;padding:9px 13px;margin:6px 0;font-size:12px"><b style="color:#1e8e5a">✓</b> Không có tháng nào âm dòng tiền lũy kế với bộ điều khoản hiện tại.</div>`;
+  if(R.leftAdv>0.05)warn+=`<div style="background:#fff8ec;border:1px dashed #e09112;border-radius:7px;padding:8px 13px;margin:6px 0;font-size:11.5px">⚠ Còn ${f1(R.leftAdv)} tỷ tạm ứng chưa thu hồi qua IPC — tất toán vào các đợt hoàn cuối kỳ.</div>`;
+  add(`<h1 style="font-size:19px;margin:0 0 2px">BÁO CÁO PHÂN TÍCH DÒNG TIỀN DỰ ÁN</h1>
+    <div style="font-size:11px;color:#556">Giá trị hợp đồng <b>${f1(S.cv)} tỷ VND</b> (chưa VAT) · ${S.months} tháng thi công · biên gộp ${f1(margin)}% · lập ngày ${new Date().toLocaleDateString('vi-VN')}</div>
+    <h2 style="font-size:13.5px;border-bottom:2px solid #16232e;padding-bottom:3px;margin:14px 0 4px">1 · Cảnh báo &amp; chỉ số vốn</h2>${warn}`);
+
+  // ---- 2 · S-Curve ----
+  let img1='';try{img1=renderChartImage(buildMainCfg(R),1000,420);}catch(e){}
+  if(img1)add(`<h2 style="font-size:13.5px;border-bottom:2px solid #16232e;padding-bottom:3px;margin:0 0 8px">2 · Biểu đồ S-Curve — Sản lượng · Thu · Chi · Dòng tiền lũy kế</h2><img src="${img1}" style="width:100%">`);
+
+  // ---- 3 · DK thanh toan tu CDT (dang list) ----
+  const li=(k,v)=>`<tr><td ${TDL} style="padding:4px 8px;border-bottom:1px solid #e6eaee;text-align:left;font-size:11.5px;color:#3d4f5e;width:46%">${k}</td><td style="padding:4px 8px;border-bottom:1px solid #e6eaee;text-align:left;font-size:11.5px;font-weight:600">${v}</td></tr>`;
+  add(`<h2 style="font-size:13.5px;border-bottom:2px solid #16232e;padding-bottom:3px;margin:0 0 8px">3 · Điều kiện thanh toán từ Chủ đầu tư</h2>
+    <table style="border-collapse:collapse;width:100%">
+    ${li('Tạm ứng',S.cdt.advPct+'% GTHĐ = '+f1(S.cv*S.cdt.advPct/100)+' tỷ · nhận sau '+S.cdt.advDays+' ngày kể từ khởi công')}
+    ${li('Khấu trừ tạm ứng',S.cdt.dedPct+'%/kỳ IPC · dừng khi doanh thu đạt '+S.cdt.dedStopPct+'% · không trừ quá giá trị IPC (phần dư carry kỳ sau)')}
+    ${li('Chu kỳ IPC',cyc+' tháng/lần'+(cyc>1?' (kỳ cuối là kỳ vét)':''))}
+    ${li('Độ trễ thanh toán','duyệt '+S.cdt.apprDays+' + chi trả '+S.cdt.payDays+' ngày → M+'+fmtLag(R.lagIn)+' (tiền chia tỷ lệ 2 tháng liền kề)')}
+    ${li('Retention',S.cdt.retPct+'%/đợt'+((+S.cdt.retCapPct||0)>0?' · trần '+S.cdt.retCapPct+'% GTHĐ':' · không trần')+' — hoàn '+S.cdt.retSplit1+'% khi bàn giao (T'+(S.months+1)+'), còn lại hết bảo hành (T'+(S.months+S.cdt.dlpMonths)+')')}
+    ${li('Giữ tới quyết toán',S.cdt.fhPct+'%/kỳ · hoàn sau bàn giao '+S.cdt.fhDelay+' tháng (T'+(S.months+S.cdt.fhDelay)+')')}
+    ${li('Bảo hành (DLP)',S.cdt.dlpMonths+' tháng')}
+    </table>`);
+
+  // ---- 4 · DK thanh toan voi thau phu ----
+  const pkRows=S.pkgs.map(p=>`<tr><td ${TDL}>${p.name}</td><td ${TD}>${p.pct}%</td><td ${TD}>${f1(S.cv*p.pct/100)}</td><td ${TD}>T${p.st}–T${p.en}</td><td ${TD}>${p.advPct}%</td><td ${TD}>${p.retPct}%</td><td ${TD}>${(p.apprDays||0)}+${(p.payDays||0)}ng</td><td ${TD}>M+${fmtLag(lagF((p.apprDays||0)+(p.payDays||0)))}</td></tr>`).join('');
+  add(`<h2 style="font-size:13.5px;border-bottom:2px solid #16232e;padding-bottom:3px;margin:0 0 8px">4 · Điều kiện thanh toán với thầu phụ / NCC</h2>
+    <div style="font-size:11px;color:#556;margin-bottom:6px">Dòng chi tính theo <b>lịch tuần</b> (chốt KL cuối tuần, trả sau độ trễ — tiền vào đúng tháng chứa ngày trả) · Phương án trả: <b>${S.opts.ntpMode==='b2b'?'Back-to-back — trả khi CĐT trả (M+'+fmtLag(R.lagIn)+')':'Độc lập — theo độ trễ riêng từng gói'}</b> · Retention NTP hoàn 50% bàn giao / 50% hết bảo hành · Tổng gói ${f1(psum)}% + chi nội bộ ${S.opts.internalOn?S.opts.internalPct+'% ('+(S.opts.internalMode==='flat'?'rải đều':'theo sản lượng')+')':'(tắt)'} + mob ${S.opts.mobPct}% → biên gộp ${f1(margin)}%</div>
+    <table style="border-collapse:collapse;width:100%"><tr><th ${THL}>Gói thầu</th><th ${TH}>% GTHĐ</th><th ${TH}>Giá trị</th><th ${TH}>Thời gian</th><th ${TH}>Tạm ứng</th><th ${TH}>Retention</th><th ${TH}>Duyệt+trả</th><th ${TH}>Trễ</th></tr>${pkRows}</table>`);
+
+  // ---- 5 · Bang cashflow tom gon ----
+  // Rut ngan: giu T0..M+1; giai doan bao hanh chi giu thang co phat sinh (hoan giu lai)
+  const compact=R.rows.filter(r=>r.m<=S.months+1||Math.abs(r.ti)+Math.abs(r.to)>0.05);
+  const cfRows=compact.map(r=>{
+    const hot=r.m===R.minM&&R.minC<0;
+    const bg=hot?'background:#fdf3e0;font-weight:700;':(r.cum<-1e-9?'background:#fffaf1;':'');
+    return `<tr style="${bg}"><td ${TDL}>T${r.m}${hot?' ⚠ đáy':''}${r.m===S.months?' (bàn giao)':''}</td><td ${TD}>${fD(r.pv)}</td><td ${TD} style="padding:4px 8px;border-bottom:1px solid #e6eaee;text-align:right;font-family:monospace;font-size:11px;color:#1e8e5a">${fD(r.ti)}</td><td ${TD} style="padding:4px 8px;border-bottom:1px solid #e6eaee;text-align:right;font-family:monospace;font-size:11px;color:#c63a3a">${fD(r.to)}</td><td ${TD}>${f1(r.net)}</td><td ${TD}><b style="color:${r.cum<-1e-9?'#c63a3a':'#1e8e5a'}">${f1(r.cum)}</b></td></tr>`;
+  }).join('');
+  const CHUNK=26, hdr=`<tr><th ${THL}>Tháng</th><th ${TH}>SL kế hoạch</th><th ${TH}>Σ Thu</th><th ${TH}>Σ Chi</th><th ${TH}>Ròng</th><th ${TH}>Lũy kế</th></tr>`;
+  const rowArr=cfRows.split('</tr>').filter(x=>x.trim()).map(x=>x+'</tr>');
+  for(let i=0;i<rowArr.length;i+=CHUNK){
+    add(`${i===0?`<h2 style="font-size:13.5px;border-bottom:2px solid #16232e;padding-bottom:3px;margin:0 0 8px">5 · Bảng dòng tiền tóm gọn (tỷ VND) — giai đoạn bảo hành chỉ giữ tháng có phát sinh</h2>`:''}
+      <table style="border-collapse:collapse;width:100%">${hdr}${rowArr.slice(i,i+CHUNK).join('')}
+      ${i+CHUNK>=rowArr.length?`<tr><td ${TDL} style="padding:5px 8px;background:#eef2f6;font-weight:700;text-align:left;font-size:11px">Tổng</td><td ${TD} style="padding:5px 8px;background:#eef2f6;font-weight:700;text-align:right;font-family:monospace;font-size:11px">${f1(R.rows.reduce((a,b)=>a+b.pv,0))}</td><td ${TD} style="padding:5px 8px;background:#eef2f6;font-weight:700;text-align:right;font-family:monospace;font-size:11px;color:#1e8e5a">${f1(R.totIn)}</td><td ${TD} style="padding:5px 8px;background:#eef2f6;font-weight:700;text-align:right;font-family:monospace;font-size:11px;color:#c63a3a">${f1(R.totOut)}</td><td ${TD} style="padding:5px 8px;background:#eef2f6;font-weight:700;text-align:right;font-family:monospace;font-size:11px">${f1(R.totIn-R.totOut)}</td><td ${TD} style="padding:5px 8px;background:#eef2f6;text-align:right">—</td></tr>`:''}</table>`);
+  }
+  add(`<p style="font-size:9.5px;color:#778;margin:4px 0 0">Báo cáo lập bằng công cụ Cashflow Projection · số liệu dựa trên giả định đầu vào do người dùng cung cấp, không thay thế thẩm định tài chính độc lập.</p>`);
+
+  // ---- Ghep PDF: moi block do vao trang A4, block dai tu sang trang ----
+  try{
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF({unit:'mm',format:'a4'});
+    const PW=210,PH=297,MG=9;let y=MG;
+    for(const b of blocks){
+      const cnv=await html2canvas(b,{scale:2,backgroundColor:'#ffffff'});
+      const h=(cnv.height/cnv.width)*(PW-2*MG);
+      if(y>MG&&y+h>PH-MG){pdf.addPage();y=MG;}
+      if(h<=PH-2*MG){
+        pdf.addImage(cnv.toDataURL('image/jpeg',0.92),'JPEG',MG,y,PW-2*MG,h);y+=h+1.5;
+      }else{ // block cao hon 1 trang -> cat lat
+        let sy=0;const pagePx=cnv.width*(PH-2*MG)/(PW-2*MG);
+        while(sy<cnv.height){
+          const sh=Math.min(pagePx,cnv.height-sy);
+          const c2=document.createElement('canvas');c2.width=cnv.width;c2.height=sh;
+          c2.getContext('2d').drawImage(cnv,0,sy,cnv.width,sh,0,0,cnv.width,sh);
+          const h2=(sh/cnv.width)*(PW-2*MG);
+          if(y>MG){pdf.addPage();y=MG;}
+          pdf.addImage(c2.toDataURL('image/jpeg',0.92),'JPEG',MG,y,PW-2*MG,h2);
+          y=MG+h2+1.5;sy+=sh;if(sy<cnv.height){pdf.addPage();y=MG;}
+        }
+      }
+    }
+    pdf.save('bao-cao-cashflow-'+new Date().toISOString().slice(0,10)+'.pdf');
+    toast('Đã xuất PDF: cảnh báo vốn · S-Curve · ĐK thanh toán CĐT · ĐK thầu phụ · cashflow tóm gọn');
+  }catch(e){toast('Lỗi tạo PDF: '+e.message);}
+  wrap.remove();
+}
+
+// ================= PRINT =================
+function printReport(){
+  if(!lastR){toast('Chưa có kết quả');return;}
+  const R=lastR,pa=document.getElementById('printArea');
+  // Render offscreen kich thuoc co dinh — dam bao PDF LUON co bieu do
+  // du nguoi dung dang dung o tab khac (canvas trong tab an se cho ra anh trang)
+  let img1='',img2='';
+  try{img1=renderChartImage(buildMainCfg(R),1000,420);}catch(e){}
+  try{if(lastScen)img2=renderChartImage(buildScenCfg(),1000,380);}catch(e){}
+  const cyc=Math.max(1,Math.round(+S.cdt.ipcCycle||1));
+  const rows=R.rows.map(r=>`<tr${r.m===R.minM&&R.minC<0?' style="background:#fdf3e0;font-weight:700"':''}>
+    <td style="text-align:left">T${r.m}</td><td>${fD(r.pv)}</td><td>${fD(r.ti)}</td><td>${fD(r.to)}</td><td>${f1(r.net)}</td><td><b>${f1(r.cum)}</b></td></tr>`).join('');
+  const pk=S.pkgs.map(p=>`<tr><td style="text-align:left">${p.name}</td><td>${p.pct}%</td><td>${f1(S.cv*p.pct/100)}</td><td>T${p.st}–T${p.en}</td><td>${p.advPct}%</td><td>M+${fmtLag(lagF(p.apprDays+p.payDays))}</td></tr>`).join('');
+  pa.innerHTML=`
+  <h1>BÁO CÁO PHÂN TÍCH DÒNG TIỀN DỰ ÁN</h1>
+  <div class="psub">Giá trị hợp đồng ${f1(S.cv)} tỷ VND (chưa VAT) · ${S.months} tháng thi công · Lập ngày ${new Date().toLocaleDateString('vi-VN')}</div>
+  <h2>1 · Chỉ số chính</h2>
+  <table><tr><th style="text-align:left">Chỉ số</th><th>Giá trị</th></tr>
+  <tr><td style="text-align:left">Đỉnh thiếu hụt vốn (nhu cầu vốn lưu động)</td><td><b>${f1(R.minC)} tỷ tại T${R.minM} (${f1(Math.abs(R.minC)/S.cv*100)}% GTHĐ)</b></td></tr>
+  <tr><td style="text-align:left">Hạn mức tín dụng đề xuất (×1,2)</td><td>${f1(Math.abs(R.minC)*1.2)} tỷ</td></tr>
+  <tr><td style="text-align:left">Giai đoạn dòng tiền âm</td><td>${R.negN?`T${R.negFrom}–T${R.negTo} (${R.negN} tháng)`:'Không có'}</td></tr>
+  <tr><td style="text-align:left">Dòng tiền dương trở lại</td><td>${R.be!==null?'T'+R.be:'—'}</td></tr>
+  <tr><td style="text-align:left">Tổng thu / Tổng chi / Ròng cuối kỳ</td><td>${f1(R.totIn)} / ${f1(R.totOut)} / ${f1(R.totIn-R.totOut)} tỷ</td></tr>
+  ${S.opts.loanOn?`<tr><td style="text-align:left">Chi phí lãi vay (riêng): số tháng vay / tổng lãi</td><td>${R.loanStats.negMonths} tháng / ${f1(R.loanStats.totInterest)} tỷ (vay TB ${f1(R.loanStats.avgBorrow)} · max ${f1(R.loanStats.maxBorrow)})</td></tr>
+  <tr><td style="text-align:left">Lợi nhuận sau tài chính</td><td>${f1(R.totIn-R.totOut-R.loanStats.totInterest)} tỷ</td></tr>`:''}</table>
+  <h2>2 · Điều khoản chính</h2>
+  <p>Tạm ứng CĐT ${S.cdt.advPct}% (nhận sau ${S.cdt.advDays} ngày), khấu trừ ${S.cdt.dedPct}%/IPC đến khi doanh thu đạt ${S.cdt.dedStopPct}%. IPC nghiệm thu ${cyc} tháng/lần, độ trễ ${S.cdt.apprDays}+${S.cdt.payDays} ngày → M+${fmtLag(R.lagIn)}. Retention ${S.cdt.retPct}%${(+S.cdt.retCapPct||0)>0?` (trần ${S.cdt.retCapPct}% GTHĐ)`:''} — hoàn ${S.cdt.retSplit1}% bàn giao, còn lại sau ${S.cdt.dlpMonths} tháng bảo hành. Giữ quyết toán ${S.cdt.fhPct}%, hoàn T+${S.cdt.fhDelay}. Chi nội bộ ${S.opts.internalOn?S.opts.internalPct+'% + mobilization '+S.opts.mobPct+'%':'không tính'}.</p>
+  <h2>3 · Gói thầu NTP/NCC</h2>
+  <table><tr><th style="text-align:left">Gói</th><th>%</th><th>Giá trị</th><th>Thời gian</th><th>Tạm ứng</th><th>Trễ trả</th></tr>${pk}</table>
+  <h2>4 · Biểu đồ S-Curve</h2>
+  ${img1?`<img src="${img1}">`:''}
+  <h2 class="pgbreak">5 · Bảng dòng tiền theo tháng (tỷ VND)</h2>
+  <table><tr><th style="text-align:left">Tháng</th><th>SL kế hoạch</th><th>Σ Thu</th><th>Σ Chi</th><th>Ròng</th><th>Lũy kế</th></tr>${rows}</table>
+  <h2>6 · Chẩn đoán &amp; kịch bản</h2>
+  ${buildAnalysis(R)}
+  ${lastScen?`<table style="margin-top:8px"><tr><th style="text-align:left">Kịch bản</th><th>Đỉnh thiếu hụt</th><th>Tại</th><th>Dương lại</th></tr>
+  <tr><td style="text-align:left">Base</td><td>${f1(R.minC)}</td><td>T${R.minM}</td><td>${R.be!==null?'T'+R.be:'—'}</td></tr>
+  <tr><td style="text-align:left">B — CĐT trễ +${S.scen.bDays} ngày</td><td>${f1(lastScen.rB.minC)}</td><td>T${lastScen.rB.minM}</td><td>${lastScen.rB.be!==null?'T'+lastScen.rB.be:'—'}</td></tr>
+  <tr><td style="text-align:left">C — ${lastScen.lblC}</td><td>${f1(lastScen.rC.minC)}</td><td>T${lastScen.rC.minM}</td><td>${lastScen.rC.be!==null?'T'+lastScen.rC.be:'—'}</td></tr></table>`:''}
+  ${img2?`<img src="${img2}" style="margin-top:8px">`:''}
+  <p style="margin-top:14px;font-size:10px;color:#777">Báo cáo lập bằng công cụ Cashflow Projection · số liệu dựa trên giả định đầu vào do người dùng cung cấp, không thay thế thẩm định tài chính độc lập.</p>`;
+  document.body.classList.add('print-mode');
+  const done=()=>{document.body.classList.remove('print-mode');window.removeEventListener('afterprint',done);};
+  window.addEventListener('afterprint',done);
+  window.print();
+}
+
+// ================= UI =================
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav button').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('main section').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');document.getElementById(b.dataset.t).classList.add('on');
+});
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('show'),3400);}
+
+// init
+syncInputs();renderDist();renderPkgs();recalc();
+</script>
+</body>
+</html>
