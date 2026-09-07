@@ -102,6 +102,17 @@
   .field-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   .field{display:flex;flex-direction:column;gap:6px}
   .field.full{grid-column:1 / -1}
+  .seg-group{display:flex;gap:8px;flex-wrap:wrap}
+  .seg-btn{
+    flex:1;min-width:120px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;color:var(--muted);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;
+    transition:all .15s;text-align:center
+  }
+  .seg-btn:hover{border-color:var(--accent);color:var(--text)}
+  .seg-btn.active{
+    background:linear-gradient(135deg,rgba(255,182,72,.18),rgba(255,122,69,.12));
+    border-color:var(--accent);color:#fff
+  }
   label{font-size:12px;color:var(--muted);font-weight:500;letter-spacing:.02em}
   label .unit{color:#54607a;font-family:'JetBrains Mono',monospace;font-size:11px;margin-left:4px}
   input,select{
@@ -202,7 +213,7 @@
       <div class="logo">M</div>
       <div>
         <h1>Metal Profiles Calculator</h1>
-        <div class="sub">Tính khối lượng cấu kiện thép · 14 loại profile (gồm tổ hợp & vát) · Lưu danh sách</div>
+        <div class="sub">Tính khối lượng cấu kiện thép · 14 loại profile (gồm tổ hợp & vát) + thép sàn 2 phương · Lưu danh sách</div>
       </div>
     </div>
   </header>
@@ -604,6 +615,42 @@ const FIGURES = {
     <line class="dim" x1="140" y1="155" x2="255" y2="155" marker-start="url(#arrStart)" marker-end="url(#arrEnd)"/>
     <text x="82" y="168" text-anchor="middle">L1</text>
     <text x="198" y="168" text-anchor="middle">L2</text>
+  </svg>`,
+
+  /* THÉP SÀN 2 PHƯƠNG — mặt bằng ô sàn, lưới thép chạy 2 phương X (ngang) & Y (đứng) */
+  rebarSlab2Way: `<svg viewBox="0 0 220 172">${GRAD_DEFS}
+    <text class="title" x="110" y="12" text-anchor="middle">MẶT BẰNG — THÉP SÀN 2 PHƯƠNG</text>
+    <!-- biên ô sàn -->
+    <rect class="obj" x="34" y="26" width="150" height="98" fill="none"/>
+    <!-- thanh phương X: chạy dọc theo L (ngang), rải theo W -->
+    <line x1="34" y1="46" x2="184" y2="46" stroke="#1a1a2e" stroke-width="1.1" opacity=".55"/>
+    <line x1="34" y1="66" x2="184" y2="66" stroke="#1a1a2e" stroke-width="1.1" opacity=".55"/>
+    <line x1="34" y1="86" x2="184" y2="86" stroke="#1a1a2e" stroke-width="1.1" opacity=".55"/>
+    <line x1="34" y1="106" x2="184" y2="106" stroke="#1a1a2e" stroke-width="1.1" opacity=".55"/>
+    <!-- thanh phương Y: chạy dọc theo W (đứng), rải theo L -->
+    <line x1="58" y1="26" x2="58" y2="124" stroke="#1a1a2e" stroke-width="1.1" opacity=".55"/>
+    <line x1="86" y1="26" x2="86" y2="124" stroke="#1a1a2e" stroke-width="1.1" opacity=".55"/>
+    <line x1="114" y1="26" x2="114" y2="124" stroke="#1a1a2e" stroke-width="1.1" opacity=".55"/>
+    <line x1="142" y1="26" x2="142" y2="124" stroke="#1a1a2e" stroke-width="1.1" opacity=".55"/>
+    <line x1="170" y1="26" x2="170" y2="124" stroke="#1a1a2e" stroke-width="1.1" opacity=".55"/>
+    <text x="60" y="42" font-size="7" fill="#8892a6">X</text>
+    <text x="42" y="60" font-size="7" fill="#8892a6">Y</text>
+    <!-- gióng L (trên) -->
+    <line class="ext" x1="34" y1="26" x2="34" y2="16"/>
+    <line class="ext" x1="184" y1="26" x2="184" y2="16"/>
+    <line class="dim" x1="34" y1="19" x2="184" y2="19" marker-start="url(#arrStart)" marker-end="url(#arrEnd)"/>
+    <text x="109" y="16" text-anchor="middle">L</text>
+    <!-- gióng W (trái) -->
+    <line class="ext" x1="34" y1="26" x2="20" y2="26"/>
+    <line class="ext" x1="34" y1="124" x2="20" y2="124"/>
+    <line class="dim" x1="25" y1="26" x2="25" y2="124" marker-start="url(#arrStart)" marker-end="url(#arrEnd)"/>
+    <text x="13" y="78" text-anchor="middle">W</text>
+    <!-- gióng khoảng cách a (dưới) -->
+    <line class="ext" x1="58" y1="124" x2="58" y2="136"/>
+    <line class="ext" x1="86" y1="124" x2="86" y2="136"/>
+    <line class="dim" x1="58" y1="132" x2="86" y2="132" marker-start="url(#arrStart)" marker-end="url(#arrEnd)"/>
+    <text x="72" y="145" text-anchor="middle">a</text>
+    <text class="title" x="110" y="164" text-anchor="middle">Ø, a khai riêng cho Lớp trên / Lớp dưới</text>
   </svg>`
 };
 const CALCULATORS = {
@@ -964,6 +1011,72 @@ const CALCULATORS = {
         {label:'Tổng diện tích sơn', val:paintPerPiece*n, unit:'m²', paint:true, big:true}
       ];
     }
+  },
+
+  /* ================= THÉP SÀN 2 PHƯƠNG (RIÊNG NHÓM) ================= */
+  rebarSlab2Way: {
+    name:'Thép sàn 2 phương / Two-way slab mesh',
+    desc:'Ước tính nhanh khối lượng thép sàn theo ô, bố trí lưới 2 phương X–Y. Số thanh mỗi phương ≈ ceil(cạnh vuông góc / khoảng cách) + 1 (chưa trừ lớp bảo vệ, chưa cộng neo/nối chồng) — dùng để tra nhanh tỷ trọng kg/m², không thay bảng thống kê thép chi tiết.',
+    fields:[
+      {key:'mode', label:'Cách nhập kích thước ô sàn', type:'radio', full:true, def:'dim', options:[
+        ['dim','Dài × Rộng'], ['area','Diện tích, S']
+      ]},
+      {key:'l', label:'Chiều dài ô sàn, L', unit:'m', showIf: d => d.mode !== 'area'},
+      {key:'w', label:'Chiều rộng ô sàn, W', unit:'m', showIf: d => d.mode !== 'area'},
+      {key:'s', label:'Diện tích ô sàn, S', unit:'m²', showIf: d => d.mode === 'area'},
+      {key:'layers', label:'Phương án bố trí thép', type:'radio', full:true, def:'2', options:[
+        ['2','2 lớp (trên + dưới)'], ['1','1 lớp']
+      ]},
+      {key:'spacing1', label:'Khoảng cách Lớp trên (hoặc lớp duy nhất), a', unit:'mm'},
+      {key:'dia1', label:'Đường kính Lớp trên (hoặc lớp duy nhất), Ø', unit:'mm'},
+      {key:'spacing2', label:'Khoảng cách Lớp dưới, a', unit:'mm', showIf: d => d.layers === '2'},
+      {key:'dia2', label:'Đường kính Lớp dưới, Ø', unit:'mm', showIf: d => d.layers === '2'}
+    ],
+    validate: ({mode,l,w,s}) => {
+      if(mode === 'area' && s <= 0) return 'Diện tích ô sàn phải lớn hơn 0';
+      if(mode !== 'area' && (l <= 0 || w <= 0)) return 'Dài và Rộng ô sàn phải lớn hơn 0';
+      return null;
+    },
+    calc: ({mode,l,w,s,layers,spacing1,dia1,spacing2,dia2}) => {
+      // Kích thước ô sàn: nhập trực tiếp L×W, hoặc suy ra hình vuông cạnh a = sqrt(S)
+      let L, W;
+      if(mode === 'area'){ L = Math.sqrt(s); W = L; }
+      else { L = l; W = w; }
+      const S = L * W;
+
+      // Đơn trọng thép theo đường kính (kg/m) = (π/4)·d²·ρ
+      const unitWeight = dMm => Math.PI/4 * Math.pow(dMm/1000, 2) * DENSITY;
+
+      // Một lớp lưới 2 phương: thanh phương X chạy dọc L, rải đều theo W;
+      // thanh phương Y chạy dọc W, rải đều theo L.
+      function layerCalc(spacingMm, diaMm){
+        const spacingM = spacingMm / 1000;
+        const nX = Math.ceil(W / spacingM) + 1;
+        const nY = Math.ceil(L / spacingM) + 1;
+        const lenX = nX * L;
+        const lenY = nY * W;
+        const totalLen = lenX + lenY;
+        return { totalLen, weight: totalLen * unitWeight(diaMm) };
+      }
+
+      const top = layerCalc(spacing1, dia1);
+      const bottom = (layers === '2') ? layerCalc(spacing2, dia2) : { totalLen:0, weight:0 };
+      const totalWeight = top.weight + bottom.weight;
+      const weightPerM2 = totalWeight / S;
+
+      const rows = [
+        {label:'Diện tích ô sàn, S', val:S, unit:'m²'},
+        {label:'Tổng chiều dài thép Lớp trên', val:top.totalLen, unit:'m'},
+        {label:'Khối lượng Lớp trên', val:top.weight, unit:'kg'}
+      ];
+      if(layers === '2'){
+        rows.push({label:'Tổng chiều dài thép Lớp dưới', val:bottom.totalLen, unit:'m'});
+        rows.push({label:'Khối lượng Lớp dưới', val:bottom.weight, unit:'kg'});
+      }
+      rows.push({label:'Tổng khối lượng thép sàn', val:totalWeight, unit:'kg', big:true});
+      rows.push({label:'Tỷ trọng thép sàn', val:weightPerM2, unit:'kg/m²', big:true, rate:true});
+      return rows;
+    }
   }
 };
 
@@ -978,6 +1091,9 @@ const NAV_GROUPS = [
   ]},
   { title:'Vát 2 đầu (Tapered)', keys:[
     'taperedI','taperedIHaunch'
+  ]},
+  { title:'Thép sàn', keys:[
+    'rebarSlab2Way'
   ]}
 ];
 
@@ -1020,6 +1136,20 @@ function selectCalc(key){
 /* ============================================================
    RENDER CALC FORM
    ============================================================ */
+// Field có showIf(data) sẽ ẩn/hiện tuỳ input khác (vd: nhập L×W hay S, 1 lớp hay 2 lớp)
+function isFieldVisible(f, data){
+  return f.showIf ? !!f.showIf(data) : true;
+}
+
+// Chỉ toggle display của wrapper div (không tạo lại input) để không mất giá trị đang gõ
+function applyFieldVisibility(calc, data){
+  const fields = document.getElementById('fields');
+  calc.fields.forEach(f => {
+    const div = fields.querySelector(`[data-field-key="${f.key}"]`);
+    if(div) div.style.display = isFieldVisible(f, data) ? '' : 'none';
+  });
+}
+
 function renderCalc(){
   const calc = CALCULATORS[state.current];
   document.getElementById('calcTitle').textContent = calc.name;
@@ -1029,13 +1159,19 @@ function renderCalc(){
   fields.innerHTML = '';
   calc.fields.forEach(f => {
     const div = document.createElement('div');
-    div.className = 'field';
+    div.className = 'field' + (f.type === 'radio' || f.full ? ' full' : '');
+    div.dataset.fieldKey = f.key;
     let inputHtml = '';
     if(f.type === 'select'){
       inputHtml = `<select id="f_${f.key}">
         <option value="">— Chọn —</option>
         ${f.options.map(o => `<option value="${o[1]}">${o[0]} (${o[1]} kg/m)</option>`).join('')}
       </select>`;
+    } else if(f.type === 'radio'){
+      inputHtml = `<input type="hidden" id="f_${f.key}" value="${f.def !== undefined ? f.def : ''}">
+        <div class="seg-group" id="seg_${f.key}">
+          ${f.options.map(o => `<button type="button" class="seg-btn${String(o[0])===String(f.def)?' active':''}" data-val="${o[0]}">${o[1]}</button>`).join('')}
+        </div>`;
     } else {
       inputHtml = `<input type="number" id="f_${f.key}" step="any" min="0" value="${f.def !== undefined ? f.def : ''}" placeholder="0">`;
     }
@@ -1047,6 +1183,16 @@ function renderCalc(){
     const el = document.getElementById('f_' + f.key);
     el.addEventListener('input', updateResult);
     el.addEventListener('change', updateResult);
+    if(f.type === 'radio'){
+      const seg = document.getElementById('seg_' + f.key);
+      seg.querySelectorAll('.seg-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          el.value = btn.dataset.val;
+          seg.querySelectorAll('.seg-btn').forEach(b => b.classList.toggle('active', b === btn));
+          updateResult();
+        });
+      });
+    }
   });
   document.getElementById('noteInput').value = '';
   updateResult();
@@ -1057,7 +1203,7 @@ function getInputs(){
   const data = {};
   for(const f of calc.fields){
     const el = document.getElementById('f_' + f.key);
-    if(f.type === 'select'){
+    if(f.type === 'select' || f.type === 'radio'){
       data[f.key] = el.value;
     } else {
       data[f.key] = parseFloat(el.value);
@@ -1069,8 +1215,9 @@ function getInputs(){
 function inputsValid(data){
   const calc = CALCULATORS[state.current];
   for(const f of calc.fields){
+    if(!isFieldVisible(f, data)) continue; // field đang ẩn thì không bắt buộc nhập
     const v = data[f.key];
-    if(f.type === 'select'){
+    if(f.type === 'select' || f.type === 'radio'){
       if(!v) return false;
     } else {
       if(isNaN(v) || v <= 0) return false;
@@ -1082,6 +1229,7 @@ function inputsValid(data){
 function updateResult(){
   const calc = CALCULATORS[state.current];
   const data = getInputs();
+  applyFieldVisibility(calc, data);
   const errEl = document.getElementById('err');
   const box = document.getElementById('resultRows');
   errEl.classList.remove('show');
@@ -1132,21 +1280,27 @@ document.getElementById('saveBtn').onclick = () => {
     if(err){ flash(err, true); return; }
   }
   const results = calc.calc(data);
-  // tách weight và paint từ results
-  const weightResults = results.filter(r => !r.paint);
+  // tách weight và paint từ results (dòng rate:true như kg/m² không tính là tổng khối lượng)
+  const weightResults = results.filter(r => !r.paint && !r.rate);
   const paintResults = results.filter(r => r.paint);
   const totalWeight = weightResults.length ? weightResults[weightResults.length-1].val : 0;
   const totalPaint = paintResults.length ? paintResults[paintResults.length-1].val : 0;
   const note = document.getElementById('noteInput').value.trim();
   // tạo chuỗi spec
-  const specParts = calc.fields.map(f => {
-    const v = data[f.key];
-    if(f.type === 'select'){
-      const opt = f.options.find(o => String(o[1]) === String(v));
-      return opt ? opt[0] : v;
-    }
-    return `${f.label.split(',')[0].trim()}=${v}${f.unit ? f.unit : ''}`;
-  });
+  const specParts = calc.fields
+    .filter(f => isFieldVisible(f, data))
+    .map(f => {
+      const v = data[f.key];
+      if(f.type === 'select'){
+        const opt = f.options.find(o => String(o[1]) === String(v));
+        return opt ? opt[0] : v;
+      }
+      if(f.type === 'radio'){
+        const opt = f.options.find(o => String(o[0]) === String(v));
+        return opt ? opt[1] : v;
+      }
+      return `${f.label.split(',')[0].trim()}=${v}${f.unit ? f.unit : ''}`;
+    });
   const item = {
     id: Date.now() + '-' + Math.random().toString(36).slice(2,7),
     catKey: state.current,
@@ -1223,7 +1377,8 @@ function shortCat(key){
     sheet:'Tấm', pipeSeamless:'Ống đúc', hssCircular:'Ống tròn', hssSquare:'Hộp vuông',
     hssRect:'Hộp CN', roundBar:'Tròn đặc', squareBar:'Vuông đặc', flatBar:'Dẹt',
     equalAngle:'L đều', unequalAngle:'L lệch', channelGOST:'U GOST',
-    builtupI:'I tổ hợp', taperedI:'I vát', taperedIHaunch:'I vát 2 đoạn'
+    builtupI:'I tổ hợp', taperedI:'I vát', taperedIHaunch:'I vát 2 đoạn',
+    rebarSlab2Way:'Thép sàn'
   };
   return map[key] || key;
 }
