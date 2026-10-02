@@ -292,7 +292,7 @@ tr[data-status="na"]{opacity:.62}
   items.forEach(function(tr){
    var s=tr.dataset.status||'todo';
    var okm=(mode==='all')||(mode===s);
-   var okq=!nd||tr.textContent.toLowerCase().indexOf(nd)>-1||tr.dataset.key.toLowerCase().indexOf(nd)>-1;
+   var okq=!nd||(tr._t||(tr._t=(tr.textContent+' '+tr.dataset.key).toLowerCase())).indexOf(nd)>-1;
    tr.classList.toggle('hide',!(okm&&okq));
   });
   document.querySelectorAll('.grp').forEach(function(g){
@@ -302,7 +302,7 @@ tr[data-status="na"]{opacity:.62}
   });
  }
  document.getElementById('f-mode').addEventListener('change',function(e){mode=e.target.value;filt()});
- document.getElementById('q').addEventListener('input',function(e){q=e.target.value;filt()});
+ var qT;document.getElementById('q').addEventListener('input',function(e){q=e.target.value;clearTimeout(qT);qT=setTimeout(filt,150)});
 
  /* hành động */
  document.getElementById('b-open').addEventListener('click',function(){

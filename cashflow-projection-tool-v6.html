@@ -932,10 +932,12 @@ function buildMainCfg(R){
 function drawMain(R){
   if(chartMain)chartMain.destroy();
   setTrimNotes(R);
+  if(!window.Chart)return;
   chartMain=new Chart(document.getElementById('chartMain'),buildMainCfg(R));
 }
 // Ve bieu do offscreen kich thuoc co dinh -> anh luon co noi dung du tab dang an
 function renderChartImage(cfg,w,h){
+  if(!window.Chart)return '';
   const cv=document.createElement('canvas');
   cv.width=w;cv.height=h;
   cv.style.cssText='position:fixed;left:-4000px;top:0';
@@ -1002,7 +1004,7 @@ function runScenarios(){
     card('Kịch bản B','bad',`CĐT trễ thêm ${S.scen.bDays} ngày`,rB,`Chênh so với base: ${f1(rB.minC-base.minC)} tỷ.`)+
     card('Kịch bản C',rC.minC>base.minC?'good':'bad',lblC,rC,`Chênh so với base: ${f1(rC.minC-base.minC)} tỷ.${legTxt}`);
   if(chartScen)chartScen.destroy();
-  chartScen=new Chart(document.getElementById('chartScen'),buildScenCfg());
+  if(window.Chart)chartScen=new Chart(document.getElementById('chartScen'),buildScenCfg());
   document.getElementById('scenAdvice').innerHTML=
     `<p>① Đàm phán rút ngắn thời gian duyệt IPC — đòn bẩy mạnh nhất (thử ở Kịch bản C). ② Đồng bộ kỳ trả NTP với kỳ thu CĐT (back-to-back) cho các gói trả nhanh M+1. ③ Dời tạm ứng các gói giữa dự án sát ngày huy động thực. ④ Đề xuất IPC 2 kỳ/tháng cho giai đoạn cao điểm. ⑤ Thay retention bằng bảo lãnh (retention bond) để giải phóng ${f1(S.cv*S.cdt.retPct/100*(100-S.cdt.retSplit1)/100)} tỷ nằm chờ ${S.cdt.dlpMonths} tháng bảo hành. ⑥ Nếu CĐT có lịch sử chậm thanh toán, dùng Kịch bản B làm cơ sở xin hạn mức thay vì Base. ⑦ Dùng <b>Combo</b> ở Kịch bản C để định lượng trọn gói đàm phán trước khi họp với CĐT.</p>`;
 }

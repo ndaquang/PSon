@@ -84,13 +84,13 @@ const fF=document.getElementById("fF");
 fF.innerHTML='<option value="">— Tất cả chương FIDIC —</option>'+M.chapters.map(c=>`<option value="${c[0]}">Ch.${c[0]} — ${c[1]}</option>`).join("");
 document.querySelectorAll(".pill").forEach(el=>el.onclick=()=>{const p=el.dataset.pr,b=el.dataset.ben;
  if(p){prSel.has(+p)?prSel.delete(+p):prSel.add(+p)}else{benSel.has(b)?benSel.delete(b):benSel.add(b)}el.classList.toggle("on");render()});
-fF.onchange=render;document.getElementById("q").oninput=render;
+let qT;fF.onchange=render;document.getElementById("q").oninput=()=>{clearTimeout(qT);qT=setTimeout(render,150)};
 document.getElementById("reset").onclick=()=>{document.getElementById("q").value="";fF.value="";prSel.clear();benSel.clear();document.querySelectorAll(".pill").forEach(p=>p.classList.remove("on"));render()};
 let allOpen=false;
 document.getElementById("expand").onclick=()=>{allOpen=!allOpen;document.getElementById("expand").textContent=allOpen?"Thu gọn tất cả":"Mở tất cả";render()};
 function filt(){const q=document.getElementById("q").value.trim().toLowerCase(),ff=fF.value;
  return T.filter(t=>{if(ff&&t.f!=+ff)return false;if(prSel.size&&!prSel.has(t.pr))return false;if(benSel.size&&!benSel.has(t.ben))return false;
- if(q){const b=(t.t+" "+t.orig+" "+t.rec+" "+t.ex+" "+t.cat+" "+t.weigh).toLowerCase();if(!b.includes(q))return false}return true})}
+ if(q&&!(t._s||(t._s=(t.t+" "+t.orig+" "+t.rec+" "+t.ex+" "+t.cat+" "+t.weigh).toLowerCase())).includes(q))return false;return true})}
 function hl(s,q){s=esc(s);if(!q)return s;const i=s.toLowerCase().indexOf(q);return i<0?s:s.slice(0,i)+"<mark>"+s.slice(i,i+q.length)+"</mark>"+s.slice(i+q.length)}
 function render(){const rows=filt(),q=document.getElementById("q").value.trim().toLowerCase();
  document.getElementById("count").innerHTML=`Hiển thị <b>${rows.length}</b> / ${T.length} nội dung chính`;
