@@ -169,7 +169,7 @@ thead.calc-group tr{background:#334155;color:#fff}
   <!-- LABOR TAB -->
   <div class="tab-panel active" id="tab-labor">
     <div class="filters">
-      <input type="text" id="laborSearch" placeholder="🔍 Tìm công tác..." oninput="renderLabor()">
+      <input type="text" id="laborSearch" placeholder="🔍 Tìm công tác..." oninput="debounce(renderLabor)">
       <select id="laborDiv" onchange="renderLabor()"></select>
     </div>
     <div class="action-bar" id="laborActionBar" style="display:none">
@@ -183,7 +183,7 @@ thead.calc-group tr{background:#334155;color:#fff}
   <!-- EQUIPMENT TAB -->
   <div class="tab-panel" id="tab-equipment">
     <div class="filters">
-      <input type="text" id="equipSearch" placeholder="🔍 Tìm thiết bị..." oninput="renderEquip()">
+      <input type="text" id="equipSearch" placeholder="🔍 Tìm thiết bị..." oninput="debounce(renderEquip)">
       <select id="equipCat" onchange="renderEquip()"></select>
     </div>
     <div class="action-bar" id="equipActionBar" style="display:none">
@@ -912,6 +912,12 @@ function addAllLabor() {
 function clearSelectedLabor() {
   selectedLabor.clear();
   renderLabor();
+}
+
+const _deb = new Map();
+function debounce(fn, ms = 150) {
+  clearTimeout(_deb.get(fn));
+  _deb.set(fn, setTimeout(fn, ms));
 }
 
 function renderLabor() {

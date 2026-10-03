@@ -338,7 +338,7 @@ document.getElementById('months').onchange=e=>setMonths(+e.target.value);
 function setMonths(m){state.months=Math.max(1,Math.min(60,m||1));document.getElementById('months').value=state.months;syncPresets();renderAll();}
 document.getElementById('thr').onchange=e=>{state.thr=+e.target.value||1;renderAll();};
 document.getElementById('hideZero').onchange=e=>{state.hideZero=e.target.checked;renderDetail();};
-document.getElementById('search').oninput=e=>{state.search=e.target.value.trim().toLowerCase();renderDetail();document.getElementById('search').focus();};
+let searchT;document.getElementById('search').oninput=e=>{state.search=e.target.value.trim().toLowerCase();clearTimeout(searchT);searchT=setTimeout(()=>{renderDetail();document.getElementById('search').focus();},150);};
 document.getElementById('expandAll').onclick=()=>{state.collapsed={};renderDetail();};
 document.getElementById('collapseAll').onclick=()=>{
   state.collapsed={};DATA.bands[state.band].items.forEach(it=>{state.collapsed['S:'+it.section]=true;});renderDetail();

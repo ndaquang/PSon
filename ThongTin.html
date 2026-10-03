@@ -427,8 +427,9 @@ function boot(){
   $('statCo').textContent=COMPANIES.length.toLocaleString('vi-VN');
   renderRail();
   render();
-  $('search').addEventListener('input',e=>{query=e.target.value.trim().toLowerCase();shown=PAGE;render();});
-  $('coSearch').addEventListener('input',e=>{coQuery=e.target.value.trim().toLowerCase();renderRail();});
+  let qT,cT;
+  $('search').addEventListener('input',e=>{query=e.target.value.trim().toLowerCase();shown=PAGE;clearTimeout(qT);qT=setTimeout(render,150);});
+  $('coSearch').addEventListener('input',e=>{coQuery=e.target.value.trim().toLowerCase();clearTimeout(cT);cT=setTimeout(renderRail,120);});
   $('logout').addEventListener('click',()=>location.reload());
   $('menuBtn').addEventListener('click',()=>$('rail').classList.toggle('open'));
 }
