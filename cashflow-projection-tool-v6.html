@@ -465,7 +465,9 @@ function runEngine(S,ov){
   const ipcDetail=[];
   // ---- INFLOW: Tam ung CDT ----
   const advAmt=cv*c.advPct/100;
-  spread(inAdv,0,advL,advAmt,H);
+  // Tam ung CDT: nhan 1 LAN, don vao thang chua ngay nhan (khong chia ty le giua 2 thang)
+  const advM=Math.min(H,Math.max(0,Math.ceil((+c.advDays||0)/30)));
+  inAdv[advM]+=advAmt;
   let advR=advAmt,cumRev=0,retHeld=0,fhHeld=0,buf=0;
   const cycle=Math.max(1,Math.round(+c.ipcCycle||1));
   const retCap=(+c.retCapPct||0)>0?cv*c.retCapPct/100:Infinity;
@@ -613,7 +615,7 @@ function runEngine(S,ov){
   const ntpWeeks=Object.keys(ntpSched).map(Number).sort((a,b)=>a-b).map(d=>({payDay:d,wk:ntpSched[d].wk,t:ntpSched[d].t,amt:ntpSched[d].amt}));
 
   // ---- Mo rong THANG -> TUAN (chi de HIEN THI, khong doi gia tri thang) ----
-  const weeks=expandToWeeks(rows,H,ntpSchedDay,outNTPRetention,S.opts.loanOn,S.opts.loanRate);
+  const weeks=expandToWeeks(rows,H,ntpSchedDay,outNTPRetention,S.opts.loanOn,S.opts.loanRate,{day:+c.advDays||0,amt:advAmt});
 
   return{rows,H,H_settle,minC,minM,be,ipcDetail,loanStats,leftAdv,leftSubAdv,leftSubAdvWarn,ntpWeeks,lagIn,peakOut,peakOutM,
     negFrom:negRows.length?negRows[0].m:null,negTo:negRows.length?negRows[negRows.length-1].m:null,negN:negRows.length,
@@ -623,7 +625,7 @@ function runEngine(S,ov){
 
 // Chia nho moi thang (rows[m]) ra cac tuan lich, bao toan tuyet doi tung thanh phan.
 // Da kiem chung 36/36 test: sum(tuan trong thang)=gia tri thang, tong toan cuc khop 100%.
-function expandToWeeks(rows,H,ntpSchedDay,outNTPRetention,loanOn,loanRatePct){
+function expandToWeeks(rows,H,ntpSchedDay,outNTPRetention,loanOn,loanRatePct,adv){
   const Wtotal=Math.ceil(H*30/7)+1;
   const weeks=[];
   for(let w=1;w<=Wtotal;w++)weeks.push({w,dayStart:(w-1)*7,dayEnd:w*7,m:Math.min(H,Math.ceil((w*7)/30)),
@@ -640,12 +642,15 @@ function expandToWeeks(rows,H,ntpSchedDay,outNTPRetention,loanOn,loanRatePct){
     }
   }
   for(let m=0;m<=H;m++){
-    distribute(rows[m].inAdv,m,'inAdv');
     distribute(rows[m].inIPC,m,'inIPC');
     distribute(rows[m].inRet,m,'inRet');
     distribute(rows[m].outAdv,m,'outAdv');
     distribute(rows[m].outInt,m,'outInt');
     if(outNTPRetention&&outNTPRetention[m])distribute(outNTPRetention[m],m,'outNTP');
+  }
+  { // tam ung CDT: dat dung tuan chua ngay nhan
+    const aw=Math.min(weeks.length-1,Math.floor(adv.day/7));
+    weeks[Math.max(0,aw)].inAdv+=adv.amt;
   }
   Object.keys(ntpSchedDay).forEach(dayStr=>{
     const info=ntpSchedDay[dayStr],day=+dayStr,wi=Math.floor(day/7);
