@@ -63,6 +63,7 @@ tr.handover td{border-top:2px dashed var(--ink-2)}
 .pos{color:var(--green)}.negv{color:var(--red)}
 td.in{color:var(--green)}td.out{color:var(--red)}
 body.compact .det{display:none}
+.cfseg{display:inline-flex;gap:4px}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:14px}
 fieldset{border:1px solid var(--line);border-radius:8px;padding:12px 16px 14px;background:var(--card)}
 legend{font-weight:700;font-size:14px;padding:0 6px}
@@ -288,14 +289,15 @@ td.keyfig{font-weight:700;color:var(--blue);background:var(--blue-soft)}
 
 <!-- ===== TAB 5 ===== -->
 <section id="t5">
-  <h2>Bảng dòng tiền theo tuần</h2>
+  <h2 id="cfTitle">Bảng dòng tiền theo tuần</h2>
   <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+    <span class="cfseg"><button type="button" class="btn sm" id="cfModeW" onclick="setCfMode('week')">Theo tuần</button><button type="button" class="btn ghost sm" id="cfModeM" onclick="setCfMode('month')">Gộp theo tháng</button></span>
     <button class="btn ghost sm" onclick="document.body.classList.toggle('compact')">⇄ Gọn / Chi tiết</button>
-    <span class="note" style="margin:0">Đơn vị tính: <b>tuần (7 ngày)</b>, cột phụ ghi tháng tương ứng · Dòng nền vàng = lũy kế âm · viền đậm = đỉnh thiếu hụt · nét đứt = mốc bàn giao · bảng dừng ở <b>mốc hoàn tiền quyết toán</b>, giai đoạn bảo hành còn lại gộp 1 dòng rút gọn.</span>
+    <span class="note" style="margin:0" id="cfNote">Đơn vị tính: <b>tuần (7 ngày)</b>, cột phụ ghi tháng tương ứng · Dòng nền vàng = lũy kế âm · viền đậm = đỉnh thiếu hụt · nét đứt = mốc bàn giao · bảng dừng ở <b>mốc hoàn tiền quyết toán</b>, giai đoạn bảo hành còn lại gộp 1 dòng rút gọn.</span>
   </div>
   <div class="twrap"><table id="cfT">
     <thead><tr>
-      <th>Tuần</th><th>SL tuần</th>
+      <th id="cfH1">Tuần</th><th id="cfH2">SL tuần</th>
       <th class="det">Tạm ứng CĐT</th><th class="det">Thu IPC ròng</th><th class="det">Hoàn giữ lại</th><th>Σ Thu</th>
       <th class="det">Tạm ứng NTP</th><th class="det">Trả NTP</th><th class="det">Chi nội bộ</th><th>Σ Chi</th>
       <th>Ròng</th><th>Lũy kế</th><th class="det">Vay (số dư âm)</th><th class="det">Lãi vay tháng</th>
@@ -816,16 +818,31 @@ function recalc(){
   });
   // cashflow table - THEO TUAN, cat tai moc quyet toan, phan con lai rut gon 1 dong
   const tb=document.querySelector('#cfT tbody');tb.innerHTML='';
-  const wc=weekCut(R);
-  const shown=R.weeks.slice(0,wc), rest=R.weeks.slice(wc);
+  const isM=cfMode==='month';
+  const cutM=(S.view&&S.view.full)?R.rows.length:Math.min(R.rows.length,Math.ceil(R.H_settle)+1);
+  const wc=isM?cutM:weekCut(R);
+  const src=isM?R.rows:R.weeks;
+  const U=isM?'T':'W', key=isM?'m':'w';
+  const shown=src.slice(0,wc), rest=src.slice(wc);
+  const last=src[src.length-1];
+  document.getElementById('cfTitle').textContent=isM?'Bảng dòng tiền theo tháng':'Bảng dòng tiền theo tuần';
+  document.getElementById('cfH1').textContent=isM?'Tháng':'Tuần';
+  document.getElementById('cfH2').textContent=isM?'SL tháng':'SL tuần';
+  document.getElementById('cfModeW').className='btn sm'+(isM?' ghost':'');
+  document.getElementById('cfModeM').className='btn sm'+(isM?'':' ghost');
+  document.getElementById('cfNote').innerHTML=isM
+    ?'Đơn vị tính: <b>tháng</b> (30 ngày) · Dòng nền vàng = lũy kế âm · viền đậm = đỉnh thiếu hụt · nét đứt = mốc bàn giao · bảng dừng ở <b>mốc hoàn tiền quyết toán</b>, giai đoạn bảo hành còn lại gộp 1 dòng rút gọn.'
+    :'Đơn vị tính: <b>tuần (7 ngày)</b>, cột phụ ghi tháng tương ứng · Dòng nền vàng = lũy kế âm · viền đậm = đỉnh thiếu hụt · nét đứt = mốc bàn giao · bảng dừng ở <b>mốc hoàn tiền quyết toán</b>, giai đoạn bảo hành còn lại gộp 1 dòng rút gọn.';
   const wMinC=R.weeks.reduce((best,x)=>x.cum<best.cum?x:best,R.weeks[0]);
   const wHandover=Math.ceil(S.months*30/7);
+  const minK=isM?R.minM:wMinC.w, hoK=isM?S.months:wHandover;
   shown.forEach(r=>{
+    const k=r[key];
     const tr=document.createElement('tr');
-    let cls=[];if(r.cum<-1e-9)cls.push('neg');if(r.w===wMinC.w&&R.minC<0)cls.push('min');if(r.w===wHandover)cls.push('handover');
+    let cls=[];if(r.cum<-1e-9)cls.push('neg');if(k===minK&&R.minC<0)cls.push('min');if(k===hoK)cls.push('handover');
     tr.className=cls.join(' ');
-    tr.innerHTML=`<td>W${r.w}<span style="color:#8a97a3;font-size:10px"> ·T${r.m}</span>${r.w===wMinC.w&&R.minC<0?' ⚠':''}${r.w===wHandover?' (bàn giao)':''}</td>
-      <td class="num">${fD(r.pvWeek||0)}</td>
+    tr.innerHTML=`<td>${U}${k}${isM?'':`<span style="color:#8a97a3;font-size:10px"> ·T${r.m}</span>`}${k===minK&&R.minC<0?' ⚠':''}${k===hoK?' (bàn giao)':''}</td>
+      <td class="num">${fD(isM?(r.pv||0):(r.pvWeek||0))}</td>
       <td class="num in det">${fD(r.inAdv)}</td><td class="num in det">${fD(r.inIPC)}</td><td class="num in det">${fD(r.inRet)}</td>
       <td class="num in"><b>${fD(r.ti)}</b></td>
       <td class="num out det">${fD(r.outAdv)}</td><td class="num out det">${fD(r.outNTP)}</td><td class="num out det">${fD(r.outInt)}</td>
@@ -840,14 +857,14 @@ function recalc(){
     const sum=f=>rest.reduce((a,x)=>a+(x[f]||0),0);
     const tr=document.createElement('tr');
     tr.style.cssText='background:#f2f5f8;font-style:italic;color:#43506b';
-    tr.innerHTML=`<td>W${wc+1}–W${R.weeks.length} <span style="font-size:10px">(rút gọn · bảo hành)</span></td>
+    tr.innerHTML=`<td>${U}${src[wc][key]}–${U}${last[key]} <span style="font-size:10px">(rút gọn · bảo hành)</span></td>
       <td class="num">—</td>
       <td class="num in det">${fD(sum('inAdv'))}</td><td class="num in det">${fD(sum('inIPC'))}</td><td class="num in det">${fD(sum('inRet'))}</td>
       <td class="num in"><b>${fD(sum('ti'))}</b></td>
       <td class="num out det">${fD(sum('outAdv'))}</td><td class="num out det">${fD(sum('outNTP'))}</td><td class="num out det">${fD(sum('outInt'))}</td>
       <td class="num out"><b>${fD(sum('to'))}</b></td>
       <td class="num ${sum('net')<0?'negv':'pos'}">${f1(sum('net'))}</td>
-      <td class="num ${R.weeks[R.weeks.length-1].cum<-1e-9?'negv':'pos'}"><b>${f1(R.weeks[R.weeks.length-1].cum)}</b></td>
+      <td class="num ${last.cum<-1e-9?'negv':'pos'}"><b>${f1(last.cum)}</b></td>
       <td class="det">—</td><td class="num det" style="color:#a25f00">${S.opts.loanOn?fD(sum('loan')):'—'}</td>`;
     tb.appendChild(tr);
   }
@@ -864,6 +881,8 @@ function recalc(){
   drawMain(R);
   runScenarios();
 }
+let cfMode='week';
+function setCfMode(m){cfMode=m;recalc();}
 function buildAnalysis(R){
   if(R.totIn-R.totOut<-0.05){
     return `<p style="background:var(--red-soft);border:1px solid var(--red);border-radius:7px;padding:10px 14px"><strong style="color:var(--red)">⛔ Dự án đang LỖ CẤU TRÚC:</strong> tổng chi ${f1(R.totOut)} tỷ &gt; tổng thu ${f1(R.totIn)} tỷ (chênh ${f1(R.totIn-R.totOut)} tỷ). Con số "đỉnh thiếu hụt ${f1(R.minC)} tỷ tại T${R.minM}" lúc này là <b>khoản lỗ tích lũy</b>, không phải nhu cầu vốn lưu động tạm thời — và không điều khoản thanh toán nào cứu được. Kiểm tra lại: tổng % gói thầu (tab Gói thầu) + chi nội bộ + mobilization phải &lt; 100% GTHĐ để còn biên gộp. Thông thường: gói NTP/NCC ~65–75%, chi nội bộ ~18–22%, biên gộp ~5–12%.</p>`+loanPanel(R);
