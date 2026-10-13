@@ -1,6 +1,6 @@
 # Construction Toolkit — Bộ Công Cụ Xây Dựng
 
-Bộ 18 công cụ cho công tác thi công, đấu thầu, tài chính dự án xây dựng.
+Bộ 17 công cụ cho công tác thi công, đấu thầu, tài chính dự án xây dựng.
 Toàn bộ là **static site**: mỗi công cụ là một file HTML độc lập (HTML/CSS/JS thuần, dữ liệu nhúng sẵn),
 chạy hoàn toàn trên trình duyệt, không cần backend, không upload dữ liệu đi đâu.
 
@@ -13,7 +13,7 @@ Mở `index.html` để vào trang tổng (dashboard) liệt kê tất cả côn
 | Công cụ | File | Mô tả |
 |---|---|---|
 | Định Mức RSMeans v7 | `Dinh-Muc-Xay-Dung-RSMeans-v7.html` | Tra cứu định mức năng suất nhân công & thiết bị theo RSMeans, lọc/sắp xếp, biểu đồ |
-| Định Mức TT10/2019 | `Dinh Muc Xay Dung TT10.2019 - Ban Day Du.html` | Tra cứu định mức dự toán TT10/2019/TT-BXD (bản đầy đủ), lập bảng hao phí VL/NC/MTC theo khối lượng |
+| Định Mức TT10/2019 | `Dinh Muc Xay Dung TT10.2019 - Ban Day Du.html` | Tra cứu định mức dự toán TT10/2019/TT-BXD (bản đầy đủ), lập bảng hao phí VL/NC/MTC theo khối lượng. Có nút “Hướng dẫn” (`Huong-dan-Dinh-Muc-TT10.html`): cách tìm, đọc mã hiệu, chú thích 13 chương |
 | Checklist Nhà Cao Tầng | `Checklist-Nha-Cao-Tang.html` | Checklist QA/QC thi công & dự thầu nhà cao tầng, lưu trạng thái, in được |
 | Checklist Tầng Hầm | `checklist-tang-ham.html` | Checklist QA/QC thi công tầng hầm, in A4 |
 | Biểu Đồ Huy Động | `bieu-do-huy-dong.html` | Lập biểu đồ huy động nhân lực & máy móc, xuất PDF (jsPDF/html2canvas nhúng sẵn) |
@@ -49,14 +49,13 @@ Mở `index.html` để vào trang tổng (dashboard) liệt kê tất cả côn
 | Công cụ | File | Mô tả |
 |---|---|---|
 | Cẩm Nang Đàm Phán HĐ FIDIC | `CAM NANG DAM PHAN HD_FIDIC.html` | Cẩm nang đàm phán hợp đồng thi công FIDIC Red Book theo góc nhìn Nhà thầu, lọc theo chương/mức ưu tiên |
-| Hướng Dẫn Tra Cứu Định Mức TT10 | `Huong-dan-Dinh-Muc-TT10.html` | Hướng dẫn dùng công cụ Định Mức TT10: cách ô tìm kiếm hoạt động, cách đọc mã hiệu, chú thích 13 chương / 73 nhóm mã (tìm mờ theo mã, chương, tên công việc), bảng quy đổi tên gọi ngoài công trường |
 
 ## Cấu trúc thư mục
 
 ```
 .
 ├── index.html     # Dashboard — trang chủ liệt kê công cụ
-├── *.html         # Mỗi công cụ là 1 file độc lập (18 file)
+├── *.html         # Mỗi công cụ là 1 file độc lập (17 file)
 ├── .nojekyll      # Tắt Jekyll trên GitHub Pages
 └── README.md
 ```
