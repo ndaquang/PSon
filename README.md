@@ -1,6 +1,6 @@
 # Construction Toolkit — Bộ Công Cụ Xây Dựng
 
-Bộ 17 công cụ cho công tác thi công, đấu thầu, tài chính dự án xây dựng.
+Bộ 18 công cụ cho công tác thi công, đấu thầu, tài chính dự án xây dựng.
 Toàn bộ là **static site**: mỗi công cụ là một file HTML độc lập (HTML/CSS/JS thuần, dữ liệu nhúng sẵn),
 chạy hoàn toàn trên trình duyệt, không cần backend, không upload dữ liệu đi đâu.
 
@@ -49,13 +49,14 @@ Mở `index.html` để vào trang tổng (dashboard) liệt kê tất cả côn
 | Công cụ | File | Mô tả |
 |---|---|---|
 | Cẩm Nang Đàm Phán HĐ FIDIC | `CAM NANG DAM PHAN HD_FIDIC.html` | Cẩm nang đàm phán hợp đồng thi công FIDIC Red Book theo góc nhìn Nhà thầu, lọc theo chương/mức ưu tiên |
+| Hướng Dẫn Tra Cứu Định Mức TT10 | `Huong-dan-Dinh-Muc-TT10.html` | Hướng dẫn dùng công cụ Định Mức TT10: cách ô tìm kiếm hoạt động, cách đọc mã hiệu, chú thích 13 chương / 73 nhóm mã (tìm mờ theo mã, chương, tên công việc), bảng quy đổi tên gọi ngoài công trường |
 
 ## Cấu trúc thư mục
 
 ```
 .
 ├── index.html     # Dashboard — trang chủ liệt kê công cụ
-├── *.html         # Mỗi công cụ là 1 file độc lập (17 file)
+├── *.html         # Mỗi công cụ là 1 file độc lập (18 file)
 ├── .nojekyll      # Tắt Jekyll trên GitHub Pages
 └── README.md
 ```
