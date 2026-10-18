@@ -178,7 +178,8 @@ td.keyfig{font-weight:700;color:var(--blue);background:var(--blue-soft)}
   <div class="kpis" id="kpis"></div>
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-      <h3 style="margin:0">S-Curve theo TUẦN: Sản lượng · Thu · Chi lũy kế + Dòng tiền lũy kế</h3>
+      <h3 style="margin:0" id="chartTitle">S-Curve theo TUẦN: Sản lượng · Thu · Chi lũy kế + Dòng tiền lũy kế</h3>
+      <span class="cfseg"><button type="button" class="btn sm" id="chModeW" onclick="setChartMode('week')">Theo tuần</button><button type="button" class="btn ghost sm" id="chModeM" onclick="setChartMode('month')">Gộp theo tháng</button></span>
       <label class="chk" style="font-size:13px;color:var(--ink-2)"><input type="checkbox" data-p="view.full">Xem toàn bộ đến hết bảo hành</label>
     </div>
     <canvas id="chartMain" height="130"></canvas>
@@ -824,10 +825,8 @@ function recalc(){
   // cashflow table - THEO TUAN, cat tai moc quyet toan, phan con lai rut gon 1 dong
   const tb=document.querySelector('#cfT tbody');tb.innerHTML='';
   const isM=cfMode==='month';
-  const cutM=(S.view&&S.view.full)?R.rows.length:Math.min(R.rows.length,Math.ceil(R.H_settle)+1);
-  const wc=isM?cutM:weekCut(R);
-  const src=isM?R.rows:R.weeks;
-  const U=isM?'T':'W', key=isM?'m':'w';
+  const V=cfView(R,cfMode);
+  const wc=V.cut, src=V.src, U=V.U, key=V.key;
   const shown=src.slice(0,wc), rest=src.slice(wc);
   const last=src[src.length-1];
   document.getElementById('cfTitle').textContent=isM?'Bảng dòng tiền theo tháng':'Bảng dòng tiền theo tuần';
@@ -886,7 +885,15 @@ function recalc(){
   drawMain(R);
   runScenarios();
 }
-let cfMode='week';
+let cfMode='week',chartMode='week';
+// Cat bang/bieu do tai moc quyet toan, bo cac dong cuoi rong (khong co thu/chi) de gom vao dong bao hanh
+function cfView(R,mode){
+  const isM=mode==='month',src=isM?R.rows:R.weeks,full=!!(S.view&&S.view.full);
+  let cut=full?src.length:(isM?Math.min(src.length,Math.ceil(R.H_settle)+1):weekCut(R));
+  if(!full)while(cut>1&&Math.abs(src[cut-1].ti)+Math.abs(src[cut-1].to)<0.05)cut--;
+  return{isM,src,cut,U:isM?'T':'W',key:isM?'m':'w'};
+}
+function setChartMode(m){chartMode=m;recalc();}
 function setCfMode(m){cfMode=m;recalc();}
 function buildAnalysis(R){
   if(R.totIn-R.totOut<-0.05){
@@ -925,22 +932,25 @@ function weekCut(R){
 }
 function chartCut(R){return (S.view&&S.view.full)?R.rows.length:Math.min(R.rows.length,S.months+4);}
 function setTrimNotes(R){
-  const wc=weekCut(R);
-  const hidden=R.weeks.length-wc;
+  const V=cfView(R,chartMode),wc=V.cut;
+  const hidden=V.src.length-wc;
   // Tinh phan con lai se rut gon: tong retention/bond con lai chua hien thi (dot 2, hoac bond)
   const bondNote=R.bondAmt>0?` Bond bảo hành (CĐT): ${f1(R.bondAmt)} tỷ (không phát sinh dòng tiền — track riêng).`:'';
   const subBondNote=R.subBondAmt>0?` Bond bảo hành (NTP): ${f1(R.subBondAmt)} tỷ.`:'';
   const txt=hidden>0
-    ?`Đang ẩn từ W${wc+1} đến hết bảo hành (giai đoạn sau quyết toán T${S.months}+${fmtLag(R.lagIn)}: chỉ còn đợt hoàn retention cuối kỳ tại T${S.months+S.cdt.dlpMonths}, không ảnh hưởng đỉnh thiếu hụt trong thi công).${bondNote}${subBondNote} Tick "Xem toàn bộ" nếu cần soi.`
-    :(S.view.full?`Đang hiển thị toàn bộ đến hết bảo hành (W${R.weeks.length}).`:'');
+    ?`Đã gộp từ ${V.U}${V.src[wc][V.key]} đến hết bảo hành thành 1 điểm cuối «BH gộp» (giai đoạn sau quyết toán T${S.months}+${fmtLag(R.lagIn)}: chỉ còn đợt hoàn retention cuối kỳ tại T${S.months+S.cdt.dlpMonths}, không ảnh hưởng đỉnh thiếu hụt trong thi công).${bondNote}${subBondNote} Tick "Xem toàn bộ" nếu cần soi từng ${V.isM?'tháng':'tuần'}.`
+    :(S.view.full?`Đang hiển thị toàn bộ đến hết bảo hành (${V.U}${V.src.length-(V.isM?1:0)}).`:'');
   const n1=document.getElementById('trimNote1'),n2=document.getElementById('trimNote2');
   if(n1)n1.textContent=txt;if(n2)n2.textContent=txt;
   document.querySelectorAll('[data-p="view.full"]').forEach(el=>el.checked=!!S.view.full);
 }
 function buildMainCfg(R){
-  const rows=R.weeks.slice(0,weekCut(R));
+  const V=cfView(R,chartMode);
+  const rows=V.src.slice(0,V.cut);
+  const labels=rows.map(r=>V.U+r[V.key]);
+  if(V.cut<V.src.length){rows.push(V.src[V.src.length-1]);labels.push('BH gộp');}
   return{
-    data:{labels:rows.map(r=>'W'+r.w),datasets:[
+    data:{labels,datasets:[
       {type:'line',label:'Sản lượng lũy kế',data:rows.map(r=>r.cp),borderColor:'#16232e',borderDash:[6,4],borderWidth:2,pointRadius:0,tension:.3},
       {type:'line',label:'Thu lũy kế',data:rows.map(r=>r.ci),borderColor:'#1e8e5a',borderWidth:2.5,pointRadius:0,tension:.3},
       {type:'line',label:'Chi lũy kế',data:rows.map(r=>r.co),borderColor:'#c63a3a',borderWidth:2.5,pointRadius:0,tension:.3},
@@ -956,6 +966,9 @@ function buildMainCfg(R){
 function drawMain(R){
   if(chartMain)chartMain.destroy();
   setTrimNotes(R);
+  document.getElementById('chartTitle').textContent='S-Curve theo '+(chartMode==='month'?'THÁNG':'TUẦN')+': Sản lượng · Thu · Chi lũy kế + Dòng tiền lũy kế';
+  document.getElementById('chModeW').className='btn sm'+(chartMode==='month'?' ghost':'');
+  document.getElementById('chModeM').className='btn sm'+(chartMode==='month'?'':' ghost');
   if(!window.Chart)return;
   chartMain=new Chart(document.getElementById('chartMain'),buildMainCfg(R));
 }
