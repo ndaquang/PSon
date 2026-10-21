@@ -26,7 +26,7 @@ Mở `index.html` để vào trang tổng (dashboard) liệt kê tất cả côn
 | QT Đấu Thầu | `CHECKLIST-01-QUY-TRINH-DAU-THAU.html` | Checklist quy trình đấu thầu |
 | QT Đấu Thầu D&B | `CHECKLIST-02-QUY-TRINH-DU-AN-DB.html` | Checklist quy trình dự án Design & Build |
 | Tổng Hợp TCQ / RFI | `TCQ RFI template.html` | Mẫu tổng hợp câu hỏi làm rõ (TCQ) / RFI |
-| Tra Cứu Danh Mục Vật Tư | `Danh-muc-vat-tu-tra-cuu.html` | Tra cứu danh mục vật tư tham khảo, lọc theo nhóm, chọn & xuất danh sách |
+| Danh Mục Vật Tư & BOQ | `Danh-muc-vat-tu-tra-cuu.html` | Nhập BOQ (Excel/CSV/dán, hỗ trợ font TCVN3) → tự đề xuất danh mục vật tư theo từng dòng công việc; tra cứu ~1.800 vật tư phân loại Bộ môn → Nhóm → Loại kèm tiêu chuẩn TCVN; xuất Excel danh mục + bảng đối chiếu BOQ |
 
 ### 💰 Tài Chính
 
@@ -84,6 +84,7 @@ Phần lớn công cụ chạy hoàn toàn offline. Một số công cụ tải 
 | Định Mức RSMeans | Chart.js 3.9 |
 | Cashflow S-Curve | Chart.js 4.4, SheetJS (xlsx) 0.18, jsPDF 2.5, html2canvas 1.4 |
 | Excel Cleaner | JSZip 3.10 |
+| Danh Mục Vật Tư & BOQ | SheetJS (xlsx) 0.18 — chỉ khi nhập file .xls cũ; .xlsx/.csv đọc & xuất offline |
 
 Font chữ dùng Google Fonts; khi offline trình duyệt tự dùng font hệ thống.
 
