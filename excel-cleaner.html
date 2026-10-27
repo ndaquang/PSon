@@ -491,7 +491,7 @@
       <input type="checkbox" id="opt-styles" checked>
       <div class="opt-text">
         <div class="opt-label">Sửa cấu trúc &amp; nén styles.xml (stylesheet)</div>
-        <div class="opt-desc">Sắp xếp lại thứ tự phần tử theo chuẩn OOXML, sửa lệch số lượng (count), và sửa các giá trị thuộc tính vượt phạm vi cho phép (font family, color tint, alignment indent/textRotation...) — khắc phục lỗi "could not read stylesheet" kể cả khi XML vẫn đúng cú pháp</div>
+        <div class="opt-desc">Sắp xếp lại thứ tự phần tử theo chuẩn OOXML, sửa lệch số lượng (count), và sửa các giá trị thuộc tính vượt phạm vi cho phép (font family, color tint, alignment indent/textRotation...) — khắc phục lỗi "could not read stylesheet" kể cả khi XML vẫn đúng cú pháp. <b>Giữ nguyên định dạng số (Comma, Currency, %...), cell style, font, màu</b> — tự đối chiếu trước/sau và hoàn tác nếu phát hiện khác biệt</div>
       </div>
       <span class="opt-badge badge-red">Quan trọng</span>
     </label>
@@ -706,6 +706,7 @@ function repairStylesXml(xmlTxt) {
   leftover = leftover.trim();
 
   // Fix count="" mismatches
+  const originalBlocks = Object.assign({}, blocks);
   let countFixes = 0;
   STYLE_SECTIONS.forEach(sec => {
     if (!sec.hasCount || !blocks[sec.tag]) return;
@@ -726,6 +727,16 @@ function repairStylesXml(xmlTxt) {
 
   const canonicalTags = STYLE_SECTIONS.map(s => s.tag).filter(t => blocks[t]);
   const reordered = JSON.stringify(canonicalTags) !== JSON.stringify(originalOrder);
+
+  // Order is already correct: patch only the sections whose count changed and leave
+  // every other byte of styles.xml (number formats, cell styles...) exactly as it was.
+  if (!reordered) {
+    let patched = txt;
+    canonicalTags.forEach(t => {
+      if (blocks[t] !== originalBlocks[t]) patched = patched.replace(originalBlocks[t], () => blocks[t]);
+    });
+    return { txt: patched, changed: changed || countFixes > 0, countFixes, reordered: false };
+  }
 
   const newBody = canonicalTags.map(t => blocks[t]).join('') + leftover;
   const newTxt = `<styleSheet${rootAttrs}>${newBody}</styleSheet>`;
@@ -806,6 +817,44 @@ function fixOutOfRangeStyleValues(xmlTxt) {
   return { txt, fixes, total };
 }
 
+// ---- FORMAT PRESERVATION ----
+// Cleaning must never change how cells look. Number formats (Comma, Currency, %...),
+// the xf records that link cells to fonts/fills/borders, and named cell styles are
+// all defined in styles.xml, so they are snapshotted before and compared after.
+
+// Only whitespace BETWEEN tags is safe to drop. Whitespace inside attribute values is
+// significant — e.g. formatCode="#,##0.00&quot;  m2&quot;" or a cell style named "Comma  2".
+function compactStylesWhitespace(xmlTxt) {
+  return xmlTxt.replace(/>\s+</g, '><');
+}
+
+const TAG_ATTRS = '(?:[^>"]|"[^"]*")*'; // tag body that tolerates ">" inside quoted values
+
+function styleFingerprint(xmlTxt) {
+  const section = tag => {
+    const m = xmlTxt.match(new RegExp(`<${tag}\\b${TAG_ATTRS}>[\\s\\S]*?<\\/${tag}>`));
+    return m ? m[0] : '';
+  };
+  const attr = (tagTxt, name) => {
+    const m = tagTxt.match(new RegExp(`\\s${name}="([^"]*)"`));
+    return m ? m[1] : '';
+  };
+  const items = (tag, child, names) => {
+    const tags = section(tag).match(new RegExp(`<${child}(?=[\\s/>])${TAG_ATTRS}>`, 'g')) || [];
+    return tags.map(t => names.map(n => attr(t, n)).join('|'));
+  };
+  return {
+    numFmts:      items('numFmts', 'numFmt', ['numFmtId', 'formatCode']),
+    cellStyleXfs: items('cellStyleXfs', 'xf', ['numFmtId', 'fontId', 'fillId', 'borderId']),
+    cellXfs:      items('cellXfs', 'xf', ['numFmtId', 'fontId', 'fillId', 'borderId', 'xfId']),
+    cellStyles:   items('cellStyles', 'cellStyle', ['name', 'xfId', 'builtinId']),
+  };
+}
+
+function sameFingerprint(a, b) {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
 async function loadFile(file) {
   currentFile = file;
   $('file-preview').style.display = 'block';
@@ -842,7 +891,7 @@ async function loadFile(file) {
       const sheetMatches = [...wbTxt.matchAll(/name="([^"]+)"/g)];
       sheetMatches.forEach(m => validSheetNames.add(m[1]));
       // Count all definedNames
-      const matches = wbTxt.match(/<definedName/g);
+      const matches = wbTxt.match(/<definedName[\s>]/g);
       scanData.names = matches ? matches.length : 0;
       scanData.hasDefinedNamesBlock = wbTxt.includes('<definedNames>');
       // Count broken names (scan with all checks on for full preview)
@@ -1111,11 +1160,17 @@ async function processFile() {
       setProgress(55, 'Xóa calcChain.xml...');
       const ccSize = (await zip.files['xl/calcChain.xml'].async('uint8array')).length;
       zip.remove('xl/calcChain.xml');
-      // Also remove from content types and rels if present
+      // Also remove from content types and rels if present — a Relationship left pointing at
+      // the deleted part makes Excel report the file as corrupt and "repair" it on open.
       if (zip.files['[Content_Types].xml']) {
         let ct = await zip.files['[Content_Types].xml'].async('string');
         ct = ct.replace(/<Override[^>]*calcChain[^>]*\/>/g, '');
         zip.file('[Content_Types].xml', ct);
+      }
+      if (zip.files['xl/_rels/workbook.xml.rels']) {
+        let rels = await zip.files['xl/_rels/workbook.xml.rels'].async('string');
+        rels = rels.replace(/<Relationship\b[^>]*calcChain[^>]*\/>/gi, '');
+        zip.file('xl/_rels/workbook.xml.rels', rels);
       }
       actions.push({ label: 'calcChain.xml', detail: `Xóa ${fmtSize(ccSize)}`, ok: true });
       log(`Xóa calcChain.xml (${fmtSize(ccSize)})`, 'ok');
@@ -1124,31 +1179,47 @@ async function processFile() {
     // 3. Repair styles.xml structure (element order, count mismatches) + compress
     if (optStyles && zip.files['xl/styles.xml']) {
       setProgress(70, 'Sửa cấu trúc styles.xml...');
-      let stylesTxt = await zip.files['xl/styles.xml'].async('string');
-      const before = stylesTxt.length;
-      const repaired = repairStylesXml(stylesTxt);
-      stylesTxt = repaired.txt;
-      const valueFix = fixOutOfRangeStyleValues(stylesTxt);
-      stylesTxt = valueFix.txt;
-      // Compress excess whitespace
-      stylesTxt = stylesTxt.replace(/\s{2,}/g, ' ').replace(/> </g, '><');
+      const stylesOriginal = await zip.files['xl/styles.xml'].async('string');
+      const before = stylesOriginal.length;
+      const repaired = repairStylesXml(stylesOriginal);
+      const valueFix = fixOutOfRangeStyleValues(repaired.txt);
+      // Compact whitespace between tags only — never inside attribute values
+      let stylesTxt = compactStylesWhitespace(valueFix.txt);
+
+      // Safety net: formatting (number formats, xf links, cell styles) must come out identical.
+      const fpBefore = styleFingerprint(stylesOriginal);
+      const fpAfter  = styleFingerprint(stylesTxt);
+      const brokeFormat = !sameFingerprint(fpBefore, fpAfter);
+      const brokeXml    = isWellFormed(stylesOriginal) && !isWellFormed(stylesTxt);
+      const reverted = brokeFormat || brokeXml;
+      if (reverted) {
+        stylesTxt = stylesOriginal;
+        log(`⚠ Sửa styles.xml sẽ làm thay đổi ${brokeFormat ? 'định dạng ô' : 'cấu trúc XML'} — đã hoàn tác, giữ nguyên styles.xml gốc`, 'warn');
+      }
       const stillWellFormed = isWellFormed(stylesTxt);
       zip.file('xl/styles.xml', stylesTxt);
       const saved = before - stylesTxt.length;
+      const commaStyles = fpBefore.cellStyles.map(s => s.split('|')[0]).filter(n => /^comma/i.test(n));
+      log(`Định dạng giữ nguyên: ${fpBefore.numFmts.length} số định dạng tùy chỉnh · ${fpBefore.cellXfs.length} cellXfs · ${fpBefore.cellStyles.length} cell style` +
+          (commaStyles.length ? ` (có Comma style: ${commaStyles.join(', ')})` : ''), 'ok');
 
       const parts = [];
-      if (repaired.reordered) parts.push('sắp xếp lại thứ tự phần tử theo chuẩn OOXML');
-      if (repaired.countFixes > 0) parts.push(`sửa ${repaired.countFixes} mục lệch count`);
-      if (valueFix.total > 0) {
-        const d = valueFix.fixes;
-        const dp = [];
-        if (d.family) dp.push(`${d.family} font family`);
-        if (d.tint) dp.push(`${d.tint} color tint`);
-        if (d.indent) dp.push(`${d.indent} alignment indent`);
-        if (d.textRotation) dp.push(`${d.textRotation} textRotation`);
-        parts.push(`sửa ${valueFix.total} giá trị vượt phạm vi (${dp.join(', ')})`);
+      if (!reverted) {
+        if (repaired.reordered) parts.push('sắp xếp lại thứ tự phần tử theo chuẩn OOXML');
+        if (repaired.countFixes > 0) parts.push(`sửa ${repaired.countFixes} mục lệch count`);
+        if (valueFix.total > 0) {
+          const d = valueFix.fixes;
+          const dp = [];
+          if (d.family) dp.push(`${d.family} font family`);
+          if (d.tint) dp.push(`${d.tint} color tint`);
+          if (d.indent) dp.push(`${d.indent} alignment indent`);
+          if (d.textRotation) dp.push(`${d.textRotation} textRotation`);
+          parts.push(`sửa ${valueFix.total} giá trị vượt phạm vi (${dp.join(', ')})`);
+        }
       }
-      if (parts.length > 0) {
+      if (reverted) {
+        actions.push({ label: 'styles.xml', detail: 'Hoàn tác — giữ nguyên bản gốc để bảo toàn định dạng', ok: false });
+      } else if (parts.length > 0) {
         actions.push({ label: 'styles.xml', detail: `${parts.join(', ')} · tiết kiệm ${fmtSize(saved)}`, ok: true });
         log(`Sửa cấu trúc styles.xml: ${parts.join(', ')} (tiết kiệm ${fmtSize(saved)})`, 'ok');
       } else if (saved > 0) {

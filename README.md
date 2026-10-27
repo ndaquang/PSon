@@ -41,7 +41,7 @@ Mở `index.html` để vào trang tổng (dashboard) liệt kê tất cả côn
 | Công cụ | File | Mô tả |
 |---|---|---|
 | Số Tiền Bằng Chữ | `so-tien-bang-chu.html` | Đổi số tiền thành chữ tiếng Việt / tiếng Anh |
-| Excel Cleaner | `excel-cleaner.html` | Làm sạch file Excel (.xlsx): bỏ định dạng thừa, style rác, ô trống… |
+| Excel Cleaner | `excel-cleaner.html` | Sửa lỗi "invalid XML" / stylesheet, xóa named range lỗi và calcChain cho file Excel (.xlsx…) — **giữ nguyên định dạng ô** (Comma style, định dạng số, font, màu) |
 | Danh Bạ Email | `ThongTin.html` | Danh bạ email tra cứu — dữ liệu được **mã hóa** (AES, PBKDF2), cần mật khẩu để mở |
 
 ### 📚 Tài Liệu
