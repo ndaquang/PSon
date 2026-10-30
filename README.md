@@ -1,6 +1,6 @@
 # Construction Toolkit — Bộ Công Cụ Xây Dựng
 
-Bộ 17 công cụ cho công tác thi công, đấu thầu, tài chính dự án xây dựng.
+Bộ 18 công cụ cho công tác thi công, đấu thầu, tài chính dự án xây dựng.
 Toàn bộ là **static site**: mỗi công cụ là một file HTML độc lập (HTML/CSS/JS thuần, dữ liệu nhúng sẵn),
 chạy hoàn toàn trên trình duyệt, không cần backend, không upload dữ liệu đi đâu.
 
@@ -42,6 +42,7 @@ Mở `index.html` để vào trang tổng (dashboard) liệt kê tất cả côn
 |---|---|---|
 | Số Tiền Bằng Chữ | `so-tien-bang-chu.html` | Đổi số tiền thành chữ tiếng Việt / tiếng Anh |
 | Excel Cleaner | `excel-cleaner.html` | Sửa lỗi "invalid XML" / stylesheet, xóa named range lỗi và calcChain cho file Excel (.xlsx…) — **giữ nguyên định dạng ô** (Comma style, định dạng số, font, màu) |
+| Excel In & PDF | `excel-print-pdf.html` | Cài đặt in cho toàn bộ file Excel (khổ giấy, hướng, vừa 1 trang ngang, lề, vùng in, dòng tiêu đề lặp tự dò theo BOQ, header/footer, ngắt trang) → tải xlsx đã cài đặt, hoặc xuất PDF ngay trong trình duyệt (xem trước + tải về) |
 | Danh Bạ Email | `ThongTin.html` | Danh bạ email tra cứu — dữ liệu được **mã hóa** (AES, PBKDF2), cần mật khẩu để mở |
 
 ### 📚 Tài Liệu
@@ -55,7 +56,8 @@ Mở `index.html` để vào trang tổng (dashboard) liệt kê tất cả côn
 ```
 .
 ├── index.html     # Dashboard — trang chủ liệt kê công cụ
-├── *.html         # Mỗi công cụ là 1 file độc lập (17 file)
+├── *.html         # Mỗi công cụ là 1 file độc lập (18 file)
+├── lib/           # Thư viện đóng gói sẵn cho Excel In & PDF (xem lib/README.md)
 ├── .nojekyll      # Tắt Jekyll trên GitHub Pages
 └── README.md
 ```
@@ -84,6 +86,7 @@ Phần lớn công cụ chạy hoàn toàn offline. Một số công cụ tải 
 | Định Mức RSMeans | Chart.js 3.9 |
 | Cashflow S-Curve | Chart.js 4.4, SheetJS (xlsx) 0.18, jsPDF 2.5, html2canvas 1.4 |
 | Excel Cleaner | JSZip 3.10 |
+| Excel In & PDF | Không dùng CDN — thư viện nằm trong `lib/`: JSZip 3.10, ExcelJS 4.4, pdfmake 0.2 (kèm font Roboto), SSF 0.11 |
 | Danh Mục Vật Tư & BOQ | SheetJS (xlsx) 0.18 — chỉ khi nhập file .xls cũ; .xlsx/.csv đọc & xuất offline |
 
 Font chữ dùng Google Fonts; khi offline trình duyệt tự dùng font hệ thống.

@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Excel In &amp; PDF</title>
+<script src="lib/jszip.min.js"></script>
+<script src="lib/exceljs.min.js"></script>
+<script src="lib/ssf.js"></script>
+<script src="lib/pdfmake.min.js"></script>
+<script src="lib/vfs_fonts.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0d0d0d; --surface: #141414; --surface2: #1a1a1a;
+    --border: #2a2a2a; --border2: #333;
+    --text: #e8e4dc; --muted: #777; --muted2: #444;
+    --accent: #c8f05a; --accent-dim: rgba(200,240,90,0.1); --accent-dim2: rgba(200,240,90,0.06);
+    --red: #ff5f5f; --red-dim: rgba(255,95,95,0.1);
+    --amber: #f0a040; --amber-dim: rgba(240,160,64,0.1);
+    --blue: #5fa8ff; --blue-dim: rgba(95,168,255,0.1);
+    --mono: 'DM Mono', monospace; --sans: 'Syne', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px; opacity: 0.4; pointer-events: none; z-index: 0;
+  }
+  .container { position: relative; z-index: 1; width: 100%; max-width: 980px; padding: 48px 24px 80px; }
+
+  header { margin-bottom: 40px; }
+  .logo-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .logo-icon { width: 36px; height: 36px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+  .logo-icon svg { width: 20px; height: 20px; }
+  h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+  .tagline { font-family: var(--mono); font-size: 12px; color: var(--muted); letter-spacing: 0.05em; }
+  .back { font-family: var(--mono); font-size: 11px; color: var(--muted); text-decoration: none; display: inline-block; margin-bottom: 18px; }
+  .back:hover { color: var(--accent); }
+
+  .dropzone { border: 1.5px dashed var(--border2); border-radius: 12px; padding: 44px 32px; text-align: center; cursor: pointer; transition: border-color .15s, background .15s; background: var(--accent-dim2); position: relative; overflow: hidden; }
+  .dropzone:hover, .dropzone.dragover { border-color: var(--accent); background: var(--accent-dim); }
+  .dropzone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .drop-icon { width: 48px; height: 48px; margin: 0 auto 16px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+  .drop-icon svg { width: 22px; height: 22px; stroke: var(--accent); fill: none; }
+  .drop-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .drop-sub { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+
+  .panel { margin-top: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .panel-h { padding: 12px 16px; font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .08em; border-bottom: 1px solid var(--border); text-transform: uppercase; display: flex; align-items: center; gap: 10px; }
+  .panel-h .sp { flex: 1; }
+  .panel-h button { font-family: var(--mono); font-size: 10.5px; text-transform: none; letter-spacing: 0; }
+  .panel-b { padding: 14px 16px; }
+
+  .file-row { display: flex; align-items: center; padding: 12px 16px; gap: 12px; border-bottom: 1px solid var(--border); }
+  .file-icon { width: 32px; height: 32px; background: rgba(200,240,90,.1); border: 1px solid rgba(200,240,90,.2); border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .file-icon svg { width: 16px; height: 16px; stroke: var(--accent); fill: none; }
+  .file-name { font-size: 13px; font-weight: 500; word-break: break-all; }
+  .file-size { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .file-remove { margin-left: auto; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; line-height: 1; padding: 4px; }
+  .file-remove:hover { color: var(--red); }
+  #scan-info { padding: 12px 16px; font-family: var(--mono); font-size: 11px; color: var(--muted); line-height: 1.8; }
+  #scan-info .stat { color: var(--text); font-weight: 500; }
+  #scan-info .warn { color: var(--amber); }
+  #scan-info .ok { color: var(--accent); }
+  #scan-info .danger { color: var(--red); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+  .fld { display: flex; flex-direction: column; gap: 5px; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .fld.wide { grid-column: 1 / -1; }
+  select, input[type=text] {
+    background: var(--surface2); color: var(--text); border: 1px solid var(--border2); border-radius: 6px;
+    padding: 7px 9px; font-family: var(--mono); font-size: 12px; width: 100%; outline: none;
+  }
+  select:focus, input[type=text]:focus { border-color: var(--accent); }
+  input.bad { border-color: var(--red); background: var(--red-dim); }
+  .chk { display: flex; align-items: flex-start; gap: 10px; font-size: 12.5px; cursor: pointer; }
+  .chk input { width: 15px; height: 15px; accent-color: var(--accent); margin-top: 2px; flex-shrink: 0; }
+  .chk small { display: block; font-family: var(--mono); font-size: 10.5px; color: var(--muted); margin-top: 2px; line-height: 1.5; }
+  .sep { height: 1px; background: var(--border); margin: 14px 0; }
+  .sub { font-family: var(--mono); font-size: 10.5px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 10px; }
+  .hint { font-family: var(--mono); font-size: 10.5px; color: var(--muted); line-height: 1.6; margin-top: 8px; }
+  .hint code { background: var(--surface2); border: 1px solid var(--border2); padding: 0 4px; border-radius: 3px; color: var(--text); }
+
+  .tbl-wrap { overflow-x: auto; }
+  table.sheets { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 720px; }
+  table.sheets th { text-align: left; font-family: var(--mono); font-size: 10px; font-weight: 400; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  table.sheets td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  table.sheets tr:last-child td { border-bottom: none; }
+  table.sheets tr.off td { opacity: .45; }
+  table.sheets td.name { font-weight: 600; word-break: break-word; min-width: 120px; }
+  table.sheets td .cur { font-family: var(--mono); font-size: 10.5px; color: var(--muted); line-height: 1.6; }
+  table.sheets td .w { font-family: var(--mono); font-size: 10.5px; color: var(--amber); line-height: 1.6; }
+  table.sheets input[type=text] { min-width: 110px; padding: 5px 7px; font-size: 11.5px; }
+  table.sheets select { padding: 5px 7px; font-size: 11.5px; min-width: 96px; }
+  table.sheets input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--accent); }
+
+  .btn { padding: 13px 18px; background: var(--accent); color: #0d0d0d; border: none; border-radius: 8px; font-family: var(--sans); font-size: 13.5px; font-weight: 700; cursor: pointer; transition: opacity .15s, transform .1s; }
+  .btn:hover { opacity: .9; } .btn:active { transform: scale(.99); }
+  .btn:disabled { opacity: .4; cursor: default; transform: none; }
+  .btn.ghost { background: transparent; color: var(--accent); border: 1px solid rgba(200,240,90,.4); }
+  .btn.mini { padding: 4px 9px; border-radius: 5px; font-size: 11px; font-weight: 500; font-family: var(--mono); }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+  @media (max-width: 560px) { .actions { grid-template-columns: 1fr; } }
+
+  #progress-wrap { display: none; margin-top: 16px; }
+  .progress-bg { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 8px; }
+  .progress-fill { height: 100%; background: var(--accent); width: 0; transition: width .3s ease; }
+  .progress-label { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+  #pdf-panel { display: none; }
+  #pdf-frame { width: 100%; height: 78vh; border: none; background: #222; display: block; }
+  .pdf-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .pdf-bar .sp { flex: 1; }
+  .pdf-bar b { color: var(--accent); font-weight: 500; }
+
+  #log-wrap { display: none; margin-top: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .log-header { padding: 10px 16px; font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+  #log-body { padding: 12px 16px; font-family: var(--mono); font-size: 11px; line-height: 1.9; color: var(--muted); max-height: 220px; overflow-y: auto; }
+  #log-body .l-ok { color: var(--accent); } #log-body .l-info { color: var(--blue); } #log-body .l-warn { color: var(--amber); } #log-body .l-err { color: var(--red); }
+
+  .section-off { display: none; }
+  footer { margin-top: 48px; font-family: var(--mono); font-size: 11px; color: var(--muted2); text-align: center; line-height: 1.8; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <a class="back" href="index.html">← Trang chủ</a>
+  <header>
+    <div class="logo-row">
+      <div class="logo-icon">
+        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 7V3h8v4M6 14H4a1 1 0 01-1-1V8a1 1 0 011-1h12a1 1 0 011 1v5a1 1 0 01-1 1h-2" stroke="#0d0d0d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="6" y="11" width="8" height="6" rx="1" fill="#0d0d0d"/>
+        </svg>
+      </div>
+      <h1>Excel In &amp; PDF</h1>
+    </div>
+    <p class="tagline">// cài đặt in cho toàn bộ file · tải xlsx đã chỉnh · xuất PDF ngay trong trình duyệt</p>
+  </header>
+
+  <!-- 1. FILE -->
+  <div class="dropzone" id="dropzone">
+    <input type="file" id="file-input" accept=".xlsx,.xlsm" />
+    <div class="drop-icon">
+      <svg viewBox="0 0 24 24" stroke-width="1.5"><path d="M12 16V4m0 0l-4 4m4-4l4 4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 20h16" stroke-linecap="round"/></svg>
+    </div>
+    <div class="drop-title">Kéo thả file Excel vào đây</div>
+    <div class="drop-sub">xlsx · xlsm — xử lý hoàn toàn trong trình duyệt, không upload server</div>
+  </div>
+
+  <div class="panel section-off" id="file-panel">
+    <div class="file-row">
+      <div class="file-icon"><svg viewBox="0 0 24 24" stroke-width="1.5"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div><div class="file-name" id="f-name">—</div><div class="file-size" id="f-size">—</div></div>
+      <button class="file-remove" id="btn-remove" title="Bỏ file">×</button>
+    </div>
+    <div id="scan-info">Đang phân tích...</div>
+  </div>
+
+  <!-- 2. SHEETS -->
+  <div class="panel section-off" id="sheets-panel">
+    <div class="panel-h">Sheet cần in <span class="sp"></span>
+      <button class="btn ghost mini" id="btn-all">Chọn tất cả</button>
+      <button class="btn ghost mini" id="btn-redetect">Dò lại vùng in / tiêu đề</button>
+    </div>
+    <div class="tbl-wrap">
+      <table class="sheets">
+        <thead><tr><th></th><th>Sheet</th><th>Vùng in</th><th>Dòng tiêu đề lặp</th><th>Hướng giấy</th><th>Hiện tại trong file</th></tr></thead>
+        <tbody id="sheet-rows"></tbody>
+      </table>
+    </div>
+    <div class="panel-b" style="border-top:1px solid var(--border)">
+      <div class="grid">
+        <label class="fld">Vùng in
+          <select id="s-areamode">
+            <option value="keep">Giữ vùng in hiện có, dò nếu chưa có</option>
+            <option value="detect">Luôn dò theo dữ liệu thực</option>
+          </select>
+        </label>
+        <label class="fld">Dòng tiêu đề lặp
+          <select id="s-titlemode">
+            <option value="keep">Giữ hiện có, tự dò dòng tiêu đề BOQ nếu chưa có</option>
+            <option value="detect">Luôn tự dò dòng tiêu đề BOQ</option>
+            <option value="none">Không đặt</option>
+          </select>
+        </label>
+      </div>
+      <div class="hint">Vùng in nhập dạng <code>A1:G200</code>; dòng tiêu đề dạng <code>4:5</code> (hoặc <code>4</code>). Để trống = không thay đổi. Sửa trực tiếp trong bảng nếu dò chưa đúng.</div>
+    </div>
+  </div>
+
+  <!-- 3. SETUP -->
+  <div class="panel section-off" id="setup-panel">
+    <div class="panel-h">Cài đặt in (áp dụng cho các sheet đã chọn)</div>
+    <div class="panel-b">
+      <div class="grid">
+        <label class="fld">Mẫu có sẵn
+          <select id="s-preset">
+            <option value="boq_a4l">BOQ — A4 ngang</option>
+            <option value="boq_a3l">BOQ — A3 ngang</option>
+            <option value="a4p">Văn bản — A4 dọc</option>
+            <option value="custom">Tùy chỉnh</option>
+          </select>
+        </label>
+        <label class="fld">Khổ giấy
+          <select id="s-paper"><option value="A4">A4</option><option value="A3">A3</option><option value="A5">A5</option><option value="LETTER">Letter</option></select>
+        </label>
+        <label class="fld">Hướng giấy mặc định
+          <select id="s-orient"><option value="auto">Tự động theo độ rộng bảng</option><option value="landscape">Ngang</option><option value="portrait">Dọc</option></select>
+        </label>
+      </div>
+      <div class="sep"></div>
+      <div class="sub">Lề (cm)</div>
+      <div class="grid">
+        <label class="fld">Trái <input type="text" id="s-ml" inputmode="decimal"></label>
+        <label class="fld">Phải <input type="text" id="s-mr" inputmode="decimal"></label>
+        <label class="fld">Trên <input type="text" id="s-mt" inputmode="decimal"></label>
+        <label class="fld">Dưới <input type="text" id="s-mb" inputmode="decimal"></label>
+        <label class="fld">Header cách mép <input type="text" id="s-mh" inputmode="decimal"></label>
+        <label class="fld">Footer cách mép <input type="text" id="s-mf" inputmode="decimal"></label>
+      </div>
+      <div class="sep"></div>
+      <div class="grid">
+        <label class="chk"><input type="checkbox" id="s-fit" checked><span>Vừa 1 trang theo chiều ngang<small>fitToWidth = 1, chiều dọc tự do. PDF luôn co vừa chiều ngang trang.</small></span></label>
+        <label class="chk"><input type="checkbox" id="s-hcenter"><span>Căn giữa trang theo chiều ngang</span></label>
+        <label class="chk"><input type="checkbox" id="s-clearbreaks"><span>Xóa ngắt trang thủ công<small>Bỏ các dấu ngắt trang cũ do người lập file đặt</small></span></label>
+        <label class="chk"><input type="checkbox" id="s-dropprinter" checked><span>Bỏ thiết lập máy in cũ (printerSettings)<small>Gắn với máy in của người gửi, làm nặng file và có thể gây lệch khổ giấy</small></span></label>
+      </div>
+      <div class="sep"></div>
+      <div class="sub">Header / Footer</div>
+      <div class="grid">
+        <label class="fld">Header — trái <input type="text" id="s-hl"></label>
+        <label class="fld">Header — giữa <input type="text" id="s-hc"></label>
+        <label class="fld">Header — phải <input type="text" id="s-hr"></label>
+        <label class="fld">Footer — trái <input type="text" id="s-fl"></label>
+        <label class="fld">Footer — giữa <input type="text" id="s-fc"></label>
+        <label class="fld">Footer — phải <input type="text" id="s-fr"></label>
+      </div>
+      <div class="hint">Mã: <code>&amp;P</code> số trang · <code>&amp;N</code> tổng số trang · <code>&amp;A</code> tên sheet · <code>&amp;D</code> ngày · <code>&amp;T</code> giờ · <code>&amp;F</code> tên file · <code>&amp;&amp;</code> dấu &amp;. Để trống cả 6 ô = giữ header/footer hiện có. Sheet có hình/logo trong header/footer sẽ được giữ nguyên.</div>
+      <div class="sep"></div>
+      <div class="sub">Tùy chọn PDF</div>
+      <div class="grid">
+        <label class="fld">Đánh số trang
+          <select id="s-pagenum"><option value="continuous">Liên tục xuyên suốt các sheet</option><option value="sheet">Bắt đầu lại từ 1 ở mỗi sheet</option></select>
+        </label>
+        <label class="fld">Dấu phân cách số
+          <select id="s-sep"><option value="file">Như trong file (1,234.56)</option><option value="vn">Kiểu Việt Nam (1.234,56)</option></select>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. ACTIONS -->
+  <div class="actions section-off" id="actions">
+    <button class="btn ghost" id="btn-xlsx">⬇ Tải xlsx đã cài đặt in</button>
+    <button class="btn" id="btn-pdf">Xuất PDF</button>
+  </div>
+
+  <div id="progress-wrap">
+    <div class="progress-bg"><div class="progress-fill" id="progress-bar"></div></div>
+    <div class="progress-label" id="progress-label">Đang xử lý...</div>
+  </div>
+
+  <div class="panel" id="pdf-panel">
+    <div class="pdf-bar">
+      <span id="pdf-info"></span><span class="sp"></span>
+      <button class="btn ghost mini" id="btn-pdf-open">Mở tab mới</button>
+      <button class="btn mini" id="btn-pdf-dl">⬇ Tải PDF</button>
+    </div>
+    <div class="hint" id="pdf-hint" style="display:none;padding:14px 16px;margin:0">Trình duyệt này không xem trước PDF ngay trong trang — bấm “Tải PDF” hoặc “Mở tab mới”.</div>
+    <iframe id="pdf-frame" title="Xem trước PDF"></iframe>
+  </div>
+
+  <div id="log-wrap"><div class="log-header">Log</div><div id="log-body"></div></div>
+
+  <footer>
+    // xử lý hoàn toàn trong trình duyệt · không upload server<br>
+    // PDF nhanh vẽ lại từ dữ liệu file (không có hình/biểu đồ/conditional formatting) — cần giống Excel 100% thì tải xlsx rồi in bằng Excel
+  </footer>
+</div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const yieldToUI = () => new Promise(r => setTimeout(r, 0));
+
+// ====================================================================
+// SMALL HELPERS
+// ====================================================================
+const escXml = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const unescXml = s => String(s).replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&#(\d+);/g, (m, n) => String.fromCharCode(+n)).replace(/&amp;/g, '&');
+function parseAttrs(s) {
+  const o = {};
+  String(s).replace(/([\w:.-]+)\s*=\s*"([^"]*)"/g, (m, k, v) => { o[k] = v; return m; });
+  return o;
+}
+const attrsStr = o => Object.keys(o).map(k => ` ${k}="${o[k]}"`).join('');
+function fmtSize(b) { return b < 1024 ? b + ' B' : b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : (b / 1048576).toFixed(2) + ' MB'; }
+
+function colName(n) { let s = ''; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; }
+function colNum(s) { let n = 0; for (const ch of s.toUpperCase()) n = n * 26 + ch.charCodeAt(0) - 64; return n; }
+function parseCellRef(a) { const m = /^\$?([A-Za-z]{1,3})\$?(\d+)$/.exec(String(a).trim()); return m ? { c: colNum(m[1]), r: +m[2] } : null; }
+function parseRange(s) {
+  const parts = String(s).replace(/\$/g, '').split(':');
+  const p = parseCellRef(parts[0]), q = parseCellRef(parts[1] || parts[0]);
+  if (!p || !q) return null;
+  return { r1: Math.min(p.r, q.r), c1: Math.min(p.c, q.c), r2: Math.max(p.r, q.r), c2: Math.max(p.c, q.c) };
+}
+const rangeStr = a => `${colName(a.c1)}${a.r1}:${colName(a.c2)}${a.r2}`;
+const absRange = a => `$${colName(a.c1)}$${a.r1}:$${colName(a.c2)}$${a.r2}`;
+function parseRowSpec(s) {
+  const m = /^\s*\$?(\d+)\s*(?::\s*\$?(\d+))?\s*$/.exec(String(s));
+  if (!m) return null;
+  const a = +m[1], b = +(m[2] || m[1]);
+  return { r1: Math.min(a, b), r2: Math.max(a, b) };
+}
+const rowSpecStr = t => t ? (t.r1 === t.r2 ? String(t.r1) : `${t.r1}:${t.r2}`) : '';
+
+function log(msg, type = '') {
+  $('log-wrap').style.display = 'block';
+  const d = document.createElement('div');
+  if (type) d.className = 'l-' + type;
+  d.textContent = `[${new Date().toLocaleTimeString('vi', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}] ${msg}`;
+  $('log-body').appendChild(d);
+  $('log-body').scrollTop = $('log-body').scrollHeight;
+}
+function setProgress(pct, label) {
+  $('progress-wrap').style.display = 'block';
+  $('progress-bar').style.width = pct + '%';
+  $('progress-label').textContent = label;
+}
+const hideProgress = () => { $('progress-wrap').style.display = 'none'; };
+
+// ====================================================================
+// PACKAGE SCAN  (workbook → sheets → current print setup)
+// ====================================================================
+async function readText(zip, path) { const f = zip.file(path); return f ? await f.async('string') : null; }
+function resolveTarget(basePath, target) {
+  if (target.startsWith('/')) return target.slice(1);
+  const dir = basePath.replace(/_rels\/[^/]*$/, '');
+  const out = [];
+  (dir + target).split('/').forEach(p => { if (p === '..') out.pop(); else if (p && p !== '.') out.push(p); });
+  return out.join('/');
+}
+function relsPathFor(part) { const i = part.lastIndexOf('/'); return part.slice(0, i + 1) + '_rels/' + part.slice(i + 1) + '.rels'; }
+function parseRels(xml) {
+  const out = [];
+  String(xml || '').replace(/<Relationship\b([^>]*?)\/?>/g, (m, a) => { out.push(parseAttrs(a)); return m; });
+  return out;
+}
+
+function parsePrintAreaValue(v) {
+  return v.split(',').map(p => parseRange(p.slice(p.lastIndexOf('!') + 1))).filter(Boolean);
+}
+function parseTitlesValue(v) {
+  let rows = null, colsRef = null;
+  v.split(',').forEach(p => {
+    const ref = p.slice(p.lastIndexOf('!') + 1).replace(/\$/g, '');
+    if (/^\d+:\d+$/.test(ref)) { const [a, b] = ref.split(':').map(Number); rows = { r1: a, r2: b }; }
+    else if (/^[A-Za-z]+:[A-Za-z]+$/.test(ref)) colsRef = ref.toUpperCase();
+  });
+  return { rows, colsRef };
+}
+
+const PAPER_NAMES = { 1: 'Letter', 5: 'Legal', 8: 'A3', 9: 'A4', 11: 'A5' };
+
+async function scanSheet(zip, sh) {
+  const xml = await readText(zip, sh.path);
+  const info = { ok: !!xml, size: xml ? xml.length : 0 };
+  if (!xml) return info;
+  const tag = re => { const m = xml.match(re); return m ? parseAttrs(m[1] || '') : null; };
+  info.dimension = (xml.match(/<dimension\b[^>]*\bref="([^"]+)"/) || [])[1] || null;
+  info.pageSetup = tag(/<pageSetup\b([^>]*?)\/?>/);
+  info.pageMargins = tag(/<pageMargins\b([^>]*?)\/?>/);
+  info.printOptions = tag(/<printOptions\b([^>]*?)\/?>/);
+  const hf = xml.match(/<headerFooter\b[^>]*\/>|<headerFooter\b[^>]*>[\s\S]*?<\/headerFooter>/);
+  const hfGet = t => { const m = hf && hf[0].match(new RegExp(`<${t}>([\\s\\S]*?)</${t}>`)); return m ? unescXml(m[1]) : ''; };
+  info.oddHeader = hfGet('oddHeader');
+  info.oddFooter = hfGet('oddFooter');
+  const brk = re => {
+    const blk = (xml.match(re) || [''])[0];
+    const ids = [];
+    blk.replace(/<brk\b([^>]*?)\/?>/g, (m, a) => { const o = parseAttrs(a); if (o.id) ids.push(+o.id); return m; });
+    return ids;
+  };
+  info.rowBreaks = brk(/<rowBreaks\b[\s\S]*?<\/rowBreaks>/);
+  info.colBreaks = brk(/<colBreaks\b[\s\S]*?<\/colBreaks>/);
+  info.fitToPage = /<pageSetUpPr\b[^>]*\bfitToPage="(1|true)"/.test(xml);
+  info.hasLegacyHF = /<legacyDrawingHF\b/.test(xml);
+  info.drawings = (xml.match(/<drawing\b/g) || []).length;
+  info.cf = (xml.match(/<conditionalFormatting\b/g) || []).length;
+  const relsXml = await readText(zip, relsPathFor(sh.path));
+  info.printerSettings = parseRels(relsXml).filter(r => /printerSettings$/.test(r.Type || '')).map(r => resolveTarget(relsPathFor(sh.path), r.Target));
+  return info;
+}
+
+async function scanWorkbook(zip) {
+  const wbXml = await readText(zip, 'xl/workbook.xml');
+  if (!wbXml) throw new Error('Không tìm thấy xl/workbook.xml — đây không phải file .xlsx hợp lệ');
+  const rels = {};
+  parseRels(await readText(zip, 'xl/_rels/workbook.xml.rels')).forEach(r => { rels[r.Id] = r; });
+  const sheets = [];
+  const block = (wbXml.match(/<sheets\b[^>]*>([\s\S]*?)<\/sheets>/) || [])[1] || '';
+  block.replace(/<sheet\b([^>]*?)\/?>/g, (m, a) => {
+    const at = parseAttrs(a);
+    const ridKey = Object.keys(at).find(k => /(^|:)id$/.test(k));
+    const rel = rels[at[ridKey]];
+    sheets.push({
+      idx: sheets.length, name: unescXml(at.name || ''), state: at.state || 'visible',
+      path: rel ? resolveTarget('xl/_rels/workbook.xml.rels', rel.Target) : null,
+      isWorksheet: !!(rel && /\/worksheet$/.test(rel.Type))
+    });
+    return m;
+  });
+  const names = [];
+  wbXml.replace(/<definedName\b([^>]*)>([\s\S]*?)<\/definedName>/g, (m, a, v) => { names.push({ attrs: parseAttrs(a), value: unescXml(v) }); return m; });
+  for (const sh of sheets) {
+    const mine = n => n.attrs.localSheetId === String(sh.idx);
+    const pa = names.find(n => mine(n) && n.attrs.name === '_xlnm.Print_Area');
+    const pt = names.find(n => mine(n) && n.attrs.name === '_xlnm.Print_Titles');
+    sh.printAreas = pa ? parsePrintAreaValue(pa.value) : [];
+    const t = pt ? parseTitlesValue(pt.value) : { rows: null, colsRef: null };
+    sh.titleRows = t.rows; sh.titleColsRef = t.colsRef;
+    sh.info = sh.isWorksheet && sh.path ? await scanSheet(zip, sh) : { ok: false };
+  }
+  const date1904 = /<workbookPr\b[^>]*\bdate1904="(1|true)"/.test(wbXml);
+  return { sheets, date1904 };
+}
+
+// ====================================================================
+// CONTENT-BASED DETECTION  (print area + BOQ header row), via ExcelJS
+// ====================================================================
+async function loadExcel(buf) {
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.load(buf);
+  return wb;
+}
+const VT = () => ExcelJS.ValueType;
+function plainText(cell) {
+  let v = cell.value;
+  if (v === null || v === undefined) return '';
+  if (typeof v === 'object' && !(v instanceof Date)) {
+    if (v.richText) return v.richText.map(t => t.text).join('');
+    if ('result' in v) v = v.result;
+    else if (v.text !== undefined) v = v.text;
+    else return '';
+  }
+  if (v === null || v === undefined || typeof v === 'object') return '';
+  return String(v);
+}
+function hasValue(cell) {
+  if (cell.type === VT().Merge) return false;
+  const v = cell.value;
+  if (v === null || v === undefined) return false;
+  if (typeof v === 'string') return v.trim() !== '';
+  return true;
+}
+function detectArea(ws) {
+  let r2 = 0, c2 = 0;
+  ws.eachRow({ includeEmpty: false }, (row, r) => {
+    row.eachCell({ includeEmpty: false }, (cell, c) => {
+      if (hasValue(cell)) { if (r > r2) r2 = r; if (c > c2) c2 = c; }
+    });
+  });
+  (ws.model.merges || []).forEach(m => {
+    const a = parseRange(m);
+    if (a && hasValue(ws.getCell(a.r1, a.c1))) { r2 = Math.max(r2, a.r2); c2 = Math.max(c2, a.c2); }
+  });
+  try {
+    ws.getImages().forEach(im => {
+      const br = im.range && im.range.br;
+      if (br) { r2 = Math.max(r2, Math.ceil(br.row)); c2 = Math.max(c2, Math.ceil(br.col)); }
+    });
+  } catch (e) { /* no images */ }
+  return r2 ? { r1: 1, c1: 1, r2, c2: Math.max(c2, 1) } : null;
+}
+
+const normVi = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/đ/g, 'd').trim();
+const HDR_TOKENS = ['stt', 'tt', 'no', 'item', 'ma hieu', 'ma so', 'ma cv', 'hang muc', 'mo ta', 'dien giai', 'noi dung', 'cong viec',
+  'description', 'dvt', 'don vi', 'unit', 'khoi luong', 'so luong', 'qty', 'quantity', 'don gia', 'unit price', 'rate',
+  'thanh tien', 'amount', 'ghi chu', 'remark', 'note', 'total'];
+function hdrScore(ws, r, c1, c2) {
+  let n = 0;
+  for (let c = c1; c <= c2; c++) {
+    const cell = ws.getCell(r, c);
+    if (cell.type === VT().Merge) continue;          // merged children echo the master's text
+    const t = plainText(cell);
+    if (!t || t.length > 45) continue;
+    const s = normVi(t);
+    if (HDR_TOKENS.some(k => s === k || (k.length > 3 && (s.startsWith(k) || s.includes(' ' + k))))) n++;
+  }
+  return n;
+}
+function detectTitleRows(ws, area) {
+  if (!area) return null;
+  const last = Math.min(area.r2, area.r1 + 39);
+  let best = 0, bestRow = 0;
+  for (let r = area.r1; r <= last; r++) {
+    const s = hdrScore(ws, r, area.c1, area.c2);
+    if (s > best) { best = s; bestRow = r; }
+  }
+  if (best < 3) return null;
+  let end = bestRow;
+  (ws.model.merges || []).forEach(m => {
+    const a = parseRange(m);
+    if (a && a.r1 === bestRow && a.r2 > bestRow) end = Math.max(end, a.r2);
+  });
+  while (end < area.r2 && end - bestRow < 3 && hdrScore(ws, end + 1, area.c1, area.c2) >= 2) end++;
+  return { r1: bestRow, r2: end };
+}
+
+// visible width of a range in points (Excel: 1 char ≈ 7px, 1px = 0.75pt)
+function defaultColWidth(ws) { return (ws.properties && ws.properties.defaultColWidth) || 8.43; }
+function colPt(ws, c) { const col = ws.getColumn(c); return Math.round((col.width || defaultColWidth(ws)) * 7) * 0.75; }
+function areaWidthPt(ws, area) {
+  let w = 0;
+  for (let c = area.c1; c <= area.c2; c++) if (!ws.getColumn(c).hidden) w += colPt(ws, c);
+  return w;
+}
+
+// ====================================================================
+// PAPER / SETTINGS
+// ====================================================================
+const PAPERS = {
+  A4: { id: 9, w: 595.28, h: 841.89 }, A3: { id: 8, w: 841.89, h: 1190.55 },
+  A5: { id: 11, w: 419.53, h: 595.28 }, LETTER: { id: 1, w: 612, h: 792 }
+};
+const PRESETS = {
+  boq_a4l: { paper: 'A4', orient: 'landscape', ml: 1.0, mr: 1.0, mt: 1.9, mb: 1.9, mh: 0.8, mf: 0.8, fit: true, hcenter: false, hl: '', hc: '', hr: '', fl: '', fc: 'Trang &P / &N', fr: '' },
+  boq_a3l: { paper: 'A3', orient: 'landscape', ml: 1.0, mr: 1.0, mt: 1.9, mb: 1.9, mh: 0.8, mf: 0.8, fit: true, hcenter: false, hl: '', hc: '', hr: '', fl: '', fc: 'Trang &P / &N', fr: '' },
+  a4p: { paper: 'A4', orient: 'portrait', ml: 1.8, mr: 1.8, mt: 2.0, mb: 2.0, mh: 0.8, mf: 0.8, fit: true, hcenter: false, hl: '', hc: '', hr: '', fl: '', fc: 'Trang &P / &N', fr: '' }
+};
+const FIELD_IDS = ['paper', 'orient', 'ml', 'mr', 'mt', 'mb', 'mh', 'mf', 'hl', 'hc', 'hr', 'fl', 'fc', 'fr'];
+function applyPreset(key) {
+  const p = PRESETS[key]; if (!p) return;
+  FIELD_IDS.forEach(f => { $('s-' + f).value = p[f]; });
+  $('s-fit').checked = p.fit; $('s-hcenter').checked = p.hcenter;
+}
+function readSettings() {
+  const cm = id => Math.max(0, parseFloat(String($(id).value).replace(',', '.')) || 0);
+  const inch = id => +(cm(id) / 2.54).toFixed(4);
+  const hf = { hl: $('s-hl').value, hc: $('s-hc').value, hr: $('s-hr').value, fl: $('s-fl').value, fc: $('s-fc').value, fr: $('s-fr').value };
+  const hasHF = Object.keys(hf).some(k => hf[k].trim() !== '');
+  const join = (l, c, r) => (l ? '&L' + l : '') + (c ? '&C' + c : '') + (r ? '&R' + r : '');
+  return {
+    paper: $('s-paper').value, orient: $('s-orient').value, fit: $('s-fit').checked, hCenter: $('s-hcenter').checked,
+    m: { l: inch('s-ml'), r: inch('s-mr'), t: inch('s-mt'), b: inch('s-mb'), h: inch('s-mh'), f: inch('s-mf') },
+    hf: hasHF ? { oddHeader: join(hf.hl, hf.hc, hf.hr), oddFooter: join(hf.fl, hf.fc, hf.fr) } : null,
+    clearBreaks: $('s-clearbreaks').checked, dropPrinter: $('s-dropprinter').checked,
+    pageNum: $('s-pagenum').value, vnSep: $('s-sep').value === 'vn'
+  };
+}
+
+// ====================================================================
+// XLSX WRITER  — print setup into sheet XML / workbook.xml
+// ====================================================================
+const RE = {
+  printOptions: /<printOptions\b[^>]*\/>|<printOptions\b[^>]*>\s*<\/printOptions>/,
+  pageMargins: /<pageMargins\b[^>]*\/>|<pageMargins\b[^>]*>\s*<\/pageMargins>/,
+  pageSetup: /<pageSetup\b[^>]*\/>|<pageSetup\b[^>]*>\s*<\/pageSetup>/,
+  headerFooter: /<headerFooter\b[^>]*\/>|<headerFooter\b[^>]*>[\s\S]*?<\/headerFooter>/,
+  rowBreaks: /<rowBreaks\b[^>]*\/>|<rowBreaks\b[^>]*>[\s\S]*?<\/rowBreaks>/,
+  colBreaks: /<colBreaks\b[^>]*\/>|<colBreaks\b[^>]*>[\s\S]*?<\/colBreaks>/
+};
+// CT_Worksheet order: ... hyperlinks, printOptions, pageMargins, pageSetup, headerFooter, rowBreaks, colBreaks, ... drawing ...
+const SHEET_BEFORE = ['sheetData', 'sheetCalcPr', 'sheetProtection', 'protectedRanges', 'scenarios', 'autoFilter', 'sortState', 'dataConsolidate',
+  'customSheetViews', 'mergeCells', 'phoneticPr', 'conditionalFormatting', 'dataValidations', 'hyperlinks'];
+const SHEET_AFTER_RE = /<(?:rowBreaks|colBreaks|customProperties|cellWatches|ignoredErrors|smartTags|drawing|legacyDrawing|legacyDrawingHF|drawingHF|picture|oleObjects|controls|webPublishItems|tableParts|extLst|mc:AlternateContent)\b/g;
+
+function insertPrintBlock(xml, block) {
+  let from = 0;
+  for (const t of SHEET_BEFORE) {
+    const close = xml.lastIndexOf('</' + t + '>');
+    if (close >= 0) from = Math.max(from, close + t.length + 3);
+    const re = new RegExp('<' + t + '\\b[^>]*\\/>', 'g');
+    let m;
+    while ((m = re.exec(xml))) from = Math.max(from, m.index + m[0].length);
+  }
+  SHEET_AFTER_RE.lastIndex = from;
+  const m = SHEET_AFTER_RE.exec(xml);
+  const pos = m ? m.index : xml.lastIndexOf('</worksheet>');
+  return xml.slice(0, pos) + block + xml.slice(pos);
+}
+function patchSheetPr(xml) {
+  const m = xml.match(/<sheetPr\b([^>]*?)(\/?)>/);
+  if (!m) return xml.replace(/(<worksheet\b[^>]*>)/, (x, a) => a + '<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>');
+  if (m[2] === '/') return xml.replace(m[0], () => `<sheetPr${m[1]}><pageSetUpPr fitToPage="1"/></sheetPr>`);
+  const start = m.index + m[0].length, end = xml.indexOf('</sheetPr>', start);
+  if (end < 0) return xml;
+  let inner = xml.slice(start, end);
+  if (/<pageSetUpPr\b/.test(inner)) {
+    inner = inner.replace(/<pageSetUpPr\b([^>]*?)\/?>/, (x, a) => { const o = parseAttrs(a); o.fitToPage = '1'; return `<pageSetUpPr${attrsStr(o)}/>`; });
+  } else inner += '<pageSetUpPr fitToPage="1"/>';
+  return xml.slice(0, start) + inner + xml.slice(end);
+}
+function patchSheetXml(xml, c) {
+  if (!/<\/worksheet>/.test(xml)) return null;
+  if (c.fit) xml = patchSheetPr(xml);
+  const grab = re => { const m = xml.match(re); if (!m) return null; xml = xml.replace(re, ''); return m[0]; };
+  const oldPO = grab(RE.printOptions), oldPS = grab(RE.pageSetup);
+  grab(RE.pageMargins);
+  const oldHF = grab(RE.headerFooter);
+  if (c.clearBreaks) { grab(RE.rowBreaks); grab(RE.colBreaks); }
+
+  const poA = oldPO ? parseAttrs(oldPO) : {};
+  if (c.hCenter) poA.horizontalCentered = '1'; else delete poA.horizontalCentered;
+  const po = Object.keys(poA).length ? `<printOptions${attrsStr(poA)}/>` : '';
+  const pm = `<pageMargins left="${c.m.l}" right="${c.m.r}" top="${c.m.t}" bottom="${c.m.b}" header="${c.m.h}" footer="${c.m.f}"/>`;
+  const psA = oldPS ? parseAttrs(oldPS) : {};
+  psA.paperSize = String(c.paperId); psA.orientation = c.orient; psA.usePrinterDefaults = '0';
+  if (c.fit) { psA.fitToWidth = '1'; psA.fitToHeight = '0'; delete psA.scale; }
+  if (c.dropPrinter) Object.keys(psA).forEach(k => { if (/(^|:)id$/.test(k)) delete psA[k]; });
+  let hf = oldHF || '';
+  if (c.hf && !c.hasLegacyHF) {
+    hf = '<headerFooter>' + (c.hf.oddHeader ? `<oddHeader>${escXml(c.hf.oddHeader)}</oddHeader>` : '') +
+         (c.hf.oddFooter ? `<oddFooter>${escXml(c.hf.oddFooter)}</oddFooter>` : '') + '</headerFooter>';
+  }
+  return insertPrintBlock(xml, po + pm + `<pageSetup${attrsStr(psA)}/>` + hf);
+}
+
+function patchDefinedNames(wbXml, ops) {
+  const q = n => "'" + n.replace(/'/g, "''") + "'";
+  const bm = wbXml.match(/<definedNames\b[^>]*>([\s\S]*?)<\/definedNames>|<definedNames\b[^>]*\/>/);
+  const items = [];
+  ((bm && bm[1]) || '').replace(/<definedName\b[^>]*\/>|<definedName\b[^>]*>[\s\S]*?<\/definedName>/g, m => { items.push(m); return m; });
+  let kept = items.slice();
+  const added = [];
+  for (const op of ops) {
+    const own = (it, nm) => { const a = parseAttrs(it.match(/^<definedName\b[^>]*>/)[0]); return a.name === nm && a.localSheetId === String(op.idx); };
+    if (op.area) {
+      kept = kept.filter(it => !own(it, '_xlnm.Print_Area'));
+      added.push(`<definedName name="_xlnm.Print_Area" localSheetId="${op.idx}">${escXml(q(op.sheetName) + '!' + absRange(op.area))}</definedName>`);
+    }
+    if (op.titles) {
+      let colsRef = op.colsRef;
+      kept = kept.filter(it => !own(it, '_xlnm.Print_Titles'));
+      const parts = [];
+      if (colsRef) { const [a, b] = colsRef.split(':'); parts.push(`${q(op.sheetName)}!$${a}:$${b}`); }
+      parts.push(`${q(op.sheetName)}!$${op.titles.r1}:$${op.titles.r2}`);
+      added.push(`<definedName name="_xlnm.Print_Titles" localSheetId="${op.idx}">${escXml(parts.join(','))}</definedName>`);
+    }
+  }
+  const all = kept.concat(added);
+  if (!all.length) return wbXml;
+  const block = `<definedNames>${all.join('')}</definedNames>`;
+  if (bm) return wbXml.replace(bm[0], () => block);
+  const nx = wbXml.match(/<(?:calcPr|oleSize|customWorkbookViews|pivotCaches|smartTagPr|smartTagTypes|webPublishing|fileRecoveryPr|webPublishObjects|extLst)\b/);
+  const pos = nx ? nx.index : wbXml.lastIndexOf('</workbook>');
+  return wbXml.slice(0, pos) + block + wbXml.slice(pos);
+}
+
+async function dropPrinterSettings(zip, sheets) {
+  const removed = new Set();
+  for (const sh of sheets) {
+    const rp = relsPathFor(sh.path);
+    let rx = await readText(zip, rp);
+    if (!rx) continue;
+    rx = rx.replace(/<Relationship\b[^>]*?\/>/g, m => {
+      const a = parseAttrs(m);
+      if (/printerSettings$/.test(a.Type || '')) { removed.add(resolveTarget(rp, a.Target)); return ''; }
+      return m;
+    });
+    zip.file(rp, rx, { createFolders: false });
+  }
+  const referenced = new Set();
+  for (const rp of Object.keys(zip.files).filter(n => n.endsWith('.rels'))) {
+    parseRels(await readText(zip, rp)).forEach(r => { if (r.TargetMode !== 'External') referenced.add(resolveTarget(rp, r.Target)); });
+  }
+  let n = 0;
+  for (const p of removed) if (!referenced.has(p) && zip.file(p)) { zip.remove(p); n++; }
+  if (n && zip.file('[Content_Types].xml')) {
+    let ct = await readText(zip, '[Content_Types].xml');
+    ct = ct.replace(/<Override\b[^>]*\/>/g, m => { const a = parseAttrs(m); return removed.has((a.PartName || '').replace(/^\//, '')) ? '' : m; });
+    zip.file('[Content_Types].xml', ct, { createFolders: false });
+  }
+  return n;
+}
+
+// Writes the chosen print setup into a copy of the original package. Returns { buffer, notes }.
+async function applyPrintSetup(origBuf, g, perSheet) {
+  const zip = await JSZip.loadAsync(origBuf);
+  const scan = await scanWorkbook(zip);
+  const notes = [];
+  const ops = [];
+  const touched = [];
+  for (const ps of perSheet) {
+    const sh = scan.sheets[ps.idx];
+    if (!ps.include || !sh || !sh.isWorksheet || !sh.path) continue;
+    const xml = await readText(zip, sh.path);
+    const out = patchSheetXml(xml, {
+      fit: g.fit, paperId: PAPERS[g.paper].id, orient: ps.orient, m: g.m, hCenter: g.hCenter, hf: g.hf,
+      hasLegacyHF: sh.info.hasLegacyHF, clearBreaks: g.clearBreaks, dropPrinter: g.dropPrinter
+    });
+    if (out === null) { notes.push({ t: 'warn', s: `Sheet "${sh.name}": cấu trúc XML lạ — bỏ qua` }); continue; }
+    zip.file(sh.path, out, { createFolders: false });
+    touched.push(sh);
+    ops.push({ idx: sh.idx, sheetName: sh.name, area: ps.area, titles: ps.titles, colsRef: sh.titleColsRef });
+    if (sh.info.hasLegacyHF && g.hf) notes.push({ t: 'warn', s: `Sheet "${sh.name}": có hình trong header/footer — giữ nguyên header/footer cũ` });
+    notes.push({ t: 'ok', s: `Sheet "${sh.name}": ${g.paper} ${ps.orient === 'landscape' ? 'ngang' : 'dọc'}${ps.area ? ' · vùng in ' + rangeStr(ps.area) : ''}${ps.titles ? ' · lặp dòng ' + rowSpecStr(ps.titles) : ''}` });
+  }
+  let wbXml = await readText(zip, 'xl/workbook.xml');
+  wbXml = patchDefinedNames(wbXml, ops);
+  zip.file('xl/workbook.xml', wbXml, { createFolders: false });
+  if (g.dropPrinter) {
+    const n = await dropPrinterSettings(zip, touched);
+    if (n) notes.push({ t: 'ok', s: `Đã bỏ ${n} file thiết lập máy in (printerSettings)` });
+  }
+  const buffer = await zip.generateAsync({ type: 'arraybuffer', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+  return { buffer, notes };
+}
+
+// ====================================================================
+// PDF  — read the printed workbook back, lay it out with pdfmake
+// ====================================================================
+const INDEXED = ["000000","FFFFFF","FF0000","00FF00","0000FF","FFFF00","FF00FF","00FFFF","000000","FFFFFF","FF0000","00FF00","0000FF","FFFF00","FF00FF","00FFFF","800000","008000","000080","808000","800080","008080","C0C0C0","808080","9999FF","993366","FFFFCC","CCFFFF","660066","FF8080","0066CC","CCCCFF","000080","FF00FF","FFFF00","00FFFF","800080","800000","008080","0000FF","00CCFF","CCFFFF","CCFFCC","FFFF99","99CCFF","FF99CC","CC99FF","FFCC99","3366FF","33CCCC","99CC00","FFCC00","FF9900","FF6600","666699","969696","003366","339966","003300","333300","993300","993366","333399","333333"];
+
+function themeFromXml(xml) {
+  const def = ['000000', 'FFFFFF', '44546A', 'E7E6E6', '4472C4', 'ED7D31', 'A5A5A5', 'FFC000', '5B9BD5', '70AD47', '0563C1', '954F72'];
+  if (!xml) return [def[1], def[0], def[3], def[2]].concat(def.slice(4));
+  const base = [];
+  ['dk1', 'lt1', 'dk2', 'lt2', 'accent1', 'accent2', 'accent3', 'accent4', 'accent5', 'accent6', 'hlink', 'folHlink'].forEach((k, i) => {
+    const m = xml.match(new RegExp(`<a:${k}>([\\s\\S]*?)</a:${k}>`));
+    const c = m && (m[1].match(/(?:srgbClr val|lastClr)="([0-9A-Fa-f]{6})"/) || [])[1];
+    base.push((c || def[i]).toUpperCase());
+  });
+  // Excel's theme index swaps the first two pairs: 0=lt1, 1=dk1, 2=lt2, 3=dk2
+  return [base[1], base[0], base[3], base[2]].concat(base.slice(4));
+}
+function tintHex(hex, tint) {
+  if (!tint) return hex;
+  const r = parseInt(hex.slice(0, 2), 16) / 255, g = parseInt(hex.slice(2, 4), 16) / 255, b = parseInt(hex.slice(4, 6), 16) / 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+  let h = 0, s = 0, l = (mx + mn) / 2;
+  if (mx !== mn) {
+    const d = mx - mn;
+    s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+    h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    h /= 6;
+  }
+  l = tint < 0 ? l * (1 + tint) : l * (1 - tint) + tint;
+  const f = (p, q, t) => { if (t < 0) t += 1; if (t > 1) t -= 1; return t < 1 / 6 ? p + (q - p) * 6 * t : t < 1 / 2 ? q : t < 2 / 3 ? p + (q - p) * (2 / 3 - t) * 6 : p; };
+  let rr, gg, bb;
+  if (s === 0) rr = gg = bb = l;
+  else { const q = l < 0.5 ? l * (1 + s) : l + s - l * s, p = 2 * l - q; rr = f(p, q, h + 1 / 3); gg = f(p, q, h); bb = f(p, q, h - 1 / 3); }
+  const hx = x => Math.round(Math.max(0, Math.min(1, x)) * 255).toString(16).padStart(2, '0');
+  return (hx(rr) + hx(gg) + hx(bb)).toUpperCase();
+}
+function resolveColor(c, S) {
+  if (!c) return null;
+  if (c.argb) return '#' + c.argb.slice(-6);
+  if (c.theme !== undefined) return '#' + tintHex(S.theme[c.theme] || '000000', c.tint || 0);
+  if (c.indexed !== undefined) return c.indexed >= 64 ? (c.indexed === 64 ? '#000000' : '#FFFFFF') : '#' + (INDEXED[c.indexed] || '000000');
+  return null;
+}
+
+function fmtNumber(v, fmt, S) {
+  let out;
+  const f = fmt || 'General';
+  try { out = SSF.format(f, v, { date1904: S.date1904 }); } catch (e) { out = String(v); }
+  out = String(out).trim();
+  if (S.vnSep && !SSF.is_date(f)) out = out.replace(/[.,]/g, ch => (ch === ',' ? '.' : ','));
+  return out;
+}
+const BORDER_W = { hair: 0.25, thin: 0.5, dotted: 0.5, dashed: 0.5, dashDot: 0.5, dashDotDot: 0.5, slantDashDot: 0.5, medium: 1.0, mediumDashed: 1.0, mediumDashDot: 1.0, mediumDashDotDot: 1.0, thick: 1.8, double: 1.5 };
+
+// One cell → plain descriptor (independent of pdfmake)
+function describeCell(cell, S) {
+  let val = cell.value, text = '', runs = null, num = false, red = false;
+  if (val && typeof val === 'object' && !(val instanceof Date)) {
+    if (val.formula !== undefined || val.sharedFormula !== undefined) { if (val.result === undefined) S.missingCache++; val = val.result; }
+    else if (val.hyperlink !== undefined && val.text !== undefined) val = val.text;
+  }
+  if (val && typeof val === 'object' && !(val instanceof Date)) {
+    if (val.richText) { runs = val.richText.map(r => ({ text: r.text, font: r.font || {} })); text = runs.map(r => r.text).join(''); }
+    else if (val.error) text = String(val.error);
+    else if (val.text !== undefined) text = String(val.text);
+    val = null;
+  }
+  if (val instanceof Date) { text = fmtNumber(val.getTime() / 86400000 + 25569, cell.numFmt || 'dd/mm/yyyy', S); num = true; }
+  else if (typeof val === 'number') { text = fmtNumber(val, cell.numFmt, S); num = true; if (val < 0 && /\[Red\]/i.test(cell.numFmt || '')) red = true; }
+  else if (typeof val === 'boolean') text = val ? 'TRUE' : 'FALSE';
+  else if (typeof val === 'string') text = val;
+
+  const font = cell.font || {}, al = cell.alignment || {}, fill = cell.fill;
+  let fillColor = null;
+  if (fill && fill.type === 'pattern' && fill.pattern === 'solid') fillColor = resolveColor(fill.fgColor, S);
+  return {
+    text, runs, num, hasText: text !== '',
+    size: font.size || S.defaultSize, bold: !!font.bold, italic: !!font.italic, underline: !!font.underline, strike: !!font.strike,
+    color: red ? '#FF0000' : (resolveColor(font.color, S) || '#000000'), fill: fillColor,
+    h: al.horizontal, v: al.vertical, wrap: !!al.wrapText, indent: al.indent || 0,
+    border: cell.border || {}
+  };
+}
+
+const H_ALIGN = { left: 'left', center: 'center', right: 'right', justify: 'justify', centerContinuous: 'center', distributed: 'center', fill: 'left' };
+function textWidthEst(text, size, bold) {
+  let w = 0;
+  for (const ch of text) {
+    w += /[0-9]/.test(ch) ? 0.56 : /[.,:;'|!]/.test(ch) ? 0.26 : ch === ' ' ? 0.25 : /[()[\]]/.test(ch) ? 0.33 : ch === '-' ? 0.37 :
+         ch === '/' ? 0.4 : ch === '%' ? 0.84 : ch.toLowerCase() !== ch ? 0.64 : 0.54;
+  }
+  return w * size * (bold ? 1.04 : 1);
+}
+
+// Whole sheet → { nodes, stats }
+function buildSheetNodes(ws, cfg, S, sheetPos) {
+  const area = cfg.area;
+  const defRowH = (ws.properties && ws.properties.defaultRowHeight) || 15;
+  // visible columns / rows
+  const cols = [], colIdx = {};
+  for (let c = area.c1; c <= area.c2; c++) if (!ws.getColumn(c).hidden) { colIdx[c] = cols.length; cols.push({ c, w: colPt(ws, c) }); }
+  const rows = [], rowIdx = {};
+  for (let r = area.r1; r <= area.r2; r++) {
+    const row = ws.findRow(r);
+    if (row && row.hidden) continue;
+    rowIdx[r] = rows.length;
+    rows.push({ r, row, ht: row && row.height ? row.height : 0 });
+  }
+  if (!cols.length || !rows.length) return { nodes: [], skipped: true };
+
+  const sumW = cols.reduce((a, b) => a + b.w, 0);
+  const pg = PAPERS[cfg.paper] || PAPERS.A4;
+  const pageW = cfg.orient === 'landscape' ? pg.h : pg.w;
+  const printW = pageW - (cfg.m.l + cfg.m.r) * 72;
+  const fitScale = printW / sumW;
+  const scale = Math.max(0.2, Math.min(cfg.fit ? 1 : (cfg.scale || 100) / 100, fitScale));
+
+  // merges (visible span only)
+  const mergeAt = {}, covered = new Set();
+  (ws.model.merges || []).forEach(m => {
+    const a = parseRange(m);
+    if (!a || a.r1 < area.r1 || a.c1 < area.c1 || a.r1 > area.r2 || a.c1 > area.c2) return;
+    if (rowIdx[a.r1] === undefined || colIdx[a.c1] === undefined) return;
+    const r2 = Math.min(a.r2, area.r2), c2 = Math.min(a.c2, area.c2);
+    let cs = 0, rs = 0;
+    for (let c = a.c1; c <= c2; c++) if (colIdx[c] !== undefined) cs++;
+    for (let r = a.r1; r <= r2; r++) if (rowIdx[r] !== undefined) rs++;
+    mergeAt[`${a.r1},${a.c1}`] = { cs, rs, r2, c2 };
+    for (let r = a.r1; r <= r2; r++) for (let c = a.c1; c <= c2; c++) if (r !== a.r1 || c !== a.c1) covered.add(`${r},${c}`);
+  });
+
+  // grid of descriptors
+  const grid = rows.map(rw => cols.map(col => {
+    const key = `${rw.r},${col.c}`;
+    if (covered.has(key)) return { covered: true };
+    const cell = rw.row ? rw.row.getCell(col.c) : null;
+    if (!cell) return { empty: true, border: {}, size: S.defaultSize, text: '', h: undefined };
+    if (cell.type === VT().Merge) return { empty: true, border: {}, size: S.defaultSize, text: '' };
+    const d = describeCell(cell, S);
+    const mg = mergeAt[key];
+    if (mg) {
+      d.merge = mg;
+      // merged region keeps the borders of its outer cells
+      const cellAt = (r, c) => { const rr = ws.findRow(r); return rr ? rr.getCell(c) : null; };
+      const br = cellAt(rw.r, mg.c2), bb = cellAt(mg.r2, col.c);
+      d.border = Object.assign({}, d.border, { right: br && br.border ? br.border.right : undefined, bottom: bb && bb.border ? bb.border.bottom : undefined });
+    }
+    return d;
+  }));
+
+  // text spill: left-aligned plain text runs over empty, unformatted neighbours (as Excel does)
+  grid.forEach(line => {
+    for (let i = 0; i < line.length; i++) {
+      const d = line[i];
+      if (d.covered || !d.hasText || d.num || d.wrap || d.merge || (d.h && d.h !== 'left' && d.h !== 'general')) continue;
+      const need = textWidthEst(d.text, d.size, d.bold);
+      let avail = cols[i].w, k = i + 1;
+      while (need > avail && k < line.length) {
+        const n = line[k];
+        if (n.covered || n.hasText || n.merge || n.fill || Object.keys(n.border || {}).some(s => n.border[s] && n.border[s].style)) break;
+        avail += cols[k].w; k++;
+      }
+      if (k - i > 1) { d.spill = k - i; for (let j = i + 1; j < k; j++) line[j] = { covered: true }; }
+    }
+  });
+
+  // border edges: union of the two cells that share an edge
+  const side = (d, s) => (d && !d.covered && d.border && d.border[s] && d.border[s].style) ? d.border[s] : null;
+  const strong = (a, b) => (!a ? b : !b ? a : ((BORDER_W[b.style] || 0.5) > (BORDER_W[a.style] || 0.5) ? b : a));
+  const nR = rows.length, nC = cols.length;
+  const hEdge = [], vEdge = [];
+  for (let j = 0; j <= nR; j++) { hEdge[j] = []; for (let i = 0; i < nC; i++) hEdge[j][i] = strong(side(grid[j - 1] && grid[j - 1][i], 'bottom'), side(grid[j] && grid[j][i], 'top')); }
+  for (let j = 0; j < nR; j++) { vEdge[j] = []; for (let i = 0; i <= nC; i++) vEdge[j][i] = strong(side(grid[j][i - 1], 'right'), side(grid[j][i], 'left')); }
+  // spanning cells (merges, spilled text) own the outer edges of everything they cover
+  for (let j = 0; j < nR; j++) for (let i = 0; i < nC; i++) {
+    const d = grid[j][i];
+    if (d.covered) continue;
+    const cs = d.merge ? d.merge.cs : (d.spill || 1), rs = d.merge && d.merge.rs > 1 ? d.merge.rs : 1;
+    if (cs === 1 && rs === 1) continue;
+    const L = side(d, 'left'), R = side(d, 'right'), T = side(d, 'top'), B = side(d, 'bottom');
+    for (let q = 0; q < cs; q++) {
+      if (T) hEdge[j][i + q] = strong(hEdge[j][i + q], T);
+      if (B && hEdge[j + rs]) hEdge[j + rs][i + q] = strong(hEdge[j + rs][i + q], B);
+    }
+    for (let k = 0; k < rs && vEdge[j + k]; k++) {
+      if (L) vEdge[j + k][i] = strong(vEdge[j + k][i], L);
+      if (R) vEdge[j + k][i + cs] = strong(vEdge[j + k][i + cs], R);
+    }
+  }
+  const sc = scale;
+
+  const rowMin = rows.map((rw, j) => {
+    if (rw.ht) return rw.ht;
+    let mx = 0;
+    grid[j].forEach(d => { if (!d.covered && d.hasText) mx = Math.max(mx, d.size); });
+    return Math.max(defRowH, mx * 1.3);
+  });
+
+  const toNode = (d, j, i) => {
+    if (d.covered) return {};
+    const span = d.merge ? d.merge.cs : (d.spill || 1);
+    const rspan = d.merge && d.merge.rs > 1 ? d.merge.rs : undefined;
+    const b = [!!vEdge[j][i], !!hEdge[j][i], !!vEdge[j][Math.min(i + span, nC)], !!hEdge[Math.min(j + (rspan || 1), nR)][i]];
+    const bc = [vEdge[j][i], hEdge[j][i], vEdge[j][Math.min(i + span, nC)], hEdge[Math.min(j + (rspan || 1), nR)][i]].map(x => resolveColor(x && x.color, S) || '#000000');
+    let size = (d.size || S.defaultSize) * sc, shown = d.text;
+    if (d.num && d.hasText) {
+      let avail = -3;
+      for (let q = 0; q < span; q++) avail += cols[i + q].w;
+      const need = textWidthEst(d.text, d.size || S.defaultSize, d.bold);
+      if (need > avail) {
+        if (avail / need >= 0.7) size *= avail / need;
+        else shown = '#'.repeat(Math.max(1, Math.floor(avail / ((d.size || S.defaultSize) * 0.56))));
+      }
+    }
+    const alignment = H_ALIGN[d.h] || (d.num ? 'right' : 'left');
+    // vertical alignment: pdfmake has none, so push the text down by a margin computed from the row height(s)
+    let mt = 0.5 * sc;
+    if (d.hasText) {
+      let H = 0;
+      for (let k = 0; k < (rspan || 1) && rowMin[j + k] !== undefined; k++) H += rowMin[j + k];
+      H *= sc;
+      let w = -3;
+      for (let q = 0; q < span; q++) w += cols[i + q].w;
+      const multi = d.wrap || d.merge;
+      const lines = multi ? Math.max(1, Math.ceil(textWidthEst(d.text, d.size || S.defaultSize, d.bold) * 1.1 / Math.max(w, 1))) : 1;
+      const free = H - (lines * size * 1.2 + 1);
+      const v = d.v === 'middle' ? 'center' : (d.v || (multi ? 'top' : 'bottom'));   // ExcelJS says 'middle'; Excel's default is bottom, wrapped text keeps top unless told otherwise
+      if (free > 0 && (v === 'center' || v === 'bottom')) mt = (v === 'center' ? free / 2 : free) + 0.5 * sc;
+    }
+    const node = {
+      text: d.runs ? d.runs.map(r => ({
+        text: r.text, bold: r.font.bold === undefined ? d.bold : !!r.font.bold, italics: r.font.italic === undefined ? d.italic : !!r.font.italic,
+        color: resolveColor(r.font.color, S) || d.color, fontSize: (r.font.size || d.size) * sc
+      })) : shown,
+      fontSize: size, bold: d.bold, italics: d.italic, color: d.color, alignment,
+      noWrap: !d.wrap && !d.merge, border: b, borderColor: bc,
+      margin: [(1.5 + d.indent * 3) * sc, mt, 1.5 * sc, 0.5 * sc]
+    };
+    if (d.fill) node.fillColor = d.fill;
+    if (d.underline || d.strike) node.decoration = d.underline ? 'underline' : 'lineThrough';
+    if (span > 1) node.colSpan = span;
+    if (rspan) node.rowSpan = rspan;
+    return node;
+  };
+
+  // pdfmake table for rows [a..b], optionally with copies of the title rows in front
+  const makeTable = (a, b, titleRows, extra) => {
+    const idx = [];
+    if (titleRows) for (let j = titleRows[0]; j <= titleRows[1]; j++) idx.push(j);
+    const hdrN = idx.length;
+    for (let j = a; j <= b; j++) idx.push(j);
+    const hW = [], vW = [];
+    const wOf = x => (x ? Math.max(0.25 * sc, (BORDER_W[x.style] || 0.5) * sc) : 0);
+    for (let k = 0; k <= idx.length; k++) {
+      const jt = idx[k] !== undefined ? idx[k] : idx[idx.length - 1] + 1;   // line above row k
+      let m = 0;
+      for (let i = 0; i < nC; i++) m = Math.max(m, wOf(hEdge[Math.min(jt, nR)][i]));
+      hW.push(m);
+    }
+    for (let i = 0; i <= nC; i++) { let m = 0; idx.forEach(j => { m = Math.max(m, wOf(vEdge[j][i])); }); vW.push(m); }
+    const node = Object.assign({
+      table: {
+        widths: cols.map(c => c.w * sc), headerRows: hdrN, dontBreakRows: true, heights: k => rowMin[idx[k]] * sc,
+        body: idx.map(j => grid[j].map((d, i) => toNode(d, j, i)))
+      },
+      layout: {
+        hLineWidth: k => hW[k] || 0, vLineWidth: k => vW[k] || 0,
+        hLineColor: () => '#000000', vLineColor: () => '#000000',
+        paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0
+      }
+    }, extra || {});
+    if (cfg.hCenter && sumW * sc < printW) node.margin = [(printW - sumW * sc) / 2, 0, 0, 0];
+    return node;
+  };
+
+  // split into: rows above the titles | title rows + body, cut at manual breaks
+  const local = r => { let j = -1; for (let k = 0; k < rows.length; k++) { if (rows[k].r <= r) j = k; else break; } return j; };
+  const cuts = [...new Set((cfg.breaks || []).map(local).filter(j => j >= 0 && j < nR - 1))].sort((a, b) => a - b);
+  let tStart = null, tEnd = null;
+  if (cfg.titles) {
+    const a = rows.findIndex(x => x.r >= cfg.titles.r1), bb = local(cfg.titles.r2);
+    if (a >= 0 && bb >= a) { tStart = a; tEnd = bb; }
+  }
+  const nodes = [];
+  const segments = [];
+  let s = 0;
+  [...cuts, nR - 1].forEach(e => { if (e >= s) { segments.push([s, e]); s = e + 1; } });
+  segments.forEach(([a, b], k) => {
+    const parts = [];
+    if (tStart !== null && a <= tStart && b >= tStart) {          // segment that holds the titles
+      if (a < tStart) parts.push({ a, b: tStart - 1, titles: null });
+      parts.push({ a: tStart, b, titles: null, header: true });
+    } else if (tStart !== null && a > tStart) parts.push({ a, b, titles: [tStart, tEnd] });
+    else parts.push({ a, b, titles: null });
+    parts.forEach((p, n) => {
+      const extra = {};
+      if (k > 0 && n === 0) extra.pageBreak = 'before';          // only a manual break starts a new page
+      if (p.header) {
+        const t = makeTable(p.a, p.b, null, extra);
+        t.table.headerRows = tEnd - tStart + 1;
+        nodes.push(t);
+      } else nodes.push(makeTable(p.a, p.b, p.titles ? p.titles : null, extra));
+    });
+  });
+  return { nodes, scale, rows: nR, cols: nC };
+}
+
+// Excel header/footer codes → { L, C, R }
+function parseHF(str) {
+  const sec = { L: '', C: '', R: '' };
+  let cur = 'C';
+  str = str || '';
+  for (let i = 0; i < str.length; i++) {
+    const ch = str[i];
+    if (ch !== '&') { sec[cur] += ch; continue; }
+    const n = str[++i];
+    if (n === undefined) break;
+    if (n === 'L' || n === 'C' || n === 'R') { cur = n; continue; }
+    if (n === '&') { sec[cur] += '&'; continue; }
+    if ('PNADTFZ'.includes(n)) { sec[cur] += '\u0001' + n + '\u0001'; continue; }
+    if (n === '"') { const j = str.indexOf('"', i + 1); i = j < 0 ? str.length : j; continue; }
+    if (n === 'K') { i += 6; continue; }
+    if (/\d/.test(n)) { while (/\d/.test(str[i + 1] || '')) i++; continue; }
+  }
+  return sec;
+}
+function fillHF(text, v) {
+  return text.replace(/\u0001([PNADTFZ])\u0001/g, (m, k) => ({ P: v.page, N: v.pages, A: v.sheet, D: v.date, T: v.time, F: v.file, Z: v.file }[k]));
+}
+
+// Excel's built-in number formats 41-44 (Accounting / Comma styles) and the locale-dependent date ids 14/22
+// have no format code in styles.xml, and ExcelJS cannot resolve them. Spell them out in an in-memory copy
+// that is used only for rendering — the xlsx the user downloads is never touched by this.
+const BUILTIN_FMT = {
+  14: 'dd/mm/yyyy', 22: 'dd/mm/yyyy hh:mm',
+  41: '_(* #,##0_);_(* \\(#,##0\\);_(* "-"_);_(@_)',
+  42: '_("$"* #,##0_);_("$"* \\(#,##0\\);_("$"* "-"_);_(@_)',
+  43: '_(* #,##0.00_);_(* \\(#,##0.00\\);_(* "-"??_);_(@_)',
+  44: '_("$"* #,##0.00_);_("$"* \\(#,##0.00\\);_("$"* "-"??_);_(@_)'
+};
+async function withBuiltinNumFmts(zip) {
+  let xml = await readText(zip, 'xl/styles.xml');
+  if (!xml) return zip.generateAsync({ type: 'arraybuffer' });
+  const defined = new Set();
+  xml.replace(/<numFmt\b[^>]*\bnumFmtId="(\d+)"/g, (m, i) => { defined.add(+i); return m; });
+  const used = new Set();
+  ((xml.match(/<cellXfs\b[\s\S]*?<\/cellXfs>/) || [''])[0]).replace(/\bnumFmtId="(\d+)"/g, (m, i) => { used.add(+i); return m; });
+  const add = [...used].filter(id => BUILTIN_FMT[id] && !defined.has(id))
+    .map(id => `<numFmt numFmtId="${id}" formatCode="${escXml(BUILTIN_FMT[id])}"/>`);
+  if (add.length) {
+    const nf = xml.match(/<numFmts\b([^>]*)>/);
+    if (nf) {
+      const cnt = (parseInt((nf[1].match(/count="(\d+)"/) || [])[1], 10) || 0) + add.length;
+      xml = xml.replace(nf[0], `<numFmts${nf[1].replace(/\s*count="\d+"/, '')} count="${cnt}">`).replace('</numFmts>', add.join('') + '</numFmts>');
+    } else if (/<numFmts\b[^>]*\/>/.test(xml)) {
+      xml = xml.replace(/<numFmts\b[^>]*\/>/, `<numFmts count="${add.length}">${add.join('')}</numFmts>`);
+    } else {
+      xml = xml.replace(/(<styleSheet\b[^>]*>)/, (x, a) => `${a}<numFmts count="${add.length}">${add.join('')}</numFmts>`);
+    }
+    zip.file('xl/styles.xml', xml, { createFolders: false });
+  }
+  return zip.generateAsync({ type: 'arraybuffer' });
+}
+
+async function buildPdf(printedBuf, g, includeIdx, fileName) {
+  const zip = await JSZip.loadAsync(printedBuf);
+  const scan = await scanWorkbook(zip);
+  setProgress(30, 'Đọc nội dung các sheet...');
+  await yieldToUI();
+  const stylesXml = await readText(zip, 'xl/styles.xml') || '';
+  const themeXml = await readText(zip, 'xl/theme/theme1.xml');
+  const wb = await loadExcel(await withBuiltinNumFmts(zip));
+  const fSz = (stylesXml.match(/<fonts\b[^>]*>\s*<font\b[^>]*>[\s\S]*?<sz val="([\d.]+)"/) || [])[1];
+  const S = {
+    theme: themeFromXml(themeXml), date1904: scan.date1904,
+    defaultSize: fSz ? +fSz : 11, vnSep: g.vnSep, missingCache: 0
+  };
+  const sheetsOut = [];
+  const content = [];
+  const markers = [];
+  const warns = [];
+  for (const idx of includeIdx) {
+    const sh = scan.sheets[idx];
+    const ws = wb.getWorksheet(sh.name);
+    if (!ws) continue;
+    const info = sh.info;
+    const used = detectArea(ws);
+    let area = sh.printAreas[0] || used;
+    // a print area that covers the whole sheet ($A$1:$XFD$1048576) must not make us lay out a million empty rows
+    if (area && used) area = { r1: area.r1, c1: area.c1, r2: Math.min(area.r2, used.r2), c2: Math.min(area.c2, used.c2) };
+    if (!area || !used || area.r1 > area.r2 || area.c1 > area.c2) { warns.push(`Sheet "${sh.name}": không có dữ liệu trong vùng in — bỏ qua`); continue; }
+    if (sh.printAreas.length > 1) warns.push(`Sheet "${sh.name}": có ${sh.printAreas.length} vùng in — PDF nhanh chỉ vẽ vùng đầu tiên`);
+    const m = info.pageMargins || {};
+    const ps = info.pageSetup || {};
+    const cfg = {
+      area, paper: g.paper, orient: ps.orientation === 'portrait' ? 'portrait' : 'landscape',
+      m: { l: +m.left || 0.7, r: +m.right || 0.7, t: +m.top || 0.75, b: +m.bottom || 0.75, h: +m.header || 0.3, f: +m.footer || 0.3 },
+      fit: info.fitToPage && ps.fitToWidth !== '0', scale: +ps.scale || 100,
+      titles: sh.titleRows, breaks: info.rowBreaks, hCenter: !!(info.printOptions && /^(1|true)$/.test(info.printOptions.horizontalCentered || '')),
+      hf: { header: parseHF(info.oddHeader), footer: parseHF(info.oddFooter) }
+    };
+    const before = S.missingCache;
+    const res = buildSheetNodes(ws, cfg, S, sheetsOut.length);
+    if (res.skipped || !res.nodes.length) { warns.push(`Sheet "${sh.name}": vùng in rỗng — bỏ qua`); continue; }
+    if (S.missingCache > before) warns.push(`Sheet "${sh.name}": ${S.missingCache - before} ô công thức không có giá trị lưu sẵn (hiện trống) — mở file bằng Excel, lưu lại rồi thử lại`);
+    if (info.drawings) warns.push(`Sheet "${sh.name}": có hình/biểu đồ — PDF nhanh không vẽ phần này`);
+    if (info.cf) warns.push(`Sheet "${sh.name}": có conditional formatting — PDF nhanh không áp dụng`);
+    if (info.hasLegacyHF) warns.push(`Sheet "${sh.name}": có hình trong header/footer — PDF nhanh không vẽ`);
+    const i = sheetsOut.length;
+    // pdfmake does not report the page of a node that carries pageBreak itself, so the page break and
+    // the (invisible) marker that records where the sheet starts are two separate nodes.
+    if (i > 0) content.push({ text: '', pageBreak: 'before', pageOrientation: cfg.orient });
+    const marker = { text: ' ', fontSize: 0.1, margin: [0, 0, 0, 0] };
+    markers.push(marker);
+    content.push(marker);
+    sheetsOut.push({ name: sh.name, cfg, scale: res.scale });
+    content.push(...res.nodes);
+    log(`Sheet "${sh.name}": ${res.rows} dòng × ${res.cols} cột · tỉ lệ ${(res.scale * 100).toFixed(0)}%`, 'info');
+  }
+  if (!sheetsOut.length) throw new Error('Không có sheet nào có dữ liệu để xuất');
+  warns.forEach(w => log(w, 'warn'));
+
+  let totalPages = 0;
+  const now = new Date();
+  const p2 = n => String(n).padStart(2, '0');
+  const date = `${p2(now.getDate())}/${p2(now.getMonth() + 1)}/${now.getFullYear()}`, time = `${p2(now.getHours())}:${p2(now.getMinutes())}`;
+  // pdfmake fills node.positions while laying out, i.e. before it calls header()/footer()
+  const startOf = i => { const m = markers[i]; return m && m.positions && m.positions[0] ? m.positions[0].pageNumber : undefined; };
+  const sheetOfPage = page => { let k = 0; markers.forEach((m, i) => { const st = startOf(i); if (st !== undefined && st <= page) k = i; }); return k; };
+  const hfNode = (kind, page, pages) => {
+    const k = sheetOfPage(page), s = sheetsOut[k];
+    const own = g.pageNum === 'sheet';
+    const first = startOf(k) || 1;
+    const next = startOf(k + 1);
+    const v = { page: own ? page - first + 1 : page, pages: own ? (next === undefined ? pages : next - 1) - first + 1 : pages, sheet: s.name, date, time, file: fileName };
+    const sec = s.cfg.hf[kind];
+    const cell = (t, al) => ({ text: fillHF(t, v), alignment: al, fontSize: 8, color: '#333333' });
+    if (!sec.L && !sec.C && !sec.R) return null;
+    return { columns: [cell(sec.L, 'left'), cell(sec.C, 'center'), cell(sec.R, 'right')], columnGap: 6 };
+  };
+  const c0 = sheetsOut[0].cfg;
+  const dd = {
+    info: { title: fileName },
+    pageSize: g.paper === 'LETTER' ? 'LETTER' : g.paper, pageOrientation: c0.orient,
+    pageMargins: [c0.m.l * 72, c0.m.t * 72, c0.m.r * 72, c0.m.b * 72],
+    content,
+    header: (page, pages) => { totalPages = pages; const n = hfNode('header', page, pages); return n ? { stack: [n], margin: [c0.m.l * 72, Math.max(0, c0.m.h * 72 - 2), c0.m.r * 72, 0] } : null; },
+    footer: (page, pages) => { const n = hfNode('footer', page, pages); return n ? { stack: [n], margin: [c0.m.l * 72, Math.max(0, c0.m.b * 72 - c0.m.f * 72 - 9), c0.m.r * 72, 0] } : null; }
+  };
+  setProgress(55, 'Dựng PDF (có thể mất vài giây với file dài)...');
+  await yieldToUI(); await yieldToUI();
+  const blob = await new Promise((res, rej) => { try { pdfMake.createPdf(dd).getBlob(res); } catch (e) { rej(e); } });
+  return { blob, sheets: sheetsOut.length, pages: totalPages };
+}
+
+// ====================================================================
+// UI STATE
+// ====================================================================
+const state = { file: null, buf: null, scan: null, wb: null, rows: [], pdfUrl: null, pdfName: '' };
+
+function resetAll() {
+  state.file = null; state.buf = null; state.scan = null; state.wb = null; state.rows = [];
+  if (state.pdfUrl) URL.revokeObjectURL(state.pdfUrl);
+  state.pdfUrl = null;
+  ['file-panel', 'sheets-panel', 'setup-panel', 'actions'].forEach(id => $(id).classList.add('section-off'));
+  $('pdf-panel').style.display = 'none'; $('pdf-frame').removeAttribute('src');
+  $('log-wrap').style.display = 'none'; $('log-body').innerHTML = '';
+  hideProgress(); $('file-input').value = '';
+}
+
+const dz = $('dropzone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('dragover');
+  const f = e.dataTransfer.files[0];
+  if (f && /\.(xlsx|xlsm)$/i.test(f.name)) loadFile(f); else alert('Hỗ trợ: .xlsx, .xlsm (file .xls cũ hãy mở bằng Excel rồi lưu lại dạng .xlsx)');
+});
+$('file-input').addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+$('btn-remove').addEventListener('click', resetAll);
+
+function describeCurrent(sh) {
+  const i = sh.info;
+  if (!i.ok) return '—';
+  const ps = i.pageSetup || {};
+  const bits = [];
+  bits.push(`${PAPER_NAMES[ps.paperSize] || (ps.paperSize ? 'khổ ' + ps.paperSize : 'giấy mặc định')} ${ps.orientation === 'landscape' ? 'ngang' : 'dọc'}`);
+  bits.push(i.fitToPage ? `vừa ${ps.fitToWidth || 1}×${ps.fitToHeight === '0' ? 'tự do' : (ps.fitToHeight || 1)} trang` : `tỉ lệ ${ps.scale || 100}%`);
+  bits.push(sh.printAreas.length ? `vùng in ${sh.printAreas.map(rangeStr).join(', ')}` : 'chưa đặt vùng in');
+  if (sh.titleRows) bits.push(`lặp dòng ${rowSpecStr(sh.titleRows)}`);
+  if (i.rowBreaks.length) bits.push(`${i.rowBreaks.length} ngắt trang`);
+  if (i.oddFooter || i.oddHeader) bits.push('có header/footer');
+  if (i.printerSettings.length) bits.push('có printerSettings');
+  return bits.join(' · ');
+}
+function sheetWarnings(sh) {
+  const i = sh.info, w = [];
+  if (!i.ok) return w;
+  if (sh.state !== 'visible') w.push('sheet đang ẩn');
+  if (i.drawings) w.push('có hình/biểu đồ (PDF nhanh không vẽ)');
+  if (i.cf) w.push('có conditional formatting (PDF nhanh không áp dụng)');
+  if (i.hasLegacyHF) w.push('có hình trong header/footer (giữ nguyên)');
+  return w;
+}
+
+function buildRowsTable() {
+  const tb = $('sheet-rows');
+  tb.innerHTML = '';
+  state.rows.forEach((rw, n) => {
+    const sh = rw.sh;
+    const tr = document.createElement('tr');
+    if (!rw.include) tr.className = 'off';
+    const td = () => tr.appendChild(document.createElement('td'));
+    const c0 = td();
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = rw.include; cb.disabled = !sh.isWorksheet;
+    cb.addEventListener('change', () => { rw.include = cb.checked; tr.className = rw.include ? '' : 'off'; });
+    c0.appendChild(cb);
+    const c1 = td(); c1.className = 'name'; c1.textContent = sh.name;
+    const mk = (key, ph) => {
+      const t = document.createElement('input'); t.type = 'text'; t.value = rw[key]; t.placeholder = ph;
+      t.addEventListener('input', () => { rw[key] = t.value; t.classList.remove('bad'); });
+      rw['_' + key] = t; return t;
+    };
+    td().appendChild(mk('area', 'A1:G200'));
+    td().appendChild(mk('titles', '4:5'));
+    const c4 = td();
+    const sel = document.createElement('select');
+    [['default', 'Mặc định'], ['landscape', 'Ngang'], ['portrait', 'Dọc']].forEach(([v, l]) => { const o = document.createElement('option'); o.value = v; o.textContent = l; sel.appendChild(o); });
+    sel.value = rw.orient; sel.addEventListener('change', () => { rw.orient = sel.value; });
+    c4.appendChild(sel);
+    const c5 = td();
+    const cur = document.createElement('div'); cur.className = 'cur'; cur.textContent = sh.isWorksheet ? describeCurrent(sh) : 'không phải worksheet (chartsheet…)';
+    c5.appendChild(cur);
+    rw.warn.forEach(w => { const d = document.createElement('div'); d.className = 'w'; d.textContent = '⚠ ' + w; c5.appendChild(d); });
+    tb.appendChild(tr);
+  });
+}
+
+function detectForRows(areaMode, titleMode) {
+  state.rows.forEach(rw => {
+    const sh = rw.sh;
+    if (!sh.isWorksheet) return;
+    const ws = state.wb ? state.wb.getWorksheet(sh.name) : null;
+    // area
+    if (areaMode === 'detect' || !sh.printAreas.length) {
+      const a = ws ? detectArea(ws) : null;
+      rw.area = a ? rangeStr(a) : (sh.printAreas[0] ? rangeStr(sh.printAreas[0]) : '');
+    } else {
+      rw.area = rangeStr(sh.printAreas[0]);
+      const used = ws ? detectArea(ws) : null, a = sh.printAreas[0];
+      if (used && (a.r2 - used.r2 > 1000 || a.c2 - used.c2 > 50)) {
+        rw.area = rangeStr({ r1: a.r1, c1: a.c1, r2: Math.min(a.r2, used.r2), c2: Math.min(a.c2, used.c2) });
+        if (!rw.warn.some(w => w.startsWith('vùng in cũ'))) rw.warn.push('vùng in cũ phủ cả sheet — đã thu về vùng có dữ liệu');
+      }
+    }
+    // title rows
+    if (titleMode === 'none') rw.titles = '';
+    else if (titleMode === 'detect' || !sh.titleRows) {
+      const ar = parseRange(rw.area);
+      const t = ws && ar ? detectTitleRows(ws, ar) : null;
+      rw.titles = t ? rowSpecStr(t) : (titleMode === 'detect' ? '' : rowSpecStr(sh.titleRows));
+    } else rw.titles = rowSpecStr(sh.titleRows);
+  });
+}
+
+async function loadFile(file) {
+  resetAll();
+  state.file = file;
+  $('file-panel').classList.remove('section-off');
+  $('f-name').textContent = file.name; $('f-size').textContent = fmtSize(file.size);
+  $('scan-info').textContent = 'Đang phân tích...';
+  try {
+    state.buf = await file.arrayBuffer();
+    const zip = await JSZip.loadAsync(state.buf);
+    state.scan = await scanWorkbook(zip);
+    const ws = state.scan.sheets;
+    let html = `<span>Sheets: <span class="stat">${ws.length}</span> (worksheet: ${ws.filter(s => s.isWorksheet).length})</span><br>`;
+    // content analysis (needed to detect print area / header rows / orientation)
+    try {
+      $('scan-info').innerHTML = html + '<span>Đang đọc nội dung để dò vùng in...</span>';
+      await yieldToUI();
+      state.wb = await loadExcel(state.buf);
+      html += `<span>Đọc nội dung: <span class="ok">OK</span></span><br>`;
+    } catch (e) {
+      state.wb = null;
+      html += `<span>Đọc nội dung: <span class="danger">lỗi (${escXml(e.message)})</span> — vẫn cài đặt in được nhưng phải nhập vùng in tay và không xuất PDF được. Thử làm sạch file bằng <a href="excel-cleaner.html" style="color:var(--accent)">Excel Cleaner</a> trước.</span><br>`;
+    }
+    html += `<span>Dung lượng: <span class="stat">${fmtSize(file.size)}</span></span>`;
+    $('scan-info').innerHTML = html;
+
+    state.rows = ws.map(sh => ({
+      sh, idx: sh.idx, include: sh.isWorksheet && sh.state === 'visible', area: '', titles: '', orient: 'default',
+      warn: sh.isWorksheet ? sheetWarnings(sh) : []
+    }));
+    applyPreset('boq_a4l');
+    detectForRows($('s-areamode').value, $('s-titlemode').value);
+    buildRowsTable();
+    ['sheets-panel', 'setup-panel', 'actions'].forEach(id => $(id).classList.remove('section-off'));
+    $('btn-pdf').disabled = !state.wb;
+  } catch (e) {
+    $('scan-info').innerHTML = `<span class="danger">Lỗi đọc file: ${escXml(e.message)}</span>`;
+  }
+}
+
+$('btn-all').addEventListener('click', () => {
+  const on = state.rows.some(r => r.sh.isWorksheet && !r.include);
+  state.rows.forEach(r => { if (r.sh.isWorksheet) r.include = on; });
+  buildRowsTable();
+});
+$('btn-redetect').addEventListener('click', () => { detectForRows($('s-areamode').value, $('s-titlemode').value); buildRowsTable(); });
+$('s-areamode').addEventListener('change', () => { detectForRows($('s-areamode').value, $('s-titlemode').value); buildRowsTable(); });
+$('s-titlemode').addEventListener('change', () => { detectForRows($('s-areamode').value, $('s-titlemode').value); buildRowsTable(); });
+$('s-preset').addEventListener('change', () => { if ($('s-preset').value !== 'custom') applyPreset($('s-preset').value); });
+FIELD_IDS.concat(['fit', 'hcenter']).forEach(f => {
+  const el = $('s-' + f);
+  el.addEventListener(el.type === 'checkbox' ? 'change' : 'input', () => { $('s-preset').value = 'custom'; });
+});
+
+// Reads the table + settings into the data the writer needs; returns null (after alert) when invalid
+function collectPlan() {
+  const g = readSettings();
+  const perSheet = [];
+  let bad = false;
+  state.rows.forEach(rw => {
+    if (!rw.include || !rw.sh.isWorksheet) return;
+    let area = rw.area.trim() ? parseRange(rw.area) : null;
+    if (rw.area.trim() && !area) { rw._area.classList.add('bad'); bad = true; }
+    const cur = rw.sh.printAreas[0];
+    if (area && cur && rangeStr(area) === rangeStr(cur)) area = null;   // unchanged → leave the file's own definition alone
+    const titles = rw.titles.trim() ? parseRowSpec(rw.titles) : null;
+    if (rw.titles.trim() && !titles) { rw._titles.classList.add('bad'); bad = true; }
+    let orient = rw.orient === 'default' ? g.orient : rw.orient;
+    if (orient === 'auto') {
+      const ws = state.wb ? state.wb.getWorksheet(rw.sh.name) : null;
+      const a = area || rw.sh.printAreas[0] || (ws ? detectArea(ws) : null);   // (unchanged areas arrive here as null)
+      orient = 'landscape';
+      if (ws && a) {
+        const p = PAPERS[g.paper], printP = p.w - (g.m.l + g.m.r) * 72;
+        orient = areaWidthPt(ws, a) <= printP * 1.2 ? 'portrait' : 'landscape';
+      }
+    }
+    perSheet.push({ idx: rw.idx, include: true, area, titles, orient });
+  });
+  if (bad) { alert('Vùng in hoặc dòng tiêu đề không hợp lệ (ô viền đỏ). Ví dụ: A1:G200 và 4:5'); return null; }
+  if (!perSheet.length) { alert('Chưa chọn sheet nào'); return null; }
+  return { g, perSheet };
+}
+
+function downloadBlob(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+const outName = (suffix, ext) => state.file.name.replace(/\.(xlsx|xlsm)$/i, '') + suffix + ext;
+const xlsxMime = () => /\.xlsm$/i.test(state.file.name) ? 'application/vnd.ms-excel.sheet.macroEnabled.12' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+function setBusy(b) { $('btn-xlsx').disabled = b; $('btn-pdf').disabled = b || !state.wb; }
+
+$('btn-xlsx').addEventListener('click', async () => {
+  const plan = collectPlan(); if (!plan) return;
+  setBusy(true);
+  try {
+    setProgress(20, 'Ghi thiết lập in vào file...');
+    await yieldToUI();
+    const { buffer, notes } = await applyPrintSetup(state.buf, plan.g, plan.perSheet);
+    notes.forEach(n => log(n.s, n.t));
+    const name = outName('_print', state.file.name.match(/\.\w+$/)[0].toLowerCase());
+    downloadBlob(new Blob([buffer], { type: xlsxMime() }), name);
+    setProgress(100, 'Xong!');
+    log(`Đã tải: ${name} (${fmtSize(buffer.byteLength)})`, 'ok');
+  } catch (e) { log('Lỗi: ' + e.message, 'err'); setProgress(0, 'Lỗi!'); }
+  setBusy(false);
+});
+
+$('btn-pdf').addEventListener('click', async () => {
+  const plan = collectPlan(); if (!plan) return;
+  setBusy(true);
+  const t0 = performance.now();
+  try {
+    setProgress(10, 'Ghi thiết lập in...');
+    await yieldToUI();
+    const { buffer, notes } = await applyPrintSetup(state.buf, plan.g, plan.perSheet);
+    notes.forEach(n => log(n.s, n.t));
+    const res = await buildPdf(buffer, plan.g, plan.perSheet.map(p => p.idx), state.file.name);
+    if (state.pdfUrl) URL.revokeObjectURL(state.pdfUrl);
+    state.pdfUrl = URL.createObjectURL(res.blob);
+    state.pdfName = outName('', '.pdf');
+    const canView = navigator.pdfViewerEnabled !== false;
+    $('pdf-frame').style.display = canView ? 'block' : 'none';
+    $('pdf-hint').style.display = canView ? 'none' : 'block';
+    $('pdf-frame').src = state.pdfUrl;
+    $('pdf-panel').style.display = 'block';
+    $('pdf-info').innerHTML = `<b>${res.sheets}</b> sheet · <b>${res.pages}</b> trang · ${fmtSize(res.blob.size)}`;
+    setProgress(100, 'Xong!');
+    log(`PDF: ${res.sheets} sheet · ${res.pages} trang · ${fmtSize(res.blob.size)} · ${((performance.now() - t0) / 1000).toFixed(1)} giây`, 'ok');
+    $('pdf-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (e) { log('Lỗi: ' + e.message, 'err'); setProgress(0, 'Lỗi!'); console.error(e); }
+  setBusy(false);
+});
+$('btn-pdf-open').addEventListener('click', () => { if (state.pdfUrl) window.open(state.pdfUrl, '_blank'); });
+$('btn-pdf-dl').addEventListener('click', () => {
+  if (!state.pdfUrl) return;
+  const a = document.createElement('a'); a.href = state.pdfUrl; a.download = state.pdfName; a.click();
+  log('Đã tải: ' + state.pdfName, 'ok');
+});
+
+applyPreset('boq_a4l');
+</script>
+</body>
+</html>
